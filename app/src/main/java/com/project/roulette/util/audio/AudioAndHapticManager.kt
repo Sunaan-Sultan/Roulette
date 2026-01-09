@@ -1,7 +1,8 @@
 package com.project.roulette.util.audio
 
 import android.content.Context
-import android.media.MediaPlayer
+import android.media.AudioManager
+import android.media.ToneGenerator
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -18,32 +19,22 @@ import javax.inject.Singleton
  */
 @Singleton
 class SoundManager @Inject constructor(@ApplicationContext private val context: Context) {
-    private var spinStartSound: MediaPlayer? = null
-    private var spinEndSound: MediaPlayer? = null
-    private var clickSound: MediaPlayer? = null
-
-    init {
-        // Initialize sounds (could load from resources)
-        // For now, we'll create dummy MediaPlayers
-        try {
-            spinStartSound = MediaPlayer()
-            spinEndSound = MediaPlayer()
-            clickSound = MediaPlayer()
-        } catch (e: Exception) {
-            // Handle initialization errors
-        }
+    // Use ToneGenerator so we can play simple tones without external resources
+    private var toneGenerator: ToneGenerator? = try {
+        ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+    } catch (e: Exception) {
+        null
     }
 
     /**
-     * Play spin start sound.
+     * Play spin start sound (short whoosh/tick).
      */
     fun playSpinStart() {
         try {
-            spinStartSound?.reset()
-            // Load from resources and play
-            // soundPool.play(spinStartId, 1f, 1f, 1, 0, 1f)
+            // Short start beep (200ms)
+            toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 180)
         } catch (e: Exception) {
-            // Silently handle errors
+            // ignore
         }
     }
 
@@ -52,10 +43,10 @@ class SoundManager @Inject constructor(@ApplicationContext private val context: 
      */
     fun playSpinEnd() {
         try {
-            spinEndSound?.reset()
-            // soundPool.play(spinEndId, 1f, 1f, 1, 0, 1f)
+            // A slightly longer confirmation tone
+            toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 320)
         } catch (e: Exception) {
-            // Silently handle errors
+            // ignore
         }
     }
 
@@ -64,29 +55,33 @@ class SoundManager @Inject constructor(@ApplicationContext private val context: 
      */
     fun playClick() {
         try {
-            clickSound?.reset()
-            // soundPool.play(clickId, 1f, 1f, 1, 0, 1f)
+            toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 120)
         } catch (e: Exception) {
-            // Silently handle errors
+            // ignore
         }
     }
 
     /**
-     * Stop all sounds.
+     * Stop any ongoing tone.
      */
     fun stopAll() {
-        spinStartSound?.stop()
-        spinEndSound?.stop()
-        clickSound?.stop()
+        try {
+            toneGenerator?.stopTone()
+        } catch (e: Exception) {
+            // ignore
+        }
     }
 
     /**
-     * Release all resources.
+     * Release resources.
      */
     fun release() {
-        spinStartSound?.release()
-        spinEndSound?.release()
-        clickSound?.release()
+        try {
+            toneGenerator?.release()
+        } catch (e: Exception) {
+            // ignore
+        }
+        toneGenerator = null
     }
 }
 
@@ -167,4 +162,3 @@ class HapticFeedback @Inject constructor(@ApplicationContext private val context
         return vibrator?.hasVibrator() == true
     }
 }
-

@@ -158,7 +158,11 @@ class EditorViewModel @Inject constructor(
             val updated = currentState.wheel.copy(
                 segments = currentState.wheel.segments.map { segment ->
                     if (segment.id == segmentId) {
-                        segment.copy(name = name, color = color, weight = weight)
+                        // Ensure we never set a blank name into the domain model.
+                        val safeName = if (name.isBlank()) segment.name.ifBlank { "Option" } else name
+                        // Ensure weight is positive; fallback to previous weight if invalid
+                        val safeWeight = if (weight > 0f) weight else segment.weight
+                        segment.copy(name = safeName, color = color, weight = safeWeight)
                     } else {
                         segment
                     }

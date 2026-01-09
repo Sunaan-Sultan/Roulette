@@ -20,8 +20,16 @@ import com.project.roulette.presentation.viewmodel.StatisticsViewModel
 fun RouletteNavHost(navController: NavHostController) {
     NavHost(
         navController = navController,
-        startDestination = RouletteScreen.Home.route
+        startDestination = RouletteScreen.Splash.route
     ) {
+        composable(RouletteScreen.Splash.route) {
+            com.project.roulette.presentation.screen.splash.SplashScreen(onTimeout = {
+                navController.navigate(RouletteScreen.Home.route) {
+                    popUpTo(RouletteScreen.Splash.route) { inclusive = true }
+                }
+            })
+        }
+
         composable(RouletteScreen.Home.route) {
             val viewModel: HomeViewModel = hiltViewModel()
             HomeScreen(

@@ -40,6 +40,7 @@ import com.project.roulette.presentation.component.AlertDialogBox
 import com.project.roulette.presentation.model.EditorUiState
 import com.project.roulette.presentation.viewmodel.EditorViewModel
 import kotlinx.coroutines.launch
+import androidx.compose.ui.focus.onFocusChanged
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -240,11 +241,27 @@ private fun SegmentEditorCard(
                 OutlinedTextField(
                     value = name,
                     onValueChange = {
+                        // update local UI state only; defer domain update until focus is lost
                         setName(it)
-                        onUpdate(it, segment.color, weight.toFloatOrNull() ?: 1f)
                     },
                     label = { Text("Name") },
-                    modifier = Modifier.weight(1f)
+                    modifier = Modifier
+                        .weight(1f)
+                        .onFocusChanged { focusState ->
+                            if (!focusState.isFocused) {
+                                // when focus lost: if name is blank, restore previous usable name and persist it
+                                if (name.isBlank()) {
+                                    val restored = segment.name.ifBlank { "Option" }
+                                    setName(restored)
+                                    val parsedWeight = weight.toFloatOrNull() ?: 1f
+                                    onUpdate(restored, segment.color, parsedWeight)
+                                } else {
+                                    // non-blank - commit the live name to domain
+                                    val parsedWeight = weight.toFloatOrNull() ?: 1f
+                                    onUpdate(name, segment.color, parsedWeight)
+                                }
+                            }
+                        }
                 )
                 IconButton(onClick = onRemove) {
                     Icon(Icons.Filled.Delete, contentDescription = "Remove")
@@ -255,7 +272,10 @@ private fun SegmentEditorCard(
                 value = weight,
                 onValueChange = {
                     setWeight(it)
-                    onUpdate(name, segment.color, it.toFloatOrNull() ?: 1f)
+                    val parsed = it.toFloatOrNull() ?: 1f
+                    // propagate weight updates using a safe name fallback to avoid blank domain names
+                    val nameToUse = if (name.isNotBlank()) name else segment.name.ifBlank { "Option" }
+                    onUpdate(nameToUse, segment.color, parsed)
                 },
                 label = { Text("Weight") },
                 modifier = Modifier.fillMaxWidth()

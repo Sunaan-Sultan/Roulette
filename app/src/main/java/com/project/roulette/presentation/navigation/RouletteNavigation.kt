@@ -5,6 +5,8 @@ package com.project.roulette.presentation.navigation
  * Each destination exposes a route pattern and helper to create a concrete route.
  */
 sealed class RouletteScreen(val route: String) {
+    object Splash : RouletteScreen("splash")
+
     object Home : RouletteScreen("home")
 
     object CreateWheel : RouletteScreen("create_wheel")
