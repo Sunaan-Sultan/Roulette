@@ -1,0 +1,254 @@
+package com.project.roulette.presentation.screen.editor
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.project.roulette.presentation.model.EditorUiState
+import com.project.roulette.presentation.viewmodel.EditorViewModel
+import kotlinx.coroutines.launch
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EditorScreen(
+    viewModel: EditorViewModel,
+    wheelId: String? = null,
+    isNew: Boolean = true,
+    onNavigateBack: () -> Unit,
+    onSaved: () -> Unit
+) {
+    val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+    val snackbarHostState = remember { SnackbarHostState() }
+    val scope = rememberCoroutineScope()
+
+    LaunchedEffect(Unit) {
+        if (isNew) {
+            viewModel.initializeNew()
+        } else if (wheelId != null) {
+            viewModel.loadWheel(wheelId)
+        }
+    }
+
+    // When save completes, show snackbar and call onSaved to navigate back
+    LaunchedEffect(uiState) {
+        val current = uiState
+        if (current is EditorUiState.Success && current.isSaved) {
+            scope.launch {
+                snackbarHostState.showSnackbar("Wheel saved!")
+            }
+            onSaved()
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(if (isNew) "Create Wheel" else "Edit Wheel") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(Icons.Filled.ArrowBack, "Back")
+                    }
+                }
+            )
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
+    ) { padding ->
+        when (val state = uiState) {
+            is EditorUiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+
+            is EditorUiState.Success -> {
+                if (state.wheel != null) {
+                    LazyColumn(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        item {
+                            OutlinedTextField(
+                                value = state.wheel.name,
+                                onValueChange = { viewModel.updateWheelName(it) },
+                                label = { Text("Wheel Name") },
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+
+                        item {
+                            OutlinedTextField(
+                                value = state.wheel.description,
+                                onValueChange = { viewModel.updateWheelDescription(it) },
+                                label = { Text("Description") },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(bottom = 8.dp),
+                                maxLines = 3
+                            )
+                        }
+
+                        item {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text("Segments (${state.wheel.segments.size})")
+                                IconButton(onClick = {
+                                    viewModel.addSegment(
+                                        "New Segment",
+                                        Color(
+                                            (Math.random() * 0xFFFFFF).toLong() or 0xFF000000L
+                                        )
+                                    )
+                                }) {
+                                    Icon(Icons.Filled.Add, "Add")
+                                }
+                            }
+                        }
+
+                        items(state.wheel.segments) { segment ->
+                            SegmentEditorCard(
+                                segment = segment,
+                                onRemove = { viewModel.removeSegment(segment.id) },
+                                onUpdate = { name, color, weight ->
+                                    viewModel.updateSegment(
+                                        segment.id,
+                                        name,
+                                        color,
+                                        weight
+                                    )
+                                }
+                            )
+                        }
+
+                        item {
+                            Button(
+                                onClick = {
+                                    // Trigger save; UI will react to isSaved and navigate back
+                                    viewModel.saveWheel()
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 16.dp),
+                                enabled = !state.isSaving
+                            ) {
+                                Text(if (state.isSaving) "Saving..." else "Save Wheel")
+                            }
+                        }
+
+                        if (state.saveError != null) {
+                            item {
+                                Text("Error: ${state.saveError}", color = Color.Red)
+                            }
+                        }
+                    }
+                }
+            }
+
+            is EditorUiState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Error: ${state.message}")
+                        Button(onClick = onNavigateBack) {
+                            Text("Go Back")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun SegmentEditorCard(
+    segment: com.project.roulette.domain.model.Segment,
+    onRemove: () -> Unit,
+    onUpdate: (String, Color, Float) -> Unit
+) {
+    val (name, setName) = remember { mutableStateOf(segment.name) }
+    val (weight, setWeight) = remember { mutableStateOf(segment.weight.toString()) }
+
+    Card(modifier = Modifier.fillMaxWidth()) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                OutlinedTextField(
+                    value = name,
+                    onValueChange = {
+                        setName(it)
+                        onUpdate(it, segment.color, weight.toFloatOrNull() ?: 1f)
+                    },
+                    label = { Text("Name") },
+                    modifier = Modifier.weight(1f)
+                )
+                IconButton(onClick = onRemove) {
+                    Icon(Icons.Filled.Delete, "Remove")
+                }
+            }
+
+            OutlinedTextField(
+                value = weight,
+                onValueChange = {
+                    setWeight(it)
+                    onUpdate(name, segment.color, it.toFloatOrNull() ?: 1f)
+                },
+                label = { Text("Weight") },
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
+}

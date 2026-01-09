@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "372215794876",
+    "project_id": "acer709804",
+    "storage_bucket": "acer709804.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:372215794876:android:f7e4cd2248f614011814b9",
+        "android_client_info": {
+          "package_name": "com.project.roulette"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBLKb6kBiidaM2FVc0HMo94t5EJgjh-kes"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

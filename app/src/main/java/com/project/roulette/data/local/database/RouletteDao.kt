@@ -1,0 +1,72 @@
+package com.project.roulette.data.local.database
+
+import androidx.room.Dao
+import androidx.room.Delete
+import androidx.room.Insert
+import androidx.room.OnConflictStrategy
+import androidx.room.Query
+import androidx.room.Update
+import com.project.roulette.data.local.database.entity.WheelEntity
+import kotlinx.coroutines.flow.Flow
+
+/**
+ * Data Access Object for Wheel operations.
+ * Abstraction layer for database queries.
+ */
+@Dao
+interface WheelDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertWheel(wheel: WheelEntity)
+
+    @Update
+    suspend fun updateWheel(wheel: WheelEntity)
+
+    @Delete
+    suspend fun deleteWheel(wheel: WheelEntity)
+
+    @Query("SELECT * FROM wheels WHERE id = :wheelId")
+    fun getWheelById(wheelId: String): Flow<WheelEntity?>
+
+    @Query("SELECT * FROM wheels ORDER BY updatedAt DESC")
+    fun getAllWheels(): Flow<List<WheelEntity>>
+
+    @Query("SELECT * FROM wheels WHERE name LIKE '%' || :query || '%' ORDER BY updatedAt DESC")
+    fun searchWheels(query: String): Flow<List<WheelEntity>>
+
+    @Query("SELECT COUNT(*) > 0 FROM wheels WHERE id = :wheelId")
+    suspend fun wheelExists(wheelId: String): Boolean
+
+    @Query("DELETE FROM wheels WHERE id = :wheelId")
+    suspend fun deleteWheelById(wheelId: String)
+}
+
+/**
+ * Data Access Object for Spin History operations.
+ */
+@Dao
+interface SpinHistoryDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertSpin(spin: com.project.roulette.data.local.database.entity.SpinHistoryEntity)
+
+    @Query("SELECT * FROM spin_history WHERE wheelId = :wheelId ORDER BY spinTimestamp DESC")
+    fun getSpinsForWheel(wheelId: String): Flow<List<com.project.roulette.data.local.database.entity.SpinHistoryEntity>>
+
+    @Query("SELECT * FROM spin_history WHERE wheelId = :wheelId ORDER BY spinTimestamp DESC LIMIT :limit")
+    fun getRecentSpins(
+        wheelId: String,
+        limit: Int
+    ): Flow<List<com.project.roulette.data.local.database.entity.SpinHistoryEntity>>
+
+    @Query("SELECT COUNT(*) FROM spin_history WHERE wheelId = :wheelId AND selectedSegmentId = :segmentId")
+    suspend fun getSegmentSpinCount(wheelId: String, segmentId: String): Int
+
+    @Query("SELECT COUNT(*) FROM spin_history WHERE wheelId = :wheelId")
+    suspend fun getTotalSpinCount(wheelId: String): Int
+
+    @Query("DELETE FROM spin_history WHERE wheelId = :wheelId")
+    suspend fun clearWheelHistory(wheelId: String)
+
+    @Query("SELECT * FROM spin_history WHERE wheelId = :wheelId ORDER BY spinTimestamp DESC")
+    suspend fun getAllSpinsForWheelSync(wheelId: String): List<com.project.roulette.data.local.database.entity.SpinHistoryEntity>
+}
+
