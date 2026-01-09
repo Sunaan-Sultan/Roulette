@@ -9,13 +9,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
-import androidx.compose.ui.graphics.drawscope.Fill
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import com.project.roulette.domain.model.Segment
 import com.project.roulette.domain.model.Wheel
 import kotlin.math.PI
 import kotlin.math.cos
@@ -28,8 +26,8 @@ import kotlin.math.sin
 @Composable
 fun WheelCanvas(
     wheel: Wheel,
-    rotation: Float = 0f,
     modifier: Modifier = Modifier,
+    rotation: Float = 0f,
     wheelSize: Dp = 300.dp
 ) {
     Box(
@@ -120,17 +118,48 @@ private fun DrawScope.drawSectorLabel(
 }
 
 private fun DrawScope.drawPointerAtTop(centerX: Float, centerY: Float, radius: Float) {
-    val pointerSize = radius * 0.08f
+    // Increased pointer size for better visibility
+    val pointerSize = radius * 0.12f
+    val halfWidth = pointerSize / 2f
+
+    // Apex (top center) of the pointer
     val apexX = centerX
     val apexY = centerY - radius + pointerSize / 2f
 
-    val path = androidx.compose.ui.graphics.Path().apply {
-        moveTo(apexX - pointerSize / 2f, apexY)
-        lineTo(apexX + pointerSize / 2f, apexY)
-        lineTo(apexX, apexY + pointerSize)
+    // Coordinates for outer (outline) triangle
+    val outerLeftX = apexX - halfWidth
+    val outerRightX = apexX + halfWidth
+    val outerBottomY = apexY + pointerSize
+
+    val outerPath = androidx.compose.ui.graphics.Path().apply {
+        moveTo(outerLeftX, apexY)
+        lineTo(outerRightX, apexY)
+        lineTo(apexX, outerBottomY)
         close()
     }
 
-    drawPath(path = path, color = Color.Red)
-    drawPath(path = path, color = Color.Black, style = Stroke(width = 1f))
+    // Draw outer outline (dark) to create strong contrast
+    drawPath(path = outerPath, color = Color.Black)
+
+    // Inner triangle slightly inset for a bright, noticeable fill
+    val inset = pointerSize * 0.18f
+    val innerLeftX = outerLeftX + inset
+    val innerRightX = outerRightX - inset
+    val innerBottomY = outerBottomY - inset
+
+    val innerPath = androidx.compose.ui.graphics.Path().apply {
+        moveTo(innerLeftX, apexY + inset * 0.1f)
+        lineTo(innerRightX, apexY + inset * 0.1f)
+        lineTo(apexX, innerBottomY)
+        close()
+    }
+
+    // Bright fill for high contrast (use Yellow) and a subtle inner stroke
+    drawPath(path = innerPath, color = Color(0xFFFFD54F)) // Amber/Yellow
+    drawPath(path = innerPath, color = Color.Black, style = Stroke(width = 2f))
+
+    // Draw small tip circle for extra visibility and to ensure pointer center is easy to spot
+    val tipRadius = pointerSize * 0.18f
+    drawCircle(color = Color.White, radius = tipRadius, center = Offset(apexX, apexY + tipRadius))
+    drawCircle(color = Color.Black, radius = tipRadius, center = Offset(apexX, apexY + tipRadius), style = Stroke(width = 2f))
 }

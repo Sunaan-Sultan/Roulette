@@ -36,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.project.roulette.presentation.component.AlertDialogBox
 import com.project.roulette.presentation.model.EditorUiState
 import com.project.roulette.presentation.viewmodel.EditorViewModel
 import kotlinx.coroutines.launch
@@ -65,9 +66,11 @@ fun EditorScreen(
     LaunchedEffect(uiState) {
         val current = uiState
         if (current is EditorUiState.Success && current.isSaved) {
+            // show snackbar asynchronously (do not block navigation)
             scope.launch {
                 snackbarHostState.showSnackbar("Wheel saved!")
             }
+            // Navigate back immediately when saved flag is set
             onSaved()
         }
     }
@@ -78,7 +81,7 @@ fun EditorScreen(
                 title = { Text(if (isNew) "Create Wheel" else "Edit Wheel") },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.Filled.ArrowBack, "Back")
+                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 }
             )
@@ -142,12 +145,13 @@ fun EditorScreen(
                                         )
                                     )
                                 }) {
-                                    Icon(Icons.Filled.Add, "Add")
+                                    Icon(Icons.Filled.Add, contentDescription = "Add")
                                 }
                             }
                         }
 
-                        items(state.wheel.segments) { segment ->
+                        // Use stable keys for segments to ensure correct removal and stable state
+                        items(items = state.wheel.segments, key = { it.id }) { segment ->
                             SegmentEditorCard(
                                 segment = segment,
                                 onRemove = { viewModel.removeSegment(segment.id) },
@@ -165,8 +169,9 @@ fun EditorScreen(
                         item {
                             Button(
                                 onClick = {
-                                    // Trigger save; UI will react to isSaved and navigate back
+                                    // Trigger save and navigate back immediately
                                     viewModel.saveWheel()
+                                    onSaved()
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -176,12 +181,18 @@ fun EditorScreen(
                                 Text(if (state.isSaving) "Saving..." else "Save Wheel")
                             }
                         }
+                    }
 
-                        if (state.saveError != null) {
-                            item {
-                                Text("Error: ${state.saveError}", color = Color.Red)
-                            }
-                        }
+                    // Show alert dialog when there's a saveError
+                    if (state.saveError != null) {
+                        AlertDialogBox(
+                            visible = true,
+                            title = "Error",
+                            message = state.saveError,
+                            confirmText = "OK",
+                            onConfirm = { viewModel.clearSaveError() },
+                            onDismiss = { viewModel.clearSaveError() }
+                        )
                     }
                 }
             }
@@ -236,7 +247,7 @@ private fun SegmentEditorCard(
                     modifier = Modifier.weight(1f)
                 )
                 IconButton(onClick = onRemove) {
-                    Icon(Icons.Filled.Delete, "Remove")
+                    Icon(Icons.Filled.Delete, contentDescription = "Remove")
                 }
             }
 

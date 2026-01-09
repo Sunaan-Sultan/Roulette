@@ -77,7 +77,9 @@ data class SpinPhysicsSimulator(
 
     /**
      * Calculate the current rotation angle (in degrees, 0..360) for a given elapsed time.
-     * The returned angle represents how many degrees the wheel has rotated from the start.
+     * The returned angle represents how many degrees the wheel has rotated from the start,
+     * normalized to [0,360). This is suitable for drawing a repeating rotation but not for
+     * computing absolute animateTo targets.
      */
     fun calculateAngle(elapsedTime: Long): Float {
         val progress = getProgress(elapsedTime)
@@ -88,5 +90,15 @@ data class SpinPhysicsSimulator(
 
         // Normalize to [0, 360)
         return (totalDegrees % 360f + 360f) % 360f
+    }
+
+    /**
+     * Calculate the absolute total degrees rotated (not normalized) for the given elapsed time.
+     * This is useful when constructing an absolute animate target (e.g., current + totalDegrees).
+     */
+    fun calculateTotalDegrees(elapsedTime: Long): Float {
+        val progress = getProgress(elapsedTime)
+        val eased = easingFunction(progress).coerceIn(0f, 1f)
+        return totalRotations * 360f + (1f - eased) * 360f
     }
 }

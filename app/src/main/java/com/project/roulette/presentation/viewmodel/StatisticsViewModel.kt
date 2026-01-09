@@ -11,6 +11,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -33,30 +35,41 @@ class StatisticsViewModel @Inject constructor(
     fun loadStatistics(wheelId: String) {
         viewModelScope.launch {
             _uiState.value = StatisticsUiState.Loading
-            try {
-                // Get wheel name
-                var wheelName = "Wheel"
-                getWheelByIdUseCase(wheelId).collect { result ->
-                    if (result is Result.Success) {
-                        wheelName = result.data.name
+
+            // Combine wheel and statistics flows so we can react to updates and avoid blocking
+            getWheelByIdUseCase(wheelId)
+                .combine(getWheelStatisticsUseCase(wheelId)) { wheelResult, statsResult ->
+                    Pair(wheelResult, statsResult)
+                }
+                .catch { e ->
+                    _uiState.value = StatisticsUiState.Error(e.message ?: "Failed to load statistics")
+                }
+                .collect { (wheelResult, statsResult) ->
+                    when {
+                        wheelResult is Result.Success && statsResult is Result.Success -> {
+                            _uiState.value = StatisticsUiState.Success(
+                                statistics = statsResult.data,
+                                wheelName = wheelResult.data.name
+                            )
+                        }
+
+                        statsResult is Result.Error -> {
+                            _uiState.value = StatisticsUiState.Error(
+                                statsResult.exception.message ?: "Failed to load statistics"
+                            )
+                        }
+
+                        wheelResult is Result.Error -> {
+                            _uiState.value = StatisticsUiState.Error(
+                                wheelResult.exception.message ?: "Failed to load wheel"
+                            )
+                        }
+
+                        else -> {
+                            _uiState.value = StatisticsUiState.Error("Unknown error while loading statistics")
+                        }
                     }
                 }
-
-                // Get statistics
-                getWheelStatisticsUseCase(wheelId).collect { result ->
-                    _uiState.value = when (result) {
-                        is Result.Success -> StatisticsUiState.Success(
-                            statistics = result.data,
-                            wheelName = wheelName
-                        )
-
-                        is Result.Error -> StatisticsUiState.Error(result.exception.message ?: "Failed to load statistics")
-                        is Result.Loading -> StatisticsUiState.Loading
-                    }
-                }
-            } catch (e: Exception) {
-                _uiState.value = StatisticsUiState.Error(e.message ?: "Unknown error")
-            }
         }
     }
 
@@ -77,4 +90,3 @@ class StatisticsViewModel @Inject constructor(
         }
     }
 }
-

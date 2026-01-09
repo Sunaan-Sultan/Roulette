@@ -11,7 +11,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -34,37 +35,42 @@ class HistoryViewModel @Inject constructor(
     fun loadHistory(wheelId: String, limit: Int = 50) {
         viewModelScope.launch {
             _uiState.value = HistoryUiState.Loading
-            try {
-                val wheelResult = getWheelByIdUseCase(wheelId).first()
-                val spinsResult = getRecentSpinsUseCase(wheelId, limit).first()
 
-                when {
-                    wheelResult is Result.Success && spinsResult is Result.Success -> {
-                        _uiState.value = HistoryUiState.Success(
-                            wheelName = wheelResult.data.name,
-                            spinResults = spinsResult.data
-                        )
-                    }
+            // Combine wheel and spins flows so we can react to updates and avoid `.first()` cancellation races
+            getWheelByIdUseCase(wheelId)
+                .combine(getRecentSpinsUseCase(wheelId, limit)) { wheelResult, spinsResult ->
+                    Pair(wheelResult, spinsResult)
+                }
+                .catch { e ->
+                    // Emit an error UI state if combining fails
+                    _uiState.value = HistoryUiState.Error(e.message ?: "Failed to load history")
+                }
+                .collect { (wheelResult, spinsResult) ->
+                    when {
+                        wheelResult is Result.Success && spinsResult is Result.Success -> {
+                            _uiState.value = HistoryUiState.Success(
+                                wheelName = wheelResult.data.name,
+                                spinResults = spinsResult.data
+                            )
+                        }
 
-                    spinsResult is Result.Error -> {
-                        _uiState.value = HistoryUiState.Error(
-                            spinsResult.exception.message ?: "Failed to load history"
-                        )
-                    }
+                        spinsResult is Result.Error -> {
+                            _uiState.value = HistoryUiState.Error(
+                                spinsResult.exception.message ?: "Failed to load history"
+                            )
+                        }
 
-                    wheelResult is Result.Error -> {
-                        _uiState.value = HistoryUiState.Error(
-                            wheelResult.exception.message ?: "Failed to load wheel"
-                        )
-                    }
+                        wheelResult is Result.Error -> {
+                            _uiState.value = HistoryUiState.Error(
+                                wheelResult.exception.message ?: "Failed to load wheel"
+                            )
+                        }
 
-                    else -> {
-                        _uiState.value = HistoryUiState.Error("Unknown error while loading history")
+                        else -> {
+                            _uiState.value = HistoryUiState.Error("Unknown error while loading history")
+                        }
                     }
                 }
-            } catch (e: Exception) {
-                _uiState.value = HistoryUiState.Error(e.message ?: "Unknown error")
-            }
         }
     }
 

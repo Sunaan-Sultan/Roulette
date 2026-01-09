@@ -1,6 +1,5 @@
 package com.project.roulette.data.repository
 
-import com.project.roulette.data.local.database.SpinHistoryDao
 import com.project.roulette.domain.model.Result
 import com.project.roulette.domain.model.WheelStatistics
 import com.project.roulette.domain.repository.SpinHistoryRepository
@@ -11,7 +10,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.first
 import javax.inject.Inject
 
 /**
@@ -21,8 +20,7 @@ import javax.inject.Inject
  */
 class StatisticsRepositoryImpl @Inject constructor(
     private val spinHistoryRepository: SpinHistoryRepository,
-    private val wheelRepository: WheelRepository,
-    private val spinHistoryDao: SpinHistoryDao
+    private val wheelRepository: WheelRepository
 ) : StatisticsRepository {
 
     override fun getWheelStatistics(wheelId: String): Flow<Result<WheelStatistics>> =
@@ -74,10 +72,12 @@ class StatisticsRepositoryImpl @Inject constructor(
         try {
             flow {
                 val allStats = mutableListOf<WheelStatistics>()
-                wheelIds.forEach { wheelId ->
-                    getWheelStatistics(wheelId).collect { result ->
-                        if (result is Result.Success) {
-                            allStats.add(result.data)
+                for (wheelId in wheelIds) {
+                    // collect the first value from the per-wheel statistics flow
+                    when (val res = getWheelStatistics(wheelId).first()) {
+                        is Result.Success -> allStats.add(res.data)
+                        else -> {
+                            // skip failures for individual wheels
                         }
                     }
                 }

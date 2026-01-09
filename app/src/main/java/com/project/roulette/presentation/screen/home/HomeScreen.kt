@@ -14,6 +14,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -21,8 +23,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -48,7 +50,6 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var searchQuery by remember { mutableStateOf("") }
-    var isSearching by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -59,7 +60,7 @@ fun HomeScreen(
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onNavigateToCreate,
-                icon = { Icon(Icons.Filled.Add, "Create") },
+                icon = { Icon(Icons.Filled.Add, contentDescription = "Create") },
                 text = { Text("Create Wheel") }
             )
         }
@@ -69,9 +70,10 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            SearchBar(
-                query = searchQuery,
-                onQueryChange = { newQuery ->
+            // Simpler search input: OutlinedTextField avoids expanding scrim and big empty content area
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { newQuery ->
                     searchQuery = newQuery
                     if (newQuery.isNotEmpty()) {
                         viewModel.searchWheels(newQuery)
@@ -79,17 +81,23 @@ fun HomeScreen(
                         viewModel.loadAllWheels()
                     }
                 },
-                onSearch = { query ->
-                    viewModel.searchWheels(query)
-                    isSearching = true
+                singleLine = true,
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search") },
+                trailingIcon = {
+                    if (searchQuery.isNotEmpty()) {
+                        IconButton(onClick = {
+                            searchQuery = ""
+                            viewModel.loadAllWheels()
+                        }) {
+                            Icon(Icons.Filled.Close, contentDescription = "Clear")
+                        }
+                    }
                 },
-                active = isSearching,
-                onActiveChange = { isSearching = it },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
                 placeholder = { Text("Search wheels...") }
-            ) {}
+            )
 
             when (val state = uiState) {
                 is HomeUiState.Loading -> {
@@ -180,9 +188,8 @@ private fun WheelCard(
             }
 
             IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, "Delete")
+                Icon(Icons.Filled.Delete, contentDescription = "Delete")
             }
         }
     }
 }
-

@@ -7,7 +7,6 @@ import com.project.roulette.domain.model.SpinResult
 import com.project.roulette.domain.repository.SpinHistoryRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 
@@ -20,28 +19,26 @@ class SpinHistoryRepositoryImpl @Inject constructor(
 ) : SpinHistoryRepository {
 
     override fun getSpinHistoryForWheel(wheelId: String): Flow<Result<List<SpinResult>>> =
-        flow {
-            try {
-                spinHistoryDao.getSpinsForWheel(wheelId).collect { entities ->
-                    val results = entities.map { spinHistoryMapper.entityToSpinResult(it) }
-                    emit(Result.Success(results))
-                }
-            } catch (e: Exception) {
+        spinHistoryDao.getSpinsForWheel(wheelId)
+            .map { entities ->
+                val results = entities.map { spinHistoryMapper.entityToSpinResult(it) }
+                @Suppress("UNCHECKED_CAST")
+                (Result.Success(results) as Result<List<SpinResult>>)
+            }
+            .catch { e ->
                 emit(Result.Error(Exception("Failed to fetch spin history: ${e.message}", e)))
             }
-        }
 
     override fun getRecentSpins(wheelId: String, limit: Int): Flow<Result<List<SpinResult>>> =
-        flow {
-            try {
-                spinHistoryDao.getRecentSpins(wheelId, limit).collect { entities ->
-                    val results = entities.map { spinHistoryMapper.entityToSpinResult(it) }
-                    emit(Result.Success(results))
-                }
-            } catch (e: Exception) {
+        spinHistoryDao.getRecentSpins(wheelId, limit)
+            .map { entities ->
+                val results = entities.map { spinHistoryMapper.entityToSpinResult(it) }
+                @Suppress("UNCHECKED_CAST")
+                (Result.Success(results) as Result<List<SpinResult>>)
+            }
+            .catch { e ->
                 emit(Result.Error(Exception("Failed to fetch recent spins: ${e.message}", e)))
             }
-        }
 
     override suspend fun recordSpin(spinResult: SpinResult): Result<String> = try {
         spinHistoryDao.insertSpin(spinHistoryMapper.spinResultToEntity(spinResult))

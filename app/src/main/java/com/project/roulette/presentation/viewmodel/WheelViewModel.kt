@@ -38,7 +38,7 @@ class WheelViewModel @Inject constructor(
     private val _selectedAlgorithm = MutableStateFlow(SelectionAlgorithmFactory.AlgorithmType.UNIFORM)
     val selectedAlgorithm: StateFlow<SelectionAlgorithmFactory.AlgorithmType> = _selectedAlgorithm.asStateFlow()
 
-    private val _spinDuration = MutableStateFlow(3000L)
+    private val _spinDuration = MutableStateFlow(10000L)
     val spinDuration: StateFlow<Long> = _spinDuration.asStateFlow()
 
     // Holds the outcome produced by the selection algorithm and recorded by the use case
@@ -152,7 +152,7 @@ class WheelViewModel @Inject constructor(
      * Set spin duration.
      */
     fun setSpinDuration(durationMs: Long) {
-        _spinDuration.value = durationMs.coerceIn(1000L, 10000L) // 1-10 seconds
+        _spinDuration.value = durationMs.coerceIn(2000L, 15000L) // 2-15 seconds
     }
 
     override fun onCleared() {

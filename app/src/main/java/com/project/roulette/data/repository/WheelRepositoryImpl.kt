@@ -23,7 +23,8 @@ class WheelRepositoryImpl @Inject constructor(
     override fun getAllWheels(): Flow<Result<List<Wheel>>> =
         wheelDao.getAllWheels()
             .map { entities ->
-                Result.Success(entities.map { wheelMapper.entityToWheel(it)  }) as Result<List<Wheel>>
+                @Suppress("UNCHECKED_CAST")
+                (Result.Success(entities.map { wheelMapper.entityToWheel(it) }) as Result<List<Wheel>>)
             }
             .catch { e ->
                 emit(Result.Error(Exception("Failed to fetch wheels: ${e.message}", e)))
@@ -66,8 +67,8 @@ class WheelRepositoryImpl @Inject constructor(
     override fun searchWheels(query: String): Flow<Result<List<Wheel>>> =
         wheelDao.searchWheels(query)
             .map { entities ->
-                // Explicitly cast to the parent type here
-                Result.Success(entities.map { wheelMapper.entityToWheel(it) }) as Result<List<Wheel>>
+                @Suppress("UNCHECKED_CAST")
+                (Result.Success(entities.map { wheelMapper.entityToWheel(it) }) as Result<List<Wheel>>)
             }
             .catch { e ->
                 emit(Result.Error(Exception("Failed to search wheels: ${e.message}", e)))

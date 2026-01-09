@@ -131,11 +131,21 @@ class EditorViewModel @Inject constructor(
     fun removeSegment(segmentId: String) {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success && currentState.wheel != null) {
+            val currentSegments = currentState.wheel.segments
+            if (currentSegments.size <= 1) {
+                // Do not allow removing the last segment - update UI state with an inline error
+                _uiState.value = currentState.copy(
+                    isSaved = false,
+                    saveError = "Cannot remove the last segment"
+                )
+                return
+            }
+
             val updated = currentState.wheel.copy(
-                segments = currentState.wheel.segments.filter { it.id != segmentId },
+                segments = currentSegments.filter { it.id != segmentId },
                 updatedAt = Clock.System.now()
             )
-            _uiState.value = currentState.copy(wheel = updated, isSaved = false)
+            _uiState.value = currentState.copy(wheel = updated, isSaved = false, saveError = null)
         }
     }
 
@@ -168,14 +178,35 @@ class EditorViewModel @Inject constructor(
             return
         }
 
+        // Validate and sanitize before saving
+        val originalWheel = currentState.wheel
+        if (originalWheel.segments.isEmpty()) {
+            // Do not attempt to save a wheel without segments
+            _uiState.value = currentState.copy(
+                isSaving = false,
+                saveError = "Wheel must have at least one segment",
+                isSaved = false
+            )
+            return
+        }
+
+        // Ensure segment names are not blank (defensive): replace blank names with a default
+        val sanitizedSegments = originalWheel.segments.mapIndexed { index, seg ->
+            if (seg.name.isBlank()) {
+                seg.copy(name = "Option ${index + 1}")
+            } else seg
+        }
+
+        val sanitizedWheel = originalWheel.copy(segments = sanitizedSegments)
+
         viewModelScope.launch {
             try {
                 _uiState.value = currentState.copy(isSaving = true, saveError = null)
 
                 val result = if (currentState.isNew) {
-                    createWheelUseCase(currentState.wheel)
+                    createWheelUseCase(sanitizedWheel)
                 } else {
-                    updateWheelUseCase(currentState.wheel)
+                    updateWheelUseCase(sanitizedWheel)
                 }
 
                 when (result) {
@@ -204,6 +235,16 @@ class EditorViewModel @Inject constructor(
                     isSaved = false
                 )
             }
+        }
+    }
+
+    /**
+     * Clear the inline save error flag/message
+     */
+    fun clearSaveError() {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success) {
+            _uiState.value = currentState.copy(saveError = null)
         }
     }
 }

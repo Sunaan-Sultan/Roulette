@@ -30,11 +30,14 @@ class WheelMapper @Inject constructor() {
     }
 
     fun entityToSegment(entity: SegmentEntity): Segment {
+        // sanitize values coming from persistence to avoid domain model validation failures
+        val name = if (entity.name.isBlank()) "Unnamed" else entity.name
+        val weight = if (entity.weight <= 0f) 1f else entity.weight
         return Segment(
             id = entity.id,
-            name = entity.name,
+            name = name,
             color = Color(entity.colorValue.toULong()),
-            weight = entity.weight,
+            weight = weight,
             isActive = entity.isActive
         )
     }
@@ -83,4 +86,3 @@ class WheelMapper @Inject constructor() {
         )
     }
 }
-
