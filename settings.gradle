@@ -19,5 +19,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Roulette"
+rootProject.name = "Wheel of Names"
 include ':app'
