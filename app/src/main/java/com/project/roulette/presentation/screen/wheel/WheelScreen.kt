@@ -36,6 +36,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.project.roulette.domain.usecase.selection.SelectionAlgorithmFactory
@@ -43,6 +44,9 @@ import com.project.roulette.presentation.component.WheelCanvas
 import com.project.roulette.presentation.model.WheelUiState
 import com.project.roulette.presentation.viewmodel.WheelViewModel
 import kotlinx.coroutines.launch
+import com.project.roulette.util.loadInterstitial
+import com.project.roulette.util.showInterstitial
+import androidx.activity.compose.BackHandler
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -62,58 +66,47 @@ fun WheelScreen(
     var menuExpanded by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
+    val context = LocalContext.current
+
     LaunchedEffect(wheelId) {
         viewModel.loadWheel(wheelId)
     }
 
-    // Animatable for rotation so we can await animation end
+    LaunchedEffect(Unit) {
+        loadInterstitial(context)
+    }
+
+    BackHandler {
+        showInterstitial(context = context) {
+            onNavigateBack()
+        }
+    }
+
     val rotationAnim = remember { Animatable(0f) }
 
-    // When a pending outcome appears, compute a visually pleasing target rotation
     LaunchedEffect(pendingOutcome) {
         val outcome = pendingOutcome
         if (outcome != null) {
-            // Use the absolute current value so we keep accumulating rotations between spins
             val current = rotationAnim.value
-
-            // Ensure finalAngle normalized to [0..360)
             val finalAngle = ((outcome.spinResult.finalAngle % 360f) + 360f) % 360f
-
-            // Guarantee at least this many full rotations beyond current position
             val minFullRotations = 3
             val rotations = minFullRotations
-
-            // Small epsilon to nudge away from boundaries (keeps pointer squarely inside segment)
             val epsilon = 0.5f
-
-            // Compute current modulo so we can determine the delta needed to reach target modulo
             val currentMod = ((current % 360f) + 360f) % 360f
-
-            // Desired final rotation modulo so pointer sits over selected segment: pointer at top corresponds to wheel rotated by (360 - finalAngle)
             val desiredMod = (360f - finalAngle) % 360f
-
-            // Delta to add so that (currentMod + delta) % 360 == desiredMod
             val deltaMod = ((desiredMod - currentMod) % 360f + 360f) % 360f
-
-            // target: keep increasing absolute rotation so animateTo always moves forward
             val target = current + rotations * 360f + deltaMod + epsilon
-
-            // Clamp duration to reasonable bounds
             val duration = spinDuration.coerceIn(2000L, 15000L).toInt()
 
-            // Animate and await completion
             scope.launch {
-                // Use an easing that starts fast and eases out to a stop (fast start, slow end)
-                val adjustedDuration = (duration * 1.3f).toInt() // slightly longer for a stronger slow-down
+                val adjustedDuration = (duration * 1.3f).toInt()
                 rotationAnim.animateTo(
                     targetValue = target,
                     animationSpec = tween(durationMillis = adjustedDuration, easing = FastOutSlowInEasing)
                 )
 
-                // Add a small wobble/settle animation to make the wheel feel physical
                 val wobbleDegrees = 6f
                 val wobbleDuration = 250
-                // overshoot a bit forward then back
                 rotationAnim.animateTo(
                     targetValue = target + wobbleDegrees,
                     animationSpec = tween(durationMillis = wobbleDuration / 2, easing = LinearOutSlowInEasing)
@@ -123,7 +116,6 @@ fun WheelScreen(
                     animationSpec = tween(durationMillis = wobbleDuration / 2, easing = FastOutSlowInEasing)
                 )
 
-                // Notify ViewModel that animation finished
                 viewModel.onAnimationComplete()
             }
         }
@@ -139,7 +131,13 @@ fun WheelScreen(
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
+                    IconButton(
+                        onClick = {
+                            showInterstitial(context = context) {
+                                onNavigateBack()
+                            }
+                        }
+                    ) {
                         Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
@@ -235,7 +233,6 @@ fun WheelScreen(
                         }
                     }
 
-                    // Show selected algorithm full name
                     Row(modifier = Modifier.fillMaxWidth()) {
                         Text("Selected: ${SelectionAlgorithmFactory.getAlgorithmName(selectedAlgorithm)}")
                     }

@@ -1,5 +1,7 @@
 package com.project.roulette.presentation.screen.home
 
+import android.app.Activity
+import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -8,14 +10,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,25 +31,33 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.project.roulette.domain.model.Wheel
-import com.project.roulette.presentation.model.HomeUiState
-import com.project.roulette.presentation.viewmodel.HomeViewModel
-import com.project.roulette.R
-
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.project.roulette.R
+import com.project.roulette.domain.model.Wheel
+import com.project.roulette.presentation.model.HomeUiState
+import com.project.roulette.presentation.viewmodel.HomeViewModel
+import com.project.roulette.util.loadInterstitial
+import com.project.roulette.util.showInterstitial
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -58,6 +69,14 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var searchQuery by remember { mutableStateOf("") }
 
+    // Get the context for the AdMob SDK
+    val context = LocalContext.current
+
+    // Pre-load the ad as soon as the HomeScreen is launched
+    LaunchedEffect(Unit) {
+        loadInterstitial(context)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -66,10 +85,18 @@ fun HomeScreen(
         },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = onNavigateToCreate,
+                onClick = {
+                    // Show the interstitial ad before navigating
+                    showInterstitial(context = context) {
+                        onNavigateToCreate()
+                    }
+                },
                 icon = { Icon(Icons.Filled.Add, contentDescription = "Create") },
                 text = { Text("Create Wheel") }
             )
+        },
+        bottomBar = {
+            BannerAd(modifier = Modifier.fillMaxWidth())
         }
     ) { padding ->
         Column(
@@ -77,7 +104,6 @@ fun HomeScreen(
                 .fillMaxSize()
                 .padding(padding)
         ) {
-            // Simpler search input: OutlinedTextField avoids expanding scrim and big empty content area
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = { newQuery ->
@@ -106,54 +132,57 @@ fun HomeScreen(
                 placeholder = { Text("Search wheels...") }
             )
 
-            when (val state = uiState) {
-                is HomeUiState.Loading -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        CircularProgressIndicator()
-                    }
-                }
-
-                is HomeUiState.Success -> {
-                    if (state.wheels.isEmpty()) {
+            // Weight 1f ensures the list takes available space without pushing the ad off-screen
+            Box(modifier = Modifier.weight(1f)) {
+                when (val state = uiState) {
+                    is HomeUiState.Loading -> {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("No wheels yet. Create one!")
+                            CircularProgressIndicator()
                         }
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(state.wheels) { wheel ->
-                                WheelCard(
-                                    wheel = wheel,
-                                    isSelected = wheel.id == state.selectedWheelId,
-                                    onSelect = {
-                                        viewModel.selectWheel(wheel.id)
-                                        onNavigateToWheel(wheel.id)
-                                    },
-                                    onDelete = { viewModel.deleteWheel(wheel.id) }
-                                )
+                    }
+
+                    is HomeUiState.Success -> {
+                        if (state.wheels.isEmpty()) {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("No wheels yet. Create one!")
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(state.wheels) { wheel ->
+                                    WheelCard(
+                                        wheel = wheel,
+                                        isSelected = wheel.id == state.selectedWheelId,
+                                        onSelect = {
+                                            viewModel.selectWheel(wheel.id)
+                                            onNavigateToWheel(wheel.id)
+                                        },
+                                        onDelete = { viewModel.deleteWheel(wheel.id) }
+                                    )
+                                }
                             }
                         }
                     }
-                }
 
-                is HomeUiState.Error -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text("Error: ${state.message}")
-                            Button(onClick = { viewModel.loadAllWheels() }) {
-                                Text("Retry")
+                    is HomeUiState.Error -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text("Error: ${state.message}")
+                                Button(onClick = { viewModel.loadAllWheels() }) {
+                                    Text("Retry")
+                                }
                             }
                         }
                     }
@@ -199,4 +228,26 @@ private fun WheelCard(
             }
         }
     }
+}
+
+@Composable
+fun BannerAd(modifier: Modifier = Modifier) {
+    AndroidView(
+        modifier = modifier
+            .fillMaxWidth()
+            .navigationBarsPadding(),
+        factory = { context ->
+            AdView(context).apply {
+                setAdSize(AdSize.BANNER)
+
+                // Test ad ID
+                adUnitId = "ca-app-pub-3940256099942544/6300978111"
+
+                // Live ad ID
+//                 adUnitId = "ca-app-pub-6612258105231137/1321892628"
+
+                loadAd(AdRequest.Builder().build())
+            }
+        }
+    )
 }
