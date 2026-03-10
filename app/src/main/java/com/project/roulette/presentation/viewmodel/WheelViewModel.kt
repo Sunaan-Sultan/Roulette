@@ -74,7 +74,7 @@ class WheelViewModel @Inject constructor(
         viewModelScope.launch {
             try {
                 // Update UI to show spinning state
-                _uiState.value = currentState.copy(isSpinning = true)
+                _uiState.value = currentState.copy(isSpinning = true, lastSpinResult = null)
 
                 // Play sound and haptic feedback
                 soundManager.playSpinStart()
@@ -129,6 +129,16 @@ class WheelViewModel @Inject constructor(
 
         // Clear pending outcome
         _pendingSpinOutcome.value = null
+    }
+
+    /**
+     * Clear the last spin result (e.g. when result dialog is dismissed)
+     */
+    fun clearResult() {
+        val currentState = _uiState.value
+        if (currentState is WheelUiState.Success) {
+            _uiState.value = currentState.copy(lastSpinResult = null)
+        }
     }
 
     /**

@@ -83,9 +83,13 @@ class EditorViewModel @Inject constructor(
     fun updateWheelName(name: String) {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success && currentState.wheel != null) {
-            val safeName = name.ifBlank { " " }
+            // Use a zero-width space placeholder if the name is cleared during editing
+            // to avoid domain validation crash (require(name.isNotBlank()))
+            // isNotBlank() returns false for whitespace-only strings like " ".
+            // \u200B is a zero-width space which is NOT considered whitespace by Kotlin's isWhitespace().
+            val internalName = if (name.isBlank()) "\u200B" else name
             val updated = currentState.wheel.copy(
-                name = safeName,
+                name = internalName,
                 updatedAt = Clock.System.now()
             )
             _uiState.value = currentState.copy(wheel = updated, isSaved = false)
@@ -159,8 +163,8 @@ class EditorViewModel @Inject constructor(
             val updated = currentState.wheel.copy(
                 segments = currentState.wheel.segments.map { segment ->
                     if (segment.id == segmentId) {
-                        // Ensure we never set a blank name into the domain model.
-                        val safeName = if (name.isBlank()) segment.name.ifBlank { "Option" } else name
+                        // Use placeholder to prevent crash during drafting
+                        val safeName = if (name.isBlank()) "\u200B" else name
                         // Ensure weight is positive; fallback to previous weight if invalid
                         val safeWeight = if (weight > 0f) weight else segment.weight
                         segment.copy(name = safeName, color = color, weight = safeWeight)
@@ -185,6 +189,18 @@ class EditorViewModel @Inject constructor(
 
         // Validate and sanitize before saving
         val originalWheel = currentState.wheel
+        
+        // Final validation for Name (strip placeholders)
+        val finalName = originalWheel.name.replace("\u200B", "").trim()
+        if (finalName.isBlank()) {
+             _uiState.value = currentState.copy(
+                isSaving = false,
+                saveError = "Wheel name cannot be empty",
+                isSaved = false
+            )
+            return
+        }
+
         if (originalWheel.segments.size < 2) {
             // Do not attempt to save a wheel with fewer than 2 segments
             _uiState.value = currentState.copy(
@@ -197,12 +213,18 @@ class EditorViewModel @Inject constructor(
 
         // Ensure segment names are not blank (defensive): replace blank names with a default
         val sanitizedSegments = originalWheel.segments.mapIndexed { index, seg ->
-            if (seg.name.isBlank()) {
+            val sName = seg.name.replace("\u200B", "").trim()
+            if (sName.isBlank()) {
                 seg.copy(name = "Option ${index + 1}")
-            } else seg
+            } else {
+                seg.copy(name = sName)
+            }
         }
 
-        val sanitizedWheel = originalWheel.copy(segments = sanitizedSegments)
+        val sanitizedWheel = originalWheel.copy(
+            name = finalName,
+            segments = sanitizedSegments
+        )
 
         viewModelScope.launch {
             try {

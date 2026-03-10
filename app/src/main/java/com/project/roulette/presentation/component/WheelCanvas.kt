@@ -71,7 +71,8 @@ fun WheelCanvas(
 
                     // Draw label at midpoint of sector
                     val midAngle = startAngle + sweep / 2f
-                    drawSectorLabel(midAngle, centerX, centerY, radius, segment.name)
+                    // Pass the number of segments to adjust text size and placement
+                    drawSectorLabel(midAngle, centerX, centerY, radius, segment.name, segments.size)
 
                     startAngle += sweep
                 }
@@ -95,24 +96,63 @@ private fun DrawScope.drawSectorLabel(
     centerX: Float,
     centerY: Float,
     radius: Float,
-    text: String
+    text: String,
+    segmentCount: Int
 ) {
+    // Dynamically adjust text size based on number of segments
+    // For many segments (e.g. 20+), we need smaller text.
+    val baseTextSize = 32f
+    val adjustedTextSize = when {
+        segmentCount <= 6 -> baseTextSize
+        segmentCount <= 12 -> 28f
+        segmentCount <= 20 -> 24f
+        segmentCount <= 30 -> 20f
+        else -> 16f
+    }
+
+    // Adjust text position: pull it further out if there are many segments
+    val radiusFactor = when {
+        segmentCount <= 12 -> 0.65f
+        segmentCount <= 20 -> 0.75f
+        else -> 0.85f
+    }
+
     val angleRad = (angleDegrees) * PI.toFloat() / 180f
-    val textX = centerX + (radius * 0.65f) * cos(angleRad)
-    val textY = centerY + (radius * 0.65f) * sin(angleRad)
+    val textX = centerX + (radius * radiusFactor) * cos(angleRad)
+    val textY = centerY + (radius * radiusFactor) * sin(angleRad)
 
     drawContext.canvas.nativeCanvas.apply {
         val paint = android.graphics.Paint().apply {
             color = android.graphics.Color.WHITE
-            textSize = 32f
+            textSize = adjustedTextSize
             textAlign = android.graphics.Paint.Align.CENTER
             typeface = android.graphics.Typeface.DEFAULT_BOLD
+            // Add a subtle shadow for better readability on various colors
+            setShadowLayer(3f, 0f, 0f, android.graphics.Color.BLACK)
         }
+        
         save()
         translate(textX, textY)
-        // rotate so text reads outward along radius; subtract 90 so text is upright
-        rotate(angleDegrees - 90f)
-        drawText(text, 0f, 0f, paint)
+        
+        // Rotate text to align with the radius (radial text)
+        // For many segments, radial text is much more legible than upright text.
+        rotate(angleDegrees)
+        
+        // If the text is on the left side of the wheel, flip it so it's not upside down
+        val normalizedAngle = (angleDegrees % 360f + 360f) % 360f
+        if (normalizedAngle > 90f && normalizedAngle < 270f) {
+            rotate(180f)
+        }
+        
+        // Truncate long text for small segments
+        val maxChars = when {
+            segmentCount <= 10 -> 15
+            segmentCount <= 20 -> 10
+            else -> 6
+        }
+        val displayName = if (text.length > maxChars) text.take(maxChars - 1) + "…" else text
+
+        drawText(displayName, 0f, 0f, paint)
         restore()
     }
 }

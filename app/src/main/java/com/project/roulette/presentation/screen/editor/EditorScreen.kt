@@ -123,7 +123,10 @@ fun EditorScreen(
                                 value = localName,
                                 onValueChange = { 
                                     localName = it
-                                    viewModel.updateWheelName(it)
+                                    // If name is blank, don't update VM to avoid domain validation crash
+                                    if (it.isNotBlank()) {
+                                        viewModel.updateWheelName(it)
+                                    }
                                 },
                                 label = { Text("Wheel Name") },
                                 singleLine = true,
@@ -264,9 +267,11 @@ private fun SegmentEditorCard(
                     value = name,
                     onValueChange = {
                         setName(it)
-                        // Sync with ViewModel on every change so Save works correctly
-                        val parsedWeight = weight.toFloatOrNull() ?: 1f
-                        onUpdate(it, segment.color, parsedWeight)
+                        // If name is blank, don't update VM to avoid domain validation crash
+                        if (it.isNotBlank()) {
+                            val parsedWeight = weight.toFloatOrNull() ?: 1f
+                            onUpdate(it, segment.color, parsedWeight)
+                        }
                     },
                     label = { Text("Name") },
                     singleLine = true,
