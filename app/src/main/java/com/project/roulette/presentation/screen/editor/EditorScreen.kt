@@ -6,9 +6,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
@@ -31,6 +33,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -41,6 +44,7 @@ import com.project.roulette.presentation.model.EditorUiState
 import com.project.roulette.presentation.viewmodel.EditorViewModel
 import kotlinx.coroutines.launch
 import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.text.input.KeyboardType
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,19 +107,35 @@ fun EditorScreen(
 
             is EditorUiState.Success -> {
                 if (state.wheel != null) {
+                    val canDelete = state.wheel.segments.size > 2
                     LazyColumn(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(16.dp),
+                            .padding(16.dp)
+                            .imePadding(),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
                         item {
+                            var localName by remember(state.wheel.name) { mutableStateOf(state.wheel.name) }
+
                             OutlinedTextField(
-                                value = state.wheel.name,
-                                onValueChange = { viewModel.updateWheelName(it) },
+                                value = localName,
+                                onValueChange = { 
+                                    localName = it
+                                    viewModel.updateWheelName(it)
+                                },
                                 label = { Text("Wheel Name") },
-                                modifier = Modifier.fillMaxWidth()
+                                singleLine = true,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .onFocusChanged { focusState ->
+                                        if (!focusState.isFocused) {
+                                            val safeName = localName.ifBlank { "New Wheel" }
+                                            localName = safeName
+                                            viewModel.updateWheelName(safeName)
+                                        }
+                                    }
                             )
                         }
 
@@ -124,6 +144,7 @@ fun EditorScreen(
                                 value = state.wheel.description,
                                 onValueChange = { viewModel.updateWheelDescription(it) },
                                 label = { Text("Description") },
+                                singleLine = true,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(bottom = 8.dp),
@@ -155,6 +176,7 @@ fun EditorScreen(
                         items(items = state.wheel.segments, key = { it.id }) { segment ->
                             SegmentEditorCard(
                                 segment = segment,
+                                canDelete = canDelete,
                                 onRemove = { viewModel.removeSegment(segment.id) },
                                 onUpdate = { name, color, weight ->
                                     viewModel.updateSegment(
@@ -170,9 +192,8 @@ fun EditorScreen(
                         item {
                             Button(
                                 onClick = {
-                                    // Trigger save and navigate back immediately
+                                    // Trigger save. Navigation is handled by LaunchedEffect(uiState)
                                     viewModel.saveWheel()
-                                    onSaved()
                                 },
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -220,6 +241,7 @@ fun EditorScreen(
 @Composable
 private fun SegmentEditorCard(
     segment: com.project.roulette.domain.model.Segment,
+    canDelete: Boolean,
     onRemove: () -> Unit,
     onUpdate: (String, Color, Float) -> Unit
 ) {
@@ -241,10 +263,13 @@ private fun SegmentEditorCard(
                 OutlinedTextField(
                     value = name,
                     onValueChange = {
-                        // update local UI state only; defer domain update until focus is lost
                         setName(it)
+                        // Sync with ViewModel on every change so Save works correctly
+                        val parsedWeight = weight.toFloatOrNull() ?: 1f
+                        onUpdate(it, segment.color, parsedWeight)
                     },
                     label = { Text("Name") },
+                    singleLine = true,
                     modifier = Modifier
                         .weight(1f)
                         .onFocusChanged { focusState ->
@@ -255,30 +280,41 @@ private fun SegmentEditorCard(
                                     setName(restored)
                                     val parsedWeight = weight.toFloatOrNull() ?: 1f
                                     onUpdate(restored, segment.color, parsedWeight)
-                                } else {
-                                    // non-blank - commit the live name to domain
-                                    val parsedWeight = weight.toFloatOrNull() ?: 1f
-                                    onUpdate(name, segment.color, parsedWeight)
                                 }
                             }
                         }
                 )
-                IconButton(onClick = onRemove) {
+                IconButton(
+                    onClick = onRemove,
+                    enabled = canDelete
+                ) {
                     Icon(Icons.Filled.Delete, contentDescription = "Remove")
                 }
             }
 
             OutlinedTextField(
                 value = weight,
+                singleLine = true,
                 onValueChange = {
-                    setWeight(it)
-                    val parsed = it.toFloatOrNull() ?: 1f
-                    // propagate weight updates using a safe name fallback to avoid blank domain names
+                    // Only allow digits and a single decimal point
+                    val filtered = it.filter { c -> c.isDigit() || c == '.' }
+                        .let { s ->
+                            val dotIndex = s.indexOf('.')
+                            if (dotIndex != -1) {
+                                // Only allow up to 2 digits after decimal point
+                                val beforeDot = s.substring(0, dotIndex + 1)
+                                val afterDot = s.substring(dotIndex + 1).replace(".", "").take(2)
+                                beforeDot + afterDot
+                            } else s
+                        }
+                    setWeight(filtered)
+                    val parsed = filtered.toFloatOrNull() ?: 1f
                     val nameToUse = if (name.isNotBlank()) name else segment.name.ifBlank { "Option" }
                     onUpdate(nameToUse, segment.color, parsed)
                 },
                 label = { Text("Weight") },
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal)
             )
         }
     }

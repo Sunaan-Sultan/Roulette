@@ -83,8 +83,9 @@ class EditorViewModel @Inject constructor(
     fun updateWheelName(name: String) {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success && currentState.wheel != null) {
+            val safeName = name.ifBlank { " " }
             val updated = currentState.wheel.copy(
-                name = name,
+                name = safeName,
                 updatedAt = Clock.System.now()
             )
             _uiState.value = currentState.copy(wheel = updated, isSaved = false)
@@ -132,11 +133,11 @@ class EditorViewModel @Inject constructor(
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success && currentState.wheel != null) {
             val currentSegments = currentState.wheel.segments
-            if (currentSegments.size <= 1) {
-                // Do not allow removing the last segment - update UI state with an inline error
+            if (currentSegments.size <= 2) {
+                // Do not allow removing if only 2 segments left
                 _uiState.value = currentState.copy(
                     isSaved = false,
-                    saveError = "Cannot remove the last segment"
+                    saveError = "A wheel must have at least 2 segments"
                 )
                 return
             }
@@ -184,11 +185,11 @@ class EditorViewModel @Inject constructor(
 
         // Validate and sanitize before saving
         val originalWheel = currentState.wheel
-        if (originalWheel.segments.isEmpty()) {
-            // Do not attempt to save a wheel without segments
+        if (originalWheel.segments.size < 2) {
+            // Do not attempt to save a wheel with fewer than 2 segments
             _uiState.value = currentState.copy(
                 isSaving = false,
-                saveError = "Wheel must have at least one segment",
+                saveError = "Wheel must have at least 2 segments",
                 isSaved = false
             )
             return

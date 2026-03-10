@@ -1,12 +1,14 @@
+// RouletteApplication.kt
 package com.project.roulette
 
 import android.app.Application
+import com.project.roulette.util.RemoteConfigUtil
 import dagger.hilt.android.HiltAndroidApp
 
-/**
- * Application class for dependency injection setup.
- * Hilt annotation enables dependency graph generation.
- */
 @HiltAndroidApp
-class RouletteApplication : Application()
-
+class RouletteApplication : Application() {
+    override fun onCreate() {
+        super.onCreate()
+        RemoteConfigUtil.init()
+    }
+}

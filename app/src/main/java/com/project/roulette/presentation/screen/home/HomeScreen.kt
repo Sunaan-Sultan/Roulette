@@ -2,6 +2,9 @@ package com.project.roulette.presentation.screen.home
 
 import android.app.Activity
 import android.content.Context
+import android.os.Build
+import android.util.Log
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -54,11 +57,15 @@ import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.project.roulette.R
 import com.project.roulette.domain.model.Wheel
+import com.project.roulette.presentation.component.ForceUpdateDialog
 import com.project.roulette.presentation.model.HomeUiState
 import com.project.roulette.presentation.viewmodel.HomeViewModel
+import com.project.roulette.util.RemoteConfigUtil
+import com.project.roulette.util.getCurrentVersionCode
 import com.project.roulette.util.loadInterstitial
 import com.project.roulette.util.showInterstitial
 
+@RequiresApi(Build.VERSION_CODES.P)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
@@ -68,6 +75,7 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var searchQuery by remember { mutableStateOf("") }
+    var showForceUpdate by remember { mutableStateOf(false) }
 
     // Get the context for the AdMob SDK
     val context = LocalContext.current
@@ -75,6 +83,18 @@ fun HomeScreen(
     // Pre-load the ad as soon as the HomeScreen is launched
     LaunchedEffect(Unit) {
         loadInterstitial(context)
+
+        RemoteConfigUtil.fetchMinimumVersionCode { minimumVersionCode ->
+            val currentVersionCode = getCurrentVersionCode(context)
+            Log.d("RemoteConfig", "Current: $currentVersionCode, Minimum: $minimumVersionCode")
+            if (currentVersionCode < minimumVersionCode) {
+                showForceUpdate = true
+            }
+        }
+    }
+
+    if (showForceUpdate) {
+        ForceUpdateDialog()
     }
 
     Scaffold(
@@ -241,10 +261,10 @@ fun BannerAd(modifier: Modifier = Modifier) {
                 setAdSize(AdSize.BANNER)
 
                 // Test ad ID
-                adUnitId = "ca-app-pub-3940256099942544/6300978111"
+//                adUnitId = "ca-app-pub-3940256099942544/6300978111"
 
                 // Live ad ID
-//                 adUnitId = "ca-app-pub-6612258105231137/1321892628"
+                 adUnitId = "ca-app-pub-6612258105231137/1321892628"
 
                 loadAd(AdRequest.Builder().build())
             }
