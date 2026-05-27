@@ -264,7 +264,7 @@ fun BannerAd(modifier: Modifier = Modifier) {
 //                adUnitId = "ca-app-pub-3940256099942544/6300978111"
 
                 // Live ad ID
-                 adUnitId = "ca-app-pub-6612258105231137/1321892628"
+                 adUnitId = "ca-app-pub-9720007236604856/8011792580"
 
                 loadAd(AdRequest.Builder().build())
             }
