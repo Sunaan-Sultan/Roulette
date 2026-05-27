@@ -1,67 +1,36 @@
 package com.project.roulette.presentation.screen.home
 
-import android.app.Activity
-import android.content.Context
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.navigationBarsPadding
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExtendedFloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.viewinterop.AndroidView
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.google.android.gms.ads.AdError
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.AdSize
-import com.google.android.gms.ads.AdView
-import com.google.android.gms.ads.FullScreenContentCallback
-import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.interstitial.InterstitialAd
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
-import com.project.roulette.R
 import com.project.roulette.domain.model.Wheel
-import com.project.roulette.presentation.component.ForceUpdateDialog
+import com.project.roulette.presentation.model.HomeFilter
 import com.project.roulette.presentation.model.HomeUiState
 import com.project.roulette.presentation.viewmodel.HomeViewModel
-import com.project.roulette.util.RemoteConfigUtil
-import com.project.roulette.util.getCurrentVersionCode
+import com.project.roulette.ui.theme.*
+import com.project.roulette.util.TimeUtils
 import com.project.roulette.util.loadInterstitial
 import com.project.roulette.util.showInterstitial
 
@@ -74,117 +43,161 @@ fun HomeScreen(
     onNavigateToCreate: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var searchQuery by remember { mutableStateOf("") }
-    var showForceUpdate by remember { mutableStateOf(false) }
+    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
+    val currentFilter by viewModel.filter.collectAsStateWithLifecycle()
 
-    // Get the context for the AdMob SDK
     val context = LocalContext.current
 
-    // Pre-load the ad as soon as the HomeScreen is launched
     LaunchedEffect(Unit) {
         loadInterstitial(context)
-
-        RemoteConfigUtil.fetchMinimumVersionCode { minimumVersionCode ->
-            val currentVersionCode = getCurrentVersionCode(context)
-            Log.d("RemoteConfig", "Current: $currentVersionCode, Minimum: $minimumVersionCode")
-            if (currentVersionCode < minimumVersionCode) {
-                showForceUpdate = true
-            }
-        }
-    }
-
-    if (showForceUpdate) {
-        ForceUpdateDialog()
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(id = R.string.app_name)) }
-            )
-        },
         floatingActionButton = {
-            ExtendedFloatingActionButton(
+            Button(
                 onClick = {
-                    // Show the interstitial ad before navigating
                     showInterstitial(context = context) {
                         onNavigateToCreate()
                     }
                 },
-                icon = { Icon(Icons.Filled.Add, contentDescription = "Create") },
-                text = { Text("Create Wheel") }
-            )
+                shape = RoundedCornerShape(28.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
+                modifier = Modifier
+                    .height(56.dp)
+                    .padding(end = 8.dp)
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp)) {
+                    Icon(Icons.Filled.Add, contentDescription = null, tint = Color.White)
+                    Spacer(Modifier.width(8.dp))
+                    Text("Create Wheel", fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            }
         },
         bottomBar = {
             BannerAd(modifier = Modifier.fillMaxWidth())
-        }
+        },
+        containerColor = DeepNavyBlack
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
+                .padding(horizontal = 20.dp)
         ) {
+            
+            // Header
+            Text(
+                text = "MY COLLECTION",
+                style = MaterialTheme.typography.labelLarge,
+                color = TextSecondary,
+                letterSpacing = 1.sp
+            )
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Wheel of Names",
+                    style = MaterialTheme.typography.headlineLarge,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+                
+                IconButton(
+                    onClick = { /* Notification action */ },
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(SurfaceDark)
+                ) {
+                    Icon(
+                        Icons.Filled.Notifications,
+                        contentDescription = "Notifications",
+                        tint = Color.White
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(20.dp))
+
+            // Search Bar
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = { newQuery ->
-                    searchQuery = newQuery
-                    if (newQuery.isNotEmpty()) {
-                        viewModel.searchWheels(newQuery)
-                    } else {
-                        viewModel.loadAllWheels()
-                    }
-                },
-                singleLine = true,
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = "Search") },
-                trailingIcon = {
-                    if (searchQuery.isNotEmpty()) {
-                        IconButton(onClick = {
-                            searchQuery = ""
-                            viewModel.loadAllWheels()
-                        }) {
-                            Icon(Icons.Filled.Close, contentDescription = "Clear")
-                        }
-                    }
-                },
+                onValueChange = { viewModel.searchWheels(it) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                placeholder = { Text("Search wheels...") }
+                    .height(56.dp),
+                placeholder = { Text("Search wheels...", color = TextSecondary) },
+                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = TextSecondary) },
+                shape = RoundedCornerShape(16.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    unfocusedBorderColor = Color.Transparent,
+                    focusedBorderColor = PrimaryPurple,
+                    unfocusedContainerColor = SurfaceDark,
+                    focusedContainerColor = SurfaceDark,
+                    cursorColor = PrimaryPurple,
+                    focusedTextColor = Color.White,
+                    unfocusedTextColor = Color.White
+                ),
+                singleLine = true
             )
 
-            // Weight 1f ensures the list takes available space without pushing the ad off-screen
+            Spacer(Modifier.height(16.dp))
+
+            // Filter Chips
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                FilterChipItem(
+                    label = "All",
+                    isSelected = currentFilter == HomeFilter.ALL,
+                    onClick = { viewModel.setFilter(HomeFilter.ALL) }
+                )
+                FilterChipItem(
+                    label = "Recent",
+                    isSelected = currentFilter == HomeFilter.RECENT,
+                    onClick = { viewModel.setFilter(HomeFilter.RECENT) }
+                )
+                FilterChipItem(
+                    label = "Favourites",
+                    isSelected = currentFilter == HomeFilter.FAVOURITES,
+                    onClick = { viewModel.setFilter(HomeFilter.FAVOURITES) }
+                )
+            }
+
+            Spacer(Modifier.height(16.dp))
+
+            // List Content
             Box(modifier = Modifier.weight(1f)) {
                 when (val state = uiState) {
                     is HomeUiState.Loading -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = PrimaryPurple)
                         }
                     }
 
                     is HomeUiState.Success -> {
                         if (state.wheels.isEmpty()) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("No wheels yet. Create one!")
-                            }
+                            EmptyState(
+                                message = if (searchQuery.isNotEmpty()) "No results found" else "No wheels yet. Create one!"
+                            )
                         } else {
                             LazyColumn(
                                 modifier = Modifier.fillMaxSize(),
-                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                                verticalArrangement = Arrangement.spacedBy(12.dp),
+                                contentPadding = PaddingValues(bottom = 80.dp)
                             ) {
                                 items(state.wheels) { wheel ->
                                     WheelCard(
                                         wheel = wheel,
-                                        isSelected = wheel.id == state.selectedWheelId,
                                         onSelect = {
                                             viewModel.selectWheel(wheel.id)
                                             onNavigateToWheel(wheel.id)
+                                        },
+                                        onToggleFavorite = {
+                                            viewModel.toggleFavorite(wheel.id, wheel.isFavorite)
                                         },
                                         onDelete = { viewModel.deleteWheel(wheel.id) }
                                     )
@@ -194,12 +207,9 @@ fun HomeScreen(
                     }
 
                     is HomeUiState.Error -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Error: ${state.message}")
+                                Text("Error: ${state.message}", color = Color.Red)
                                 Button(onClick = { viewModel.loadAllWheels() }) {
                                     Text("Retry")
                                 }
@@ -213,60 +223,164 @@ fun HomeScreen(
 }
 
 @Composable
-private fun WheelCard(
-    wheel: Wheel,
+fun FilterChipItem(
+    label: String,
     isSelected: Boolean,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(20.dp),
+        color = if (isSelected) PrimaryPurple else SurfaceDark,
+        modifier = Modifier.height(40.dp)
+    ) {
+        Box(
+            modifier = Modifier.padding(horizontal = 20.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = label,
+                color = if (isSelected) Color.White else TextSecondary,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun WheelCard(
+    wheel: Wheel,
     onSelect: () -> Unit,
+    onToggleFavorite: () -> Unit,
     onDelete: () -> Unit
 ) {
-    Card(
+    // Generate a consistent accent color based on wheel ID or name
+    val accentColors = listOf(TilePurple, TileTeal, TileCoral, TileBlue, TilePink, TileOrange)
+    val accentColor = accentColors[wheel.id.hashCode().let { if (it < 0) -it else it } % accentColors.size]
+
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onSelect() }
+            .clickable { onSelect() },
+        shape = RoundedCornerShape(24.dp),
+        color = SurfaceDark,
+        border = if (wheel.isFavorite) BorderStroke(1.dp, PrimaryPurple.copy(alpha = 0.5f)) else null
     ) {
         Row(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.SpaceBetween,
+                .padding(16.dp)
+                .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Icon Tile
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(12.dp))
+                    .background(accentColor.copy(alpha = 0.2f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Filled.Refresh,
+                    contentDescription = null,
+                    tint = accentColor,
+                    modifier = Modifier.size(24.dp)
+                )
+            }
+
+            Spacer(Modifier.width(16.dp))
+
+            // Text Content
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = wheel.name,
+                    color = Color.White,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 18.sp,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "${wheel.segments.size} segments",
-                    maxLines = 1
+                    text = "${wheel.segments.size} segments • ${TimeUtils.getRelativeTime(wheel.updatedAt)}",
+                    color = TextSecondary,
+                    fontSize = 14.sp
                 )
             }
 
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Filled.Delete, contentDescription = "Delete")
+            // Badge
+            Surface(
+                shape = RoundedCornerShape(12.dp),
+                color = accentColor.copy(alpha = 0.15f),
+                modifier = Modifier.padding(horizontal = 8.dp)
+            ) {
+                Text(
+                    text = wheel.segments.size.toString(),
+                    color = accentColor,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 12.sp,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                )
+            }
+
+            // Menu
+            var expanded by remember { mutableStateOf(false) }
+            Box {
+                IconButton(onClick = { expanded = true }) {
+                    Icon(Icons.Filled.MoreVert, contentDescription = "Menu", tint = TextSecondary)
+                }
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    modifier = Modifier.background(SurfaceDarker)
+                ) {
+                    DropdownMenuItem(
+                        text = { Text(if (wheel.isFavorite) "Unfavourite" else "Favourite", color = Color.White) },
+                        onClick = {
+                            onToggleFavorite()
+                            expanded = false
+                        },
+                        leadingIcon = {
+                            Icon(
+                                if (wheel.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                contentDescription = null,
+                                tint = if (wheel.isFavorite) Color.Red else Color.White
+                            )
+                        }
+                    )
+                    DropdownMenuItem(
+                        text = { Text("Delete", color = Color.Red) },
+                        onClick = {
+                            onDelete()
+                            expanded = false
+                        },
+                        leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = Color.Red) }
+                    )
+                }
             }
         }
     }
 }
 
 @Composable
+fun EmptyState(message: String) {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text(message, color = TextSecondary)
+    }
+}
+
+@Composable
 fun BannerAd(modifier: Modifier = Modifier) {
-    AndroidView(
+    // Reusing existing BannerAd logic
+    androidx.compose.ui.viewinterop.AndroidView(
         modifier = modifier
             .fillMaxWidth()
             .navigationBarsPadding(),
         factory = { context ->
-            AdView(context).apply {
-                setAdSize(AdSize.BANNER)
-
-                // Test ad ID
-//                adUnitId = "ca-app-pub-3940256099942544/6300978111"
-
-                // Live ad ID
-                 adUnitId = "ca-app-pub-9720007236604856/8011792580"
-
-                loadAd(AdRequest.Builder().build())
+            com.google.android.gms.ads.AdView(context).apply {
+                setAdSize(com.google.android.gms.ads.AdSize.BANNER)
+                adUnitId = "ca-app-pub-9720007236604856/8011792580"
+                loadAd(com.google.android.gms.ads.AdRequest.Builder().build())
             }
         }
     )

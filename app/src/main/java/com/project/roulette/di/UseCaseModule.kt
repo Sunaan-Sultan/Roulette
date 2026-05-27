@@ -16,6 +16,7 @@ import com.project.roulette.domain.usecase.wheel.GetAllWheelsUseCase
 import com.project.roulette.domain.usecase.wheel.GetWheelByIdUseCase
 import com.project.roulette.domain.usecase.wheel.SearchWheelsUseCase
 import com.project.roulette.domain.usecase.wheel.UpdateWheelUseCase
+import com.project.roulette.domain.usecase.wheel.ToggleFavoriteUseCase
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -63,6 +64,11 @@ object UseCaseModule {
     @Provides
     fun provideSearchWheelsUseCase(wheelRepository: WheelRepository): SearchWheelsUseCase =
         SearchWheelsUseCase(wheelRepository)
+
+    @Singleton
+    @Provides
+    fun provideToggleFavoriteUseCase(wheelRepository: WheelRepository): ToggleFavoriteUseCase =
+        ToggleFavoriteUseCase(wheelRepository)
 
     // Spin Use Cases
     @Singleton

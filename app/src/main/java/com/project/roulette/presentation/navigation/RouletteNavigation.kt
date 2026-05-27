@@ -26,4 +26,7 @@ sealed class RouletteScreen(val route: String) {
     object Statistics : RouletteScreen("statistics/{wheelId}") {
         fun forId(id: String) = "statistics/$id"
     }
+
+    object Favourites : RouletteScreen("favourites")
+    object Profile : RouletteScreen("profile")
 }

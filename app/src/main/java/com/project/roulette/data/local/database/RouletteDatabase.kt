@@ -13,7 +13,7 @@ import com.project.roulette.data.local.database.entity.WheelEntity
  */
 @Database(
     entities = [WheelEntity::class, SpinHistoryEntity::class],
-    version = 1,
+    version = 2,
     exportSchema = false
 )
 abstract class RouletteDatabase : RoomDatabase() {
@@ -30,7 +30,9 @@ abstract class RouletteDatabase : RoomDatabase() {
                     context.applicationContext,
                     RouletteDatabase::class.java,
                     "roulette_database"
-                ).build().also { instance = it }
+                )
+                    .fallbackToDestructiveMigration()
+                    .build().also { instance = it }
             }
     }
 }

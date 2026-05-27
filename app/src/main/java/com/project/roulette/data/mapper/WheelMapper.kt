@@ -52,7 +52,8 @@ class WheelMapper @Inject constructor() {
             description = wheel.description,
             createdAt = wheel.createdAt.toEpochMilliseconds(),
             updatedAt = wheel.updatedAt.toEpochMilliseconds(),
-            segments = segmentsJson
+            segments = segmentsJson,
+            isFavorite = wheel.isFavorite
         )
     }
 
@@ -71,7 +72,8 @@ class WheelMapper @Inject constructor() {
             segments = segments,
             createdAt = Instant.fromEpochMilliseconds(entity.createdAt),
             updatedAt = Instant.fromEpochMilliseconds(entity.updatedAt),
-            description = entity.description
+            description = entity.description,
+            isFavorite = entity.isFavorite
         )
     }
 

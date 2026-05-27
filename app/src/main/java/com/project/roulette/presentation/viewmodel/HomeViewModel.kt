@@ -7,14 +7,17 @@ import com.project.roulette.domain.model.Wheel
 import com.project.roulette.domain.usecase.wheel.CreateWheelUseCase
 import com.project.roulette.domain.usecase.wheel.DeleteWheelUseCase
 import com.project.roulette.domain.usecase.wheel.GetAllWheelsUseCase
-import com.project.roulette.domain.usecase.wheel.GetWheelByIdUseCase
 import com.project.roulette.domain.usecase.wheel.SearchWheelsUseCase
-import com.project.roulette.domain.usecase.wheel.UpdateWheelUseCase
+import com.project.roulette.domain.usecase.wheel.ToggleFavoriteUseCase
+import com.project.roulette.presentation.model.HomeFilter
 import com.project.roulette.presentation.model.HomeUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -28,8 +31,15 @@ class HomeViewModel @Inject constructor(
     private val getAllWheelsUseCase: GetAllWheelsUseCase,
     private val createWheelUseCase: CreateWheelUseCase,
     private val deleteWheelUseCase: DeleteWheelUseCase,
-    private val searchWheelsUseCase: SearchWheelsUseCase
+    private val searchWheelsUseCase: SearchWheelsUseCase,
+    private val toggleFavoriteUseCase: ToggleFavoriteUseCase
 ) : ViewModel() {
+
+    private val _filter = MutableStateFlow(HomeFilter.ALL)
+    val filter: StateFlow<HomeFilter> = _filter.asStateFlow()
+
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
 
     private val _uiState = MutableStateFlow<HomeUiState>(HomeUiState.Loading)
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
@@ -38,26 +48,68 @@ class HomeViewModel @Inject constructor(
     val selectedWheelId: StateFlow<String?> = _selectedWheelId.asStateFlow()
 
     init {
-        loadAllWheels()
+        observeWheels()
+    }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
+    private fun observeWheels() {
+        viewModelScope.launch {
+            combine(_filter, _searchQuery) { filter, query ->
+                Pair(filter, query)
+            }.flatMapLatest { (_, query) ->
+                if (query.isNotEmpty()) {
+                    searchWheelsUseCase(query)
+                } else {
+                    getAllWheelsUseCase()
+                }
+            }.collect { result ->
+                _uiState.value = when (result) {
+                    is Result.Success -> {
+                        val filteredWheels = when (_filter.value) {
+                            HomeFilter.ALL -> result.data
+                            HomeFilter.RECENT -> result.data
+                            HomeFilter.FAVOURITES -> result.data.filter { it.isFavorite }
+                        }
+                        HomeUiState.Success(
+                            wheels = filteredWheels,
+                            selectedWheelId = _selectedWheelId.value,
+                            currentFilter = _filter.value
+                        )
+                    }
+                    is Result.Error -> HomeUiState.Error(result.exception.message ?: "Unknown error")
+                    is Result.Loading -> HomeUiState.Loading
+                }
+            }
+        }
     }
 
     /**
      * Load all wheels.
      */
     fun loadAllWheels() {
-        viewModelScope.launch {
-            _uiState.value = HomeUiState.Loading
-            getAllWheelsUseCase().collect { result ->
-                _uiState.value = when (result) {
-                    is Result.Success -> HomeUiState.Success(
-                        wheels = result.data,
-                        selectedWheelId = _selectedWheelId.value
-                    )
+        _searchQuery.value = ""
+    }
 
-                    is Result.Error -> HomeUiState.Error(result.exception.message ?: "Unknown error")
-                    is Result.Loading -> HomeUiState.Loading
-                }
-            }
+    /**
+     * Set search query.
+     */
+    fun searchWheels(query: String) {
+        _searchQuery.value = query
+    }
+
+    /**
+     * Set current filter.
+     */
+    fun setFilter(filter: HomeFilter) {
+        _filter.value = filter
+    }
+
+    /**
+     * Toggle favorite status.
+     */
+    fun toggleFavorite(wheelId: String, currentStatus: Boolean) {
+        viewModelScope.launch {
+            toggleFavoriteUseCase(wheelId, !currentStatus)
         }
     }
 
@@ -67,17 +119,8 @@ class HomeViewModel @Inject constructor(
     fun createWheel(wheel: Wheel) {
         viewModelScope.launch {
             val result = createWheelUseCase(wheel)
-            when (result) {
-                is Result.Success -> {
-                    _selectedWheelId.value = result.data
-                    loadAllWheels()
-                }
-
-                is Result.Error -> {
-                    _uiState.value = HomeUiState.Error(result.exception.message ?: "Failed to create wheel")
-                }
-
-                else -> {}
+            if (result is Result.Success) {
+                _selectedWheelId.value = result.data
             }
         }
     }
@@ -88,19 +131,10 @@ class HomeViewModel @Inject constructor(
     fun deleteWheel(wheelId: String) {
         viewModelScope.launch {
             val result = deleteWheelUseCase(wheelId)
-            when (result) {
-                is Result.Success -> {
-                    if (_selectedWheelId.value == wheelId) {
-                        _selectedWheelId.value = null
-                    }
-                    loadAllWheels()
+            if (result is Result.Success) {
+                if (_selectedWheelId.value == wheelId) {
+                    _selectedWheelId.value = null
                 }
-
-                is Result.Error -> {
-                    _uiState.value = HomeUiState.Error(result.exception.message ?: "Failed to delete wheel")
-                }
-
-                else -> {}
             }
         }
     }
@@ -115,30 +149,4 @@ class HomeViewModel @Inject constructor(
             _uiState.value = success.copy(selectedWheelId = wheelId)
         }
     }
-
-    /**
-     * Search wheels.
-     */
-    fun searchWheels(query: String) {
-        if (query.isEmpty()) {
-            loadAllWheels()
-            return
-        }
-
-        viewModelScope.launch {
-            _uiState.value = HomeUiState.Loading
-            searchWheelsUseCase(query).collect { result ->
-                _uiState.value = when (result) {
-                    is Result.Success -> HomeUiState.Success(
-                        wheels = result.data,
-                        selectedWheelId = _selectedWheelId.value
-                    )
-
-                    is Result.Error -> HomeUiState.Error(result.exception.message ?: "Search failed")
-                    is Result.Loading -> HomeUiState.Loading
-                }
-            }
-        }
-    }
 }
-

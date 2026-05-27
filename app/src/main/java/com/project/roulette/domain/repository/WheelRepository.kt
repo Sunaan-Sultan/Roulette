@@ -44,4 +44,9 @@ interface WheelRepository {
      * Check if a wheel with the given ID exists.
      */
     suspend fun wheelExists(wheelId: String): Boolean
+
+    /**
+     * Update favorite status of a wheel.
+     */
+    suspend fun updateFavorite(wheelId: String, isFavorite: Boolean): Result<Unit>
 }

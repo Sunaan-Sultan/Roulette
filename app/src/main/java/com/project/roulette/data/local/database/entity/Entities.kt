@@ -15,7 +15,8 @@ data class WheelEntity(
     val description: String = "",
     val createdAt: Long, // epoch milliseconds
     val updatedAt: Long, // epoch milliseconds
-    val segments: String // JSON serialized list of SegmentEntity
+    val segments: String, // JSON serialized list of SegmentEntity
+    val isFavorite: Boolean = false
 )
 
 /**

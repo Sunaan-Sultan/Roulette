@@ -12,7 +12,8 @@ data class Wheel(
     val segments: List<Segment>,
     val createdAt: Instant,
     val updatedAt: Instant,
-    val description: String = ""
+    val description: String = "",
+    val isFavorite: Boolean = false
 ) {
     init {
         require(name.isNotBlank()) { "Wheel name cannot be blank" }

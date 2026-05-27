@@ -46,3 +46,11 @@ class DeleteWheelUseCase(private val wheelRepository: WheelRepository) {
 class SearchWheelsUseCase(private val wheelRepository: WheelRepository) {
     operator fun invoke(query: String): Flow<Result<List<Wheel>>> = wheelRepository.searchWheels(query)
 }
+
+/**
+ * Use case: Update favorite status of a wheel.
+ */
+class ToggleFavoriteUseCase(private val wheelRepository: WheelRepository) {
+    suspend operator fun invoke(wheelId: String, isFavorite: Boolean): Result<Unit> =
+        wheelRepository.updateFavorite(wheelId, isFavorite)
+}

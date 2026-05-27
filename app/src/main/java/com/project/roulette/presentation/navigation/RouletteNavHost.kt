@@ -12,15 +12,19 @@ import com.project.roulette.presentation.screen.history.HistoryScreen
 import com.project.roulette.presentation.screen.statistics.StatisticsScreen
 import com.project.roulette.presentation.viewmodel.HomeViewModel
 import com.project.roulette.presentation.viewmodel.WheelViewModel
+import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.PaddingValues
 import com.project.roulette.presentation.viewmodel.EditorViewModel
 import com.project.roulette.presentation.viewmodel.HistoryViewModel
 import com.project.roulette.presentation.viewmodel.StatisticsViewModel
 
 @Composable
-fun RouletteNavHost(navController: NavHostController) {
+fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValues = PaddingValues()) {
     NavHost(
         navController = navController,
-        startDestination = RouletteScreen.Splash.route
+        startDestination = RouletteScreen.Splash.route,
+        modifier = Modifier.padding(paddingValues)
     ) {
         composable(RouletteScreen.Splash.route) {
             com.project.roulette.presentation.screen.splash.SplashScreen(onTimeout = {

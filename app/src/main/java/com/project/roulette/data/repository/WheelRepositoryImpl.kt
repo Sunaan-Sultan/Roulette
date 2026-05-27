@@ -76,4 +76,11 @@ class WheelRepositoryImpl @Inject constructor(
 
     override suspend fun wheelExists(wheelId: String): Boolean =
         wheelDao.wheelExists(wheelId)
+
+    override suspend fun updateFavorite(wheelId: String, isFavorite: Boolean): Result<Unit> = try {
+        wheelDao.updateFavorite(wheelId, isFavorite)
+        Result.Success(Unit)
+    } catch (e: Exception) {
+        Result.Error(Exception("Failed to update favorite: ${e.message}", e))
+    }
 }

@@ -38,6 +38,9 @@ interface WheelDao {
 
     @Query("DELETE FROM wheels WHERE id = :wheelId")
     suspend fun deleteWheelById(wheelId: String)
+
+    @Query("UPDATE wheels SET isFavorite = :isFavorite WHERE id = :wheelId")
+    suspend fun updateFavorite(wheelId: String, isFavorite: Boolean)
 }
 
 /**
