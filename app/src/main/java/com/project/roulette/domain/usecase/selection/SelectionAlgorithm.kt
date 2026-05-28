@@ -70,17 +70,20 @@ class SeededRandomAlgorithm(private val seed: Long = System.currentTimeMillis())
 }
 
 /**
- * Round-robin selection - cycles through segments in order.
- * Deterministic: useful for lessons or tutorials.
+ * Round-robin selection - ensures every segment is picked once before repeating.
+ * Deterministic based on total spins count.
  */
-class RoundRobinAlgorithm : SelectionAlgorithm {
-    private var currentIndex = 0
-
+class RoundRobinAlgorithm(private val totalSpins: Int = 0) : SelectionAlgorithm {
     override fun selectSegment(segments: List<Segment>): Segment? {
         if (segments.isEmpty()) return null
-        val selected = segments[currentIndex % segments.size]
-        currentIndex++
-        return selected
+        
+        val size = segments.size
+        val roundNumber = totalSpins / size
+        val indexInRound = totalSpins % size
+        
+        // Use roundNumber as seed to have a consistent shuffle for the entire round
+        val shuffled = segments.shuffled(java.util.Random(roundNumber.toLong()))
+        return shuffled[indexInRound]
     }
 
     override fun getName(): String = "Round Robin"
@@ -99,12 +102,12 @@ object SelectionAlgorithmFactory {
         ROUND_ROBIN
     }
 
-    fun createAlgorithm(type: AlgorithmType, seed: Long? = null): SelectionAlgorithm {
+    fun createAlgorithm(type: AlgorithmType, seed: Long? = null, totalSpins: Int = 0): SelectionAlgorithm {
         return when (type) {
             AlgorithmType.UNIFORM -> UniformRandomAlgorithm()
             AlgorithmType.WEIGHTED -> WeightedRandomAlgorithm()
             AlgorithmType.SEEDED -> SeededRandomAlgorithm(seed ?: System.currentTimeMillis())
-            AlgorithmType.ROUND_ROBIN -> RoundRobinAlgorithm()
+            AlgorithmType.ROUND_ROBIN -> RoundRobinAlgorithm(totalSpins)
         }
     }
 

@@ -82,6 +82,15 @@ class WheelViewModel @Inject constructor(
             getWheelStatisticsUseCase(wheelId).collect { result ->
                 if (result is Result.Success) {
                     _spinsToday.value = result.data.totalSpins
+                    
+                    val currentState = _uiState.value
+                    if (currentState is WheelUiState.Success && _selectedAlgorithm.value == SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN) {
+                        val total = currentState.wheel.getActiveSegments().size
+                        if (total > 0) {
+                            val remaining = total - (result.data.totalSpins % total)
+                            _uiState.value = currentState.copy(rrRemaining = remaining)
+                        }
+                    }
                 }
             }
         }
@@ -171,15 +180,16 @@ class WheelViewModel @Inject constructor(
         hapticFeedback.successPattern()
 
         // Update UI with spin result and stop spinning
+        val totalSegments = currentState.wheel.getActiveSegments().size
+        var doneCount = 0
         val newRrRemaining = if (_selectedAlgorithm.value == SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN) {
-            val current = currentState.rrRemaining ?: currentState.wheel.getActiveSegments().size
-            if (current <= 1) currentState.wheel.getActiveSegments().size else current - 1
+            val current = currentState.rrRemaining ?: totalSegments
+            doneCount = totalSegments - current + 1
+            if (current <= 1) totalSegments else current - 1
         } else null
 
         val rrInfo = if (_selectedAlgorithm.value == SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN) {
-            val total = currentState.wheel.getActiveSegments().size
-            val done = total - (newRrRemaining ?: total) + 1
-            "$done/$total done"
+            "$doneCount/$totalSegments done"
         } else currentState.algorithmInfo
 
         _uiState.value = currentState.copy(

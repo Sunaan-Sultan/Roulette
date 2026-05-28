@@ -335,10 +335,21 @@ fun WheelScreen(
                             value = seed?.toString() ?: "",
                             onValueChange = { viewModel.setSeed(it.toLongOrNull()) },
                             label = { Text("Seed Number") },
+                            supportingText = {
+                                Text("Any number works! Using the same seed gives the same results every time.")
+                            },
+                            trailingIcon = {
+                                IconButton(onClick = { viewModel.setSeed((100..999999).random().toLong()) }) {
+                                    Icon(Icons.Filled.Casino, contentDescription = "Random Seed", tint = Color(0xFF9575CD))
+                                }
+                            },
                             modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = Color(0xFF673AB7),
-                                unfocusedBorderColor = Color(0xFF212121)
+                                unfocusedBorderColor = Color(0xFF212121),
+                                focusedSupportingTextColor = Color.Gray,
+                                unfocusedSupportingTextColor = Color.Gray
                             )
                         )
                     } else if (selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.WEIGHTED) {

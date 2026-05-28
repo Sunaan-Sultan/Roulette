@@ -51,8 +51,14 @@ class SpinWheelUseCase(
                 return Result.Error(Exception("No active segments to spin"))
             }
 
+            // For Round Robin, we need to know how many spins have occurred for this wheel
+            val wheelSpinsCount = if (algorithmType == SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN) {
+                val historyResult = spinHistoryRepository.getSpinHistoryForWheel(wheelId).first()
+                if (historyResult is Result.Success) historyResult.data.size else 0
+            } else 0
+
             // Select segment using specified algorithm
-            val algorithm = selectionAlgorithmFactory.createAlgorithm(algorithmType, seed)
+            val algorithm = selectionAlgorithmFactory.createAlgorithm(algorithmType, seed, wheelSpinsCount)
             val selectedSegment = algorithm.selectSegment(activeSegments)
                 ?: return Result.Error(Exception("Selection algorithm failed"))
 
