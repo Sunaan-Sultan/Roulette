@@ -58,6 +58,7 @@ fun WheelScreen(
 
     var menuExpanded by remember { mutableStateOf(false) }
     var showAlgoInfo by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -437,24 +438,58 @@ fun WheelScreen(
                     )
                 }
 
-                // Algo Info Dialog
+                // Algo Info Bottom Sheet
                 if (showAlgoInfo) {
-                    AlertDialog(
+                    ModalBottomSheet(
                         onDismissRequest = { showAlgoInfo = false },
+                        sheetState = sheetState,
                         containerColor = Color(0xFF1E1E1E),
-                        title = { Text("Algorithms", color = Color.White) },
-                        text = {
-                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                                AlgoInfoRow(Icons.Filled.Casino, "Uniform", "Every name has exactly the same chance.")
-                                AlgoInfoRow(Icons.Filled.Balance, "Weighted", "Names with higher weights are more likely to win.")
-                                AlgoInfoRow(Icons.Filled.Tag, "Seeded", "Using the same seed will always give the same sequence.")
-                                AlgoInfoRow(Icons.Filled.Autorenew, "Round Robin", "Cycles through all names. No repeats until new round.")
-                            }
-                        },
-                        confirmButton = {
-                            TextButton(onClick = { showAlgoInfo = false }) { Text("Got it", color = Color(0xFF9575CD)) }
+                        dragHandle = { BottomSheetDefaults.DragHandle(color = Color.Gray) }
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .fillMaxHeight(0.85f)
+                                .padding(horizontal = 24.dp)
+                                .padding(bottom = 48.dp)
+                                .verticalScroll(rememberScrollState())
+                        ) {
+                            Text(
+                                "About Algorithms",
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = Color.White,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Spacer(Modifier.height(24.dp))
+                            
+                            AlgoInfoDetail(
+                                icon = Icons.Filled.Casino,
+                                title = "Uniform Random",
+                                description = "The classic fair choice. Every name on the wheel has an mathematically identical chance of being picked. It's like flipping a perfectly balanced coin or rolling a fair dice."
+                            )
+                            Spacer(Modifier.height(20.dp))
+                            
+                            AlgoInfoDetail(
+                                icon = Icons.Filled.Balance,
+                                title = "Weighted Random",
+                                description = "Allows you to bias the results. If one name has a weight of 5 and another has 1, the first name is 5 times more likely to win. Perfect for 'Luck-based' games where some entries are more valuable than others."
+                            )
+                            Spacer(Modifier.height(20.dp))
+                            
+                            AlgoInfoDetail(
+                                icon = Icons.Filled.Tag,
+                                title = "Seeded Sequence",
+                                description = "A deterministic approach. Using the same seed number will always produce the exact same sequence of winners. This is useful for running fair competitions where everyone can verify the result by using the same seed."
+                            )
+                            Spacer(Modifier.height(20.dp))
+                            
+                            AlgoInfoDetail(
+                                icon = Icons.Filled.Autorenew,
+                                title = "Round Robin",
+                                description = "Ensures everyone gets a turn. It shuffles all names into a hidden queue. Each spin picks the next person until the queue is empty, then it reshuffles for a new round. No one wins twice until everyone has won once."
+                            )
                         }
-                    )
+                    }
                 }
             }
             is WheelUiState.Error -> {
@@ -470,13 +505,22 @@ fun WheelScreen(
 }
 
 @Composable
-fun AlgoInfoRow(icon: ImageVector, title: String, description: String) {
+fun AlgoInfoDetail(icon: ImageVector, title: String, description: String) {
     Row(verticalAlignment = Alignment.Top) {
-        Icon(icon, contentDescription = null, tint = Color(0xFF9575CD), modifier = Modifier.size(20.dp))
-        Spacer(Modifier.width(12.dp))
+        Surface(
+            color = Color(0xFF673AB7).copy(alpha = 0.2f),
+            shape = RoundedCornerShape(8.dp),
+            modifier = Modifier.size(40.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Icon(icon, contentDescription = null, tint = Color(0xFF9575CD), modifier = Modifier.size(20.dp))
+            }
+        }
+        Spacer(Modifier.width(16.dp))
         Column {
-            Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Text(description, color = Color.Gray, fontSize = 12.sp)
+            Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Spacer(Modifier.height(4.dp))
+            Text(description, color = Color.Gray, fontSize = 13.sp, lineHeight = 18.sp)
         }
     }
 }
