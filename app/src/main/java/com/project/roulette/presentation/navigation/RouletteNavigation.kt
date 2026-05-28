@@ -8,6 +8,7 @@ sealed class RouletteScreen(val route: String) {
     object Splash : RouletteScreen("splash")
 
     object Home : RouletteScreen("home")
+    object Wheels : RouletteScreen("wheels")
 
     object CreateWheel : RouletteScreen("create_wheel")
 

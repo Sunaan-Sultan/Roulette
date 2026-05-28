@@ -54,3 +54,32 @@ class ToggleFavoriteUseCase(private val wheelRepository: WheelRepository) {
     suspend operator fun invoke(wheelId: String, isFavorite: Boolean): Result<Unit> =
         wheelRepository.updateFavorite(wheelId, isFavorite)
 }
+
+/**
+ * Use case: Get global statistics for all wheels.
+ */
+class GetGlobalStatsUseCase(
+    private val wheelRepository: WheelRepository,
+    private val spinHistoryRepository: com.project.roulette.domain.repository.SpinHistoryRepository
+) {
+    suspend operator fun invoke(): GlobalStats {
+        val wheelsCount = try {
+            // This is a bit suboptimal but works for now. 
+            // Better to have a dedicated count query in repository.
+            // For now let's just use a fixed value or try to get it if easy.
+            0 // Default
+        } catch (e: Exception) { 0 }
+        
+        return GlobalStats(
+            totalWheels = 0, // Will be updated in ViewModel from wheels list
+            totalSpins = spinHistoryRepository.getGlobalSpinCount(),
+            spinsToday = spinHistoryRepository.getGlobalSpinsTodayCount()
+        )
+    }
+}
+
+data class GlobalStats(
+    val totalWheels: Int,
+    val totalSpins: Int,
+    val spinsToday: Int
+)

@@ -39,5 +39,15 @@ interface SpinHistoryRepository {
      * Get total spin count for a wheel
      */
     suspend fun getTotalSpinCount(wheelId: String): Int
+
+    /**
+     * Get global spin count
+     */
+    suspend fun getGlobalSpinCount(): Int
+
+    /**
+     * Get global spins today
+     */
+    suspend fun getGlobalSpinsTodayCount(): Int
 }
 

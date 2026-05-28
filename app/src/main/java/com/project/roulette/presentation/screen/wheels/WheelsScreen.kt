@@ -1,6 +1,5 @@
-package com.project.roulette.presentation.screen.home
+package com.project.roulette.presentation.screen.wheels
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -30,10 +29,12 @@ import com.project.roulette.ui.theme.*
 import com.project.roulette.util.TimeUtils
 import com.project.roulette.util.loadInterstitial
 import com.project.roulette.util.showInterstitial
+import com.project.roulette.presentation.screen.home.BannerAd
+import com.project.roulette.presentation.screen.home.WheelCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun HomeScreen(
+fun WheelsScreen(
     viewModel: HomeViewModel,
     onNavigateToWheel: (String) -> Unit,
     onNavigateToCreate: () -> Unit
@@ -46,8 +47,6 @@ fun HomeScreen(
 
     LaunchedEffect(Unit) {
         loadInterstitial(context)
-        // Reset filter to ALL when coming to Home
-        viewModel.setFilter(HomeFilter.ALL)
     }
 
     Scaffold(
@@ -85,7 +84,7 @@ fun HomeScreen(
             
             // Header
             Text(
-                text = "MY COLLECTION",
+                text = "EXPLORE",
                 style = MaterialTheme.typography.labelLarge,
                 color = TextSecondary,
                 letterSpacing = 1.sp
@@ -97,21 +96,21 @@ fun HomeScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Wheel of Names",
-                    style = MaterialTheme.typography.headlineLarge,
+                    text = "Wheels",
+                    style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
                 
                 IconButton(
-                    onClick = { /* Notification action */ },
+                    onClick = { /* Filter action */ },
                     modifier = Modifier
                         .clip(CircleShape)
                         .background(SurfaceDark)
                 ) {
                     Icon(
-                        Icons.Filled.Notifications,
-                        contentDescription = "Notifications",
+                        Icons.Filled.Settings,
+                        contentDescription = "Filter",
                         tint = Color.White
                     )
                 }
@@ -141,27 +140,57 @@ fun HomeScreen(
                 singleLine = true
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.height(20.dp))
+
+            // Statistics Row
+            if (uiState is HomeUiState.Success) {
+                val state = uiState as HomeUiState.Success
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    StatCard(
+                        value = state.totalWheels.toString(),
+                        label = "Total",
+                        modifier = Modifier.weight(1f),
+                        accentColor = TilePurple
+                    )
+                    StatCard(
+                        value = state.totalSpins.toString(),
+                        label = "Spins",
+                        modifier = Modifier.weight(1f),
+                        accentColor = TileTeal
+                    )
+                    StatCard(
+                        value = state.spinsToday.toString(),
+                        label = "Today",
+                        modifier = Modifier.weight(1f),
+                        accentColor = TextSecondary
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(24.dp))
 
             // Filter Chips
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                FilterChipItem(
+                WheelsFilterChipItem(
                     label = "All",
                     isSelected = currentFilter == HomeFilter.ALL,
                     onClick = { viewModel.setFilter(HomeFilter.ALL) }
                 )
-                FilterChipItem(
+                WheelsFilterChipItem(
                     label = "Recent",
                     isSelected = currentFilter == HomeFilter.RECENT,
                     onClick = { viewModel.setFilter(HomeFilter.RECENT) }
                 )
-                FilterChipItem(
-                    label = "Favourites",
-                    isSelected = currentFilter == HomeFilter.FAVOURITES,
-                    onClick = { viewModel.setFilter(HomeFilter.FAVOURITES) }
+                WheelsFilterChipItem(
+                    label = "Most used",
+                    isSelected = currentFilter == HomeFilter.MOST_USED,
+                    onClick = { viewModel.setFilter(HomeFilter.MOST_USED) }
                 )
             }
 
@@ -222,7 +251,39 @@ fun HomeScreen(
 }
 
 @Composable
-fun FilterChipItem(
+fun StatCard(
+    value: String,
+    label: String,
+    modifier: Modifier = Modifier,
+    accentColor: Color
+) {
+    Surface(
+        modifier = modifier.height(100.dp),
+        shape = RoundedCornerShape(20.dp),
+        color = SurfaceDark
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Text(
+                text = value,
+                color = if (accentColor == TextSecondary) Color.White else accentColor,
+                fontSize = 28.sp,
+                fontWeight = FontWeight.Bold
+            )
+            Text(
+                text = label,
+                color = TextSecondary,
+                fontSize = 14.sp
+            )
+        }
+    }
+}
+
+@Composable
+fun WheelsFilterChipItem(
     label: String,
     isSelected: Boolean,
     onClick: () -> Unit
@@ -245,147 +306,4 @@ fun FilterChipItem(
             )
         }
     }
-}
-
-@Composable
-fun WheelCard(
-    wheel: Wheel,
-    onSelect: () -> Unit,
-    onToggleFavorite: () -> Unit,
-    onDelete: () -> Unit,
-    isActive: Boolean = false
-) {
-    val accentColors = listOf(TilePurple, TileTeal, TileCoral, TileBlue, TilePink, TileOrange)
-    val accentColor = accentColors[wheel.id.hashCode().let { if (it < 0) -it else it } % accentColors.size]
-
-    Surface(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onSelect() },
-        shape = RoundedCornerShape(24.dp),
-        color = SurfaceDark,
-        border = if (isActive) BorderStroke(1.dp, PrimaryPurple.copy(alpha = 0.5f)) else null
-    ) {
-        Row(
-            modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Box(
-                modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(accentColor.copy(alpha = 0.15f)),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(
-                    Icons.Filled.Refresh,
-                    contentDescription = null,
-                    tint = accentColor,
-                    modifier = Modifier.size(24.dp)
-                )
-            }
-
-            Spacer(Modifier.width(16.dp))
-
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = wheel.name,
-                    color = Color.White,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-                Text(
-                    text = "${wheel.segments.size} segments • ${TimeUtils.getRelativeTime(wheel.updatedAt)}",
-                    color = TextSecondary,
-                    fontSize = 14.sp
-                )
-            }
-
-            if (isActive) {
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = PrimaryPurple.copy(alpha = 0.2f),
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                ) {
-                    Text(
-                        text = "Active",
-                        color = PrimaryPurple,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                    )
-                }
-            } else {
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .clip(CircleShape)
-                        .background(accentColor.copy(alpha = 0.15f)),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = wheel.segments.size.toString(),
-                        color = accentColor,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-
-            var expanded by remember { mutableStateOf(false) }
-            Box {
-                IconButton(onClick = { expanded = true }) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = "Menu", tint = TextSecondary)
-                }
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    modifier = Modifier.background(SurfaceDarker)
-                ) {
-                    DropdownMenuItem(
-                        text = { Text(if (wheel.isFavorite) "Unfavourite" else "Favourite", color = Color.White) },
-                        onClick = {
-                            onToggleFavorite()
-                            expanded = false
-                        },
-                        leadingIcon = {
-                            Icon(
-                                if (wheel.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
-                                contentDescription = null,
-                                tint = if (wheel.isFavorite) Color.Red else Color.White
-                            )
-                        }
-                    )
-                    DropdownMenuItem(
-                        text = { Text("Delete", color = Color.Red) },
-                        onClick = {
-                            onDelete()
-                            expanded = false
-                        },
-                        leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = Color.Red) }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun BannerAd(modifier: Modifier = Modifier) {
-    androidx.compose.ui.viewinterop.AndroidView(
-        modifier = modifier
-            .fillMaxWidth()
-            .navigationBarsPadding(),
-        factory = { context ->
-            com.google.android.gms.ads.AdView(context).apply {
-                setAdSize(com.google.android.gms.ads.AdSize.BANNER)
-                adUnitId = "ca-app-pub-9720007236604856/8011792580"
-                loadAd(com.google.android.gms.ads.AdRequest.Builder().build())
-            }
-        }
-    )
 }

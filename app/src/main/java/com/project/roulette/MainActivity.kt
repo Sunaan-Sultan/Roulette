@@ -62,9 +62,9 @@ fun RouletteApp() {
 
     val items = listOf(
         Triple(RouletteScreen.Home, "Home", Icons.Filled.Home),
-        Triple(RouletteScreen.Home, "Wheels", Icons.Filled.Refresh),
+        Triple(RouletteScreen.Wheels, "Wheels", Icons.Filled.Refresh),
         Triple(RouletteScreen.Favourites, "Favourites", Icons.Filled.Favorite),
-        Triple(RouletteScreen.Profile, "Profile", Icons.Filled.Person),
+        Triple(RouletteScreen.Profile, "Profile", Icons.Filled.Person)
     )
 
     Scaffold(
@@ -72,6 +72,7 @@ fun RouletteApp() {
         bottomBar = {
             val showBottomBar = when (currentDestination?.route) {
                 RouletteScreen.Home.route,
+                RouletteScreen.Wheels.route,
                 RouletteScreen.Favourites.route,
                 RouletteScreen.Profile.route -> true
                 else -> false

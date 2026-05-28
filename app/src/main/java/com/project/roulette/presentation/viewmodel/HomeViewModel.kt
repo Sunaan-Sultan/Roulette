@@ -7,6 +7,7 @@ import com.project.roulette.domain.model.Wheel
 import com.project.roulette.domain.usecase.wheel.CreateWheelUseCase
 import com.project.roulette.domain.usecase.wheel.DeleteWheelUseCase
 import com.project.roulette.domain.usecase.wheel.GetAllWheelsUseCase
+import com.project.roulette.domain.usecase.wheel.GetGlobalStatsUseCase
 import com.project.roulette.domain.usecase.wheel.SearchWheelsUseCase
 import com.project.roulette.domain.usecase.wheel.ToggleFavoriteUseCase
 import com.project.roulette.presentation.model.HomeFilter
@@ -32,7 +33,8 @@ class HomeViewModel @Inject constructor(
     private val createWheelUseCase: CreateWheelUseCase,
     private val deleteWheelUseCase: DeleteWheelUseCase,
     private val searchWheelsUseCase: SearchWheelsUseCase,
-    private val toggleFavoriteUseCase: ToggleFavoriteUseCase
+    private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
+    private val getGlobalStatsUseCase: GetGlobalStatsUseCase
 ) : ViewModel() {
 
     private val _filter = MutableStateFlow(HomeFilter.ALL)
@@ -63,15 +65,20 @@ class HomeViewModel @Inject constructor(
                     getAllWheelsUseCase()
                 }
             }.collect { result ->
+                val globalStats = getGlobalStatsUseCase()
                 _uiState.value = when (result) {
                     is Result.Success -> {
                         val filteredWheels = when (_filter.value) {
                             HomeFilter.ALL -> result.data
-                            HomeFilter.RECENT -> result.data
+                            HomeFilter.RECENT -> result.data.sortedByDescending { it.updatedAt }
                             HomeFilter.FAVOURITES -> result.data.filter { it.isFavorite }
+                            HomeFilter.MOST_USED -> result.data // TODO: implement most used sorting
                         }
                         HomeUiState.Success(
                             wheels = filteredWheels,
+                            totalWheels = result.data.size,
+                            totalSpins = globalStats.totalSpins,
+                            spinsToday = globalStats.spinsToday,
                             selectedWheelId = _selectedWheelId.value,
                             currentFilter = _filter.value
                         )
