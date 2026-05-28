@@ -97,7 +97,7 @@ fun RouletteApp() {
                                 indicatorColor = Color.Transparent
                             ),
                             onClick = {
-                                if (screen.route != RouletteScreen.Profile.route && screen.route != RouletteScreen.Favourites.route) {
+                                if (screen.route != RouletteScreen.Profile.route) {
                                     navController.navigate(screen.route) {
                                         popUpTo(navController.graph.findStartDestination().id) {
                                             saveState = true

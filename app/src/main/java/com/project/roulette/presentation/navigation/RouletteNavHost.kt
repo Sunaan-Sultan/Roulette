@@ -7,6 +7,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.project.roulette.presentation.screen.home.HomeScreen
 import com.project.roulette.presentation.screen.wheels.WheelsScreen
+import com.project.roulette.presentation.screen.favourites.FavouritesScreen
 import com.project.roulette.presentation.screen.wheel.WheelScreen
 import com.project.roulette.presentation.screen.editor.EditorScreen
 import com.project.roulette.presentation.screen.history.HistoryScreen
@@ -65,6 +66,16 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
                 },
                 onNavigateToCreate = {
                     navController.navigate(RouletteScreen.CreateWheel.route)
+                }
+            )
+        }
+
+        composable(RouletteScreen.Favourites.route) {
+            val viewModel: HomeViewModel = hiltViewModel()
+            FavouritesScreen(
+                viewModel = viewModel,
+                onNavigateToWheel = { wheelId ->
+                    navController.navigate(RouletteScreen.Wheel.forId(wheelId))
                 }
             )
         }

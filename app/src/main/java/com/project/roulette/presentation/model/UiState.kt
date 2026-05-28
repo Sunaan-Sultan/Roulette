@@ -15,6 +15,7 @@ sealed class HomeUiState {
     object Loading : HomeUiState()
     data class Success(
         val wheels: List<Wheel>,
+        val wheelSpinCounts: Map<String, Int> = emptyMap(),
         val totalWheels: Int = 0,
         val totalSpins: Int = 0,
         val spinsToday: Int = 0,
@@ -26,7 +27,7 @@ sealed class HomeUiState {
 }
 
 enum class HomeFilter {
-    ALL, RECENT, FAVOURITES, MOST_USED
+    ALL, RECENT, FAVOURITES, MOST_USED, FAVOURITES_RECENT, FAVOURITES_MOST_USED
 }
 
 // Single Wheel screen state

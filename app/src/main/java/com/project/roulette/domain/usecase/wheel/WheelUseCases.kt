@@ -75,6 +75,8 @@ class GetGlobalStatsUseCase(
             )
         }
     }
+
+    fun getSpinCounts(): Flow<Map<String, Int>> = spinHistoryRepository.getAllWheelSpinCounts()
 }
 
 data class GlobalStats(

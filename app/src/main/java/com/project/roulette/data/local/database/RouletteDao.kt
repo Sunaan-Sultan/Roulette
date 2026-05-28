@@ -75,7 +75,15 @@ interface SpinHistoryDao {
     @Query("DELETE FROM spin_history WHERE wheelId = :wheelId")
     suspend fun clearWheelHistory(wheelId: String)
 
+    @Query("SELECT wheelId, COUNT(*) as count FROM spin_history GROUP BY wheelId")
+    fun getAllWheelSpinCounts(): Flow<List<WheelSpinCount>>
+
     @Query("SELECT * FROM spin_history WHERE wheelId = :wheelId ORDER BY spinTimestamp DESC")
     suspend fun getAllSpinsForWheelSync(wheelId: String): List<com.project.roulette.data.local.database.entity.SpinHistoryEntity>
 }
+
+data class WheelSpinCount(
+    val wheelId: String,
+    val count: Int
+)
 

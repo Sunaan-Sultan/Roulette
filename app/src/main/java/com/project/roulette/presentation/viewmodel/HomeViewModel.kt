@@ -20,14 +20,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-/**
- * ViewModel for Home/Wheel List screen.
- * Demonstrates ViewModel pattern for lifecycle-aware state management.
- * Dependency Injection: all use cases injected.
- */
 @HiltViewModel
 class HomeViewModel @Inject constructor(
     private val getAllWheelsUseCase: GetAllWheelsUseCase,
@@ -60,36 +56,40 @@ class HomeViewModel @Inject constructor(
             combine(
                 _filter,
                 _searchQuery,
-                getGlobalStatsUseCase()
-            ) { filter, query, globalStats ->
-                Triple(filter, query, globalStats)
-            }.flatMapLatest { (filter, query, globalStats) ->
-                val wheelsFlow = if (query.isNotEmpty()) {
-                    searchWheelsUseCase(query)
+                getGlobalStatsUseCase(),
+                getGlobalStatsUseCase.getSpinCounts()
+            ) { filter, query, globalStats, spinCounts ->
+                HomeParams(filter, query, globalStats, spinCounts)
+            }.flatMapLatest { params ->
+                val wheelsFlow = if (params.query.isNotEmpty()) {
+                    searchWheelsUseCase(params.query)
                 } else {
                     getAllWheelsUseCase()
                 }
 
-                wheelsFlow.map { result: com.project.roulette.domain.model.Result<List<com.project.roulette.domain.model.Wheel>> ->
+                wheelsFlow.map { result ->
                     when (result) {
-                        is com.project.roulette.domain.model.Result.Success -> {
-                            val filteredWheels = when (filter) {
+                        is Result.Success -> {
+                            val filteredWheels = when (params.filter) {
                                 HomeFilter.ALL -> result.data
                                 HomeFilter.RECENT -> result.data.sortedByDescending { it.updatedAt }
                                 HomeFilter.FAVOURITES -> result.data.filter { it.isFavorite }
-                                HomeFilter.MOST_USED -> result.data
+                                HomeFilter.MOST_USED -> result.data.sortedByDescending { params.spinCounts[it.id] ?: 0 }
+                                HomeFilter.FAVOURITES_RECENT -> result.data.filter { it.isFavorite }.sortedByDescending { it.updatedAt }
+                                HomeFilter.FAVOURITES_MOST_USED -> result.data.filter { it.isFavorite }.sortedByDescending { params.spinCounts[it.id] ?: 0 }
                             }
                             HomeUiState.Success(
                                 wheels = filteredWheels,
+                                wheelSpinCounts = params.spinCounts,
                                 totalWheels = result.data.size,
-                                totalSpins = globalStats.totalSpins,
-                                spinsToday = globalStats.spinsToday,
+                                totalSpins = params.globalStats.totalSpins,
+                                spinsToday = params.globalStats.spinsToday,
                                 selectedWheelId = _selectedWheelId.value,
-                                currentFilter = filter
+                                currentFilter = params.filter
                             )
                         }
-                        is com.project.roulette.domain.model.Result.Error -> HomeUiState.Error(result.exception.message ?: "Unknown error")
-                        is com.project.roulette.domain.model.Result.Loading -> HomeUiState.Loading
+                        is Result.Error -> HomeUiState.Error(result.exception.message ?: "Unknown error")
+                        is Result.Loading -> HomeUiState.Loading
                     }
                 }
             }.collect { state ->
@@ -98,39 +98,24 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Load all wheels.
-     */
     fun loadAllWheels() {
         _searchQuery.value = ""
     }
 
-    /**
-     * Set search query.
-     */
     fun searchWheels(query: String) {
         _searchQuery.value = query
     }
 
-    /**
-     * Set current filter.
-     */
     fun setFilter(filter: HomeFilter) {
         _filter.value = filter
     }
 
-    /**
-     * Toggle favorite status.
-     */
     fun toggleFavorite(wheelId: String, currentStatus: Boolean) {
         viewModelScope.launch {
             toggleFavoriteUseCase(wheelId, !currentStatus)
         }
     }
 
-    /**
-     * Create a new wheel.
-     */
     fun createWheel(wheel: Wheel) {
         viewModelScope.launch {
             val result = createWheelUseCase(wheel)
@@ -140,9 +125,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Delete a wheel by ID.
-     */
     fun deleteWheel(wheelId: String) {
         viewModelScope.launch {
             val result = deleteWheelUseCase(wheelId)
@@ -154,9 +136,6 @@ class HomeViewModel @Inject constructor(
         }
     }
 
-    /**
-     * Select a wheel.
-     */
     fun selectWheel(wheelId: String) {
         _selectedWheelId.value = wheelId
         if (_uiState.value is HomeUiState.Success) {
@@ -165,3 +144,10 @@ class HomeViewModel @Inject constructor(
         }
     }
 }
+
+data class HomeParams(
+    val filter: HomeFilter,
+    val query: String,
+    val globalStats: com.project.roulette.domain.usecase.wheel.GlobalStats,
+    val spinCounts: Map<String, Int>
+)

@@ -49,5 +49,10 @@ interface SpinHistoryRepository {
      * Get global spins today flow
      */
     fun getGlobalSpinsTodayCount(): Flow<Int>
+
+    /**
+     * Get spin counts for all wheels
+     */
+    fun getAllWheelSpinCounts(): Flow<Map<String, Int>>
 }
 

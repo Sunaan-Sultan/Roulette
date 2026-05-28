@@ -72,4 +72,9 @@ class SpinHistoryRepositoryImpl @Inject constructor(
         val startOfDay = calendar.timeInMillis
         return spinHistoryDao.getSpinsTodayCountFlow(startOfDay)
     }
+
+    override fun getAllWheelSpinCounts(): Flow<Map<String, Int>> =
+        spinHistoryDao.getAllWheelSpinCounts().map { list ->
+            list.associate { it.wheelId to it.count }
+        }
 }
