@@ -38,7 +38,9 @@ sealed class WheelUiState {
         val wheel: Wheel,
         val isSpinning: Boolean = false,
         val spinProgress: Float = 0f,
-        val lastSpinResult: SpinResult? = null
+        val lastSpinResult: SpinResult? = null,
+        val algorithmInfo: String? = null, // e.g. "34% chance", "seed #421", "2/4 done"
+        val rrRemaining: Int? = null // for RR badge
     ) : WheelUiState()
     data class Error(val message: String) : WheelUiState()
 }

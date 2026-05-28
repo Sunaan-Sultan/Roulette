@@ -28,12 +28,35 @@ fun WheelCanvas(
     wheel: Wheel,
     modifier: Modifier = Modifier,
     rotation: Float = 0f,
-    wheelSize: Dp = 300.dp
+    wheelSize: Dp = 260.dp
 ) {
+    val jewelTones = listOf(
+        Color(0xFF4A148C), // Deep Violet
+        Color(0xFF0D47A1), // Steel Blue
+        Color(0xFF004D40), // Forest Teal
+        Color(0xFF880E4F), // Muted Rose
+        Color(0xFF1B5E20), // Dark Green
+        Color(0xFFBF360C)  // Burnt Orange
+    )
+
     Box(
-        modifier = modifier.size(wheelSize),
+        modifier = modifier.size(wheelSize + 20.dp),
         contentAlignment = Alignment.Center
     ) {
+        Canvas(modifier = Modifier.size(wheelSize + 20.dp)) {
+            val centerX = size.width / 2f
+            val centerY = size.height / 2f
+            val outerRingRadius = (wheelSize.toPx() / 2f) + 4f
+
+            // Outer Ring
+            drawCircle(
+                color = Color(0xFF212121),
+                radius = outerRingRadius,
+                center = Offset(centerX, centerY),
+                style = Stroke(width = 8f)
+            )
+        }
+
         Canvas(modifier = Modifier.size(wheelSize)) {
             val segments = wheel.getActiveSegments()
             if (segments.isEmpty()) return@Canvas
@@ -42,50 +65,50 @@ fun WheelCanvas(
             val centerX = size.width / 2f
             val centerY = size.height / 2f
 
-            // Compute sweep angles using segment weights
-            val totalWeight = segments.sumOf { it.weight.toDouble() }.toFloat().coerceAtLeast(0.0001f)
-            val angles = segments.map { (it.weight / totalWeight) * 360f }
+            // Compute sweep angles - the requirement says "equal slices"
+            val sweep = 360f / segments.size
 
             // Apply rotation
             rotate(rotation, Offset(centerX, centerY)) {
-                var startAngle = -90f // start at top
+                var startAngle = -90f - (sweep / 2f) // center first slice at top
                 segments.forEachIndexed { index, segment ->
-                    val sweep = angles[index]
+                    val color = jewelTones[index % jewelTones.size]
 
                     // Draw filled arc sector
                     drawArc(
-                        color = segment.color,
+                        color = color,
                         startAngle = startAngle,
                         sweepAngle = sweep,
                         useCenter = true
                     )
 
-                    // Draw border (stroke)
-                    drawArc(
-                        color = Color.Black,
-                        startAngle = startAngle,
-                        sweepAngle = sweep,
-                        useCenter = true,
-                        style = Stroke(width = 2f)
-                    )
-
-                    // Draw label at midpoint of sector
+                    // Draw label
                     val midAngle = startAngle + sweep / 2f
-                    // Pass the number of segments to adjust text size and placement
-                    drawSectorLabel(midAngle, centerX, centerY, radius, segment.name, segments.size)
+                    drawSectorLabel(midAngle, centerX, centerY, radius, segment.name)
 
                     startAngle += sweep
                 }
             }
 
-            // Draw center circle
+            // Hub
             drawCircle(
-                color = Color.White,
-                radius = radius * 0.1f,
+                color = Color(0xFF673AB7), // Violet border ring
+                radius = radius * 0.12f,
                 center = Offset(centerX, centerY)
             )
+            drawCircle(
+                color = Color(0xFF121212), // Dark filled
+                radius = radius * 0.08f,
+                center = Offset(centerX, centerY)
+            )
+        }
 
-            // Draw pointer at top edge of wheel
+        // Pointer (Fixed)
+        Canvas(modifier = Modifier.size(wheelSize)) {
+            val centerX = size.width / 2f
+            val centerY = size.height / 2f
+            val radius = wheelSize.toPx() / 2f
+            
             drawPointerAtTop(centerX, centerY, radius)
         }
     }
@@ -96,110 +119,56 @@ private fun DrawScope.drawSectorLabel(
     centerX: Float,
     centerY: Float,
     radius: Float,
-    text: String,
-    segmentCount: Int
+    text: String
 ) {
-    // Dynamically adjust text size based on number of segments
-    // For many segments (e.g. 20+), we need smaller text.
-    val baseTextSize = 32f
-    val adjustedTextSize = when {
-        segmentCount <= 6 -> baseTextSize
-        segmentCount <= 12 -> 28f
-        segmentCount <= 20 -> 24f
-        segmentCount <= 30 -> 20f
-        else -> 16f
-    }
-
-    // Adjust text position: pull it further out if there are many segments
-    val radiusFactor = when {
-        segmentCount <= 12 -> 0.65f
-        segmentCount <= 20 -> 0.75f
-        else -> 0.85f
-    }
-
     val angleRad = (angleDegrees) * PI.toFloat() / 180f
-    val textX = centerX + (radius * radiusFactor) * cos(angleRad)
-    val textY = centerY + (radius * radiusFactor) * sin(angleRad)
+    
+    // Text starts from near the center and goes outward
+    val startRadius = radius * 0.25f
+    val textX = centerX + startRadius * cos(angleRad)
+    val textY = centerY + startRadius * sin(angleRad)
 
     drawContext.canvas.nativeCanvas.apply {
         val paint = android.graphics.Paint().apply {
             color = android.graphics.Color.WHITE
-            textSize = adjustedTextSize
-            textAlign = android.graphics.Paint.Align.CENTER
-            typeface = android.graphics.Typeface.DEFAULT_BOLD
-            // Add a subtle shadow for better readability on various colors
-            setShadowLayer(3f, 0f, 0f, android.graphics.Color.BLACK)
+            textSize = 36f
+            textAlign = android.graphics.Paint.Align.LEFT
+            typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
+            isAntiAlias = true
         }
         
         save()
         translate(textX, textY)
-        
-        // Rotate text to align with the radius (radial text)
-        // For many segments, radial text is much more legible than upright text.
         rotate(angleDegrees)
         
-        // If the text is on the left side of the wheel, flip it so it's not upside down
-        val normalizedAngle = (angleDegrees % 360f + 360f) % 360f
-        if (normalizedAngle > 90f && normalizedAngle < 270f) {
-            rotate(180f)
-        }
-        
-        // Truncate long text for small segments
-        val maxChars = when {
-            segmentCount <= 10 -> 15
-            segmentCount <= 20 -> 10
-            else -> 6
-        }
+        val maxChars = 12
         val displayName = if (text.length > maxChars) text.take(maxChars - 1) + "…" else text
 
-        drawText(displayName, 0f, 0f, paint)
+        drawText(displayName, 0f, 12f, paint) // 12f to vertically center text on the line
         restore()
     }
 }
 
 private fun DrawScope.drawPointerAtTop(centerX: Float, centerY: Float, radius: Float) {
-    // Increased pointer size for better visibility
-    val pointerSize = radius * 0.12f
-    val halfWidth = pointerSize / 2f
+    val pointerSize = 24.dp.toPx()
+    val apexY = centerY - radius
 
-    // Apex (top center) of the pointer
-    val apexX = centerX
-    val apexY = centerY - radius + pointerSize / 2f
-
-    // Coordinates for outer (outline) triangle
-    val outerLeftX = apexX - halfWidth
-    val outerRightX = apexX + halfWidth
-    val outerBottomY = apexY + pointerSize
-
-    val outerPath = androidx.compose.ui.graphics.Path().apply {
-        moveTo(outerLeftX, apexY)
-        lineTo(outerRightX, apexY)
-        lineTo(apexX, outerBottomY)
+    val path = androidx.compose.ui.graphics.Path().apply {
+        moveTo(centerX - pointerSize / 2, apexY - 10f)
+        lineTo(centerX + pointerSize / 2, apexY - 10f)
+        lineTo(centerX, apexY + pointerSize * 0.8f)
         close()
     }
 
-    // Draw outer outline (dark) to create strong contrast
-    drawPath(path = outerPath, color = Color.Black)
-
-    // Inner triangle slightly inset for a bright, noticeable fill
-    val inset = pointerSize * 0.18f
-    val innerLeftX = outerLeftX + inset
-    val innerRightX = outerRightX - inset
-    val innerBottomY = outerBottomY - inset
-
-    val innerPath = androidx.compose.ui.graphics.Path().apply {
-        moveTo(innerLeftX, apexY + inset * 0.1f)
-        lineTo(innerRightX, apexY + inset * 0.1f)
-        lineTo(apexX, innerBottomY)
-        close()
-    }
-
-    // Bright fill for high contrast (use Yellow) and a subtle inner stroke
-    drawPath(path = innerPath, color = Color(0xFFFFD54F)) // Amber/Yellow
-    drawPath(path = innerPath, color = Color.Black, style = Stroke(width = 2f))
-
-    // Draw small tip circle for extra visibility and to ensure pointer center is easy to spot
-    val tipRadius = pointerSize * 0.18f
-    drawCircle(color = Color.White, radius = tipRadius, center = Offset(apexX, apexY + tipRadius))
-    drawCircle(color = Color.Black, radius = tipRadius, center = Offset(apexX, apexY + tipRadius), style = Stroke(width = 2f))
+    // Glow effect (simplified with a slightly larger blurred version if possible, 
+    // but here we'll just use a soft colored stroke or layer)
+    drawPath(
+        path = path,
+        color = Color(0xFF9575CD),
+        style = Stroke(width = 4f)
+    )
+    drawPath(
+        path = path,
+        color = Color(0xFF673AB7)
+    )
 }

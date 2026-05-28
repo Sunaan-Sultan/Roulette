@@ -8,6 +8,7 @@ import com.project.roulette.domain.usecase.spin.GetRecentSpinsUseCase
 import com.project.roulette.domain.usecase.spin.SpinWheelUseCase
 import com.project.roulette.domain.usecase.statistics.GetWheelStatisticsUseCase
 import com.project.roulette.domain.usecase.wheel.GetWheelByIdUseCase
+import com.project.roulette.domain.usecase.wheel.UpdateWheelUseCase
 import com.project.roulette.presentation.model.WheelUiState
 import com.project.roulette.util.audio.HapticFeedback
 import com.project.roulette.util.audio.SoundManager
@@ -25,6 +26,7 @@ import javax.inject.Inject
 @HiltViewModel
 class WheelViewModel @Inject constructor(
     private val getWheelByIdUseCase: GetWheelByIdUseCase,
+    private val updateWheelUseCase: UpdateWheelUseCase,
     private val spinWheelUseCase: SpinWheelUseCase,
     private val getRecentSpinsUseCase: GetRecentSpinsUseCase,
     private val getWheelStatisticsUseCase: GetWheelStatisticsUseCase,
@@ -38,8 +40,25 @@ class WheelViewModel @Inject constructor(
     private val _selectedAlgorithm = MutableStateFlow(SelectionAlgorithmFactory.AlgorithmType.UNIFORM)
     val selectedAlgorithm: StateFlow<SelectionAlgorithmFactory.AlgorithmType> = _selectedAlgorithm.asStateFlow()
 
-    private val _spinDuration = MutableStateFlow(10000L)
-    val spinDuration: StateFlow<Long> = _spinDuration.asStateFlow()
+    enum class SpinSpeed(val label: String, val durationMs: Long, val rotations: Int) {
+        SLOW("Slow", 8000L, 3),
+        LEISURELY("Leisurely", 6000L, 5),
+        MEDIUM("Medium", 4000L, 7),
+        FAST("Fast", 3000L, 10),
+        BLAZING("Blazing", 2000L, 15)
+    }
+
+    private val _spinSpeed = MutableStateFlow(SpinSpeed.MEDIUM)
+    val spinSpeed: StateFlow<SpinSpeed> = _spinSpeed.asStateFlow()
+
+    private val _seed = MutableStateFlow<Long?>(null)
+    val seed: StateFlow<Long?> = _seed.asStateFlow()
+
+    private val _spinsToday = MutableStateFlow(0)
+    val spinsToday: StateFlow<Int> = _spinsToday.asStateFlow()
+
+    private val _rrQueue = MutableStateFlow<List<String>>(emptyList())
+    val rrQueue: StateFlow<List<String>> = _rrQueue.asStateFlow()
 
     // Holds the outcome produced by the selection algorithm and recorded by the use case
     private val _pendingSpinOutcome = MutableStateFlow<SpinWheelUseCase.SpinOutcome?>(null)
@@ -56,6 +75,13 @@ class WheelViewModel @Inject constructor(
                     is Result.Success -> WheelUiState.Success(wheel = result.data)
                     is Result.Error -> WheelUiState.Error(result.exception.message ?: "Failed to load wheel")
                     is Result.Loading -> WheelUiState.Loading
+                }
+            }
+            
+            // Load spins today for this wheel
+            getWheelStatisticsUseCase(wheelId).collect { result ->
+                if (result is Result.Success) {
+                    _spinsToday.value = result.data.totalSpins
                 }
             }
         }
@@ -84,14 +110,38 @@ class WheelViewModel @Inject constructor(
                 val result = spinWheelUseCase(
                     wheelId = currentState.wheel.id,
                     algorithmType = _selectedAlgorithm.value,
-                    spinDuration = _spinDuration.value
+                    spinDuration = _spinSpeed.value.durationMs,
+                    seed = _seed.value
                 )
 
                 // On success, store pending spin outcome for UI animation
                 when (result) {
                     is Result.Success -> {
-                        _pendingSpinOutcome.value = result.data
-                        // Do not set isSpinning = false here; UI will animate and notify when done
+                        val outcome = result.data
+                        val info = when (_selectedAlgorithm.value) {
+                            SelectionAlgorithmFactory.AlgorithmType.WEIGHTED -> {
+                                val total = currentState.wheel.getTotalWeight()
+                                val weight = outcome.selectedSegment.weight
+                                val percent = (weight / total * 100).toInt()
+                                "$percent% chance"
+                            }
+                            SelectionAlgorithmFactory.AlgorithmType.SEEDED -> {
+                                "seed #${_seed.value ?: "random"}"
+                            }
+                            SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN -> {
+                                // For RR, we might want to track it better, but for now:
+                                val total = currentState.wheel.getActiveSegments().size
+                                "1/$total done" // Placeholder
+                            }
+                            else -> null
+                        }
+                        
+                        _uiState.value = currentState.copy(
+                            isSpinning = true,
+                            lastSpinResult = null,
+                            algorithmInfo = info
+                        )
+                        _pendingSpinOutcome.value = outcome
                     }
 
                     is Result.Error -> {
@@ -121,11 +171,26 @@ class WheelViewModel @Inject constructor(
         hapticFeedback.successPattern()
 
         // Update UI with spin result and stop spinning
+        val newRrRemaining = if (_selectedAlgorithm.value == SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN) {
+            val current = currentState.rrRemaining ?: currentState.wheel.getActiveSegments().size
+            if (current <= 1) currentState.wheel.getActiveSegments().size else current - 1
+        } else null
+
+        val rrInfo = if (_selectedAlgorithm.value == SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN) {
+            val total = currentState.wheel.getActiveSegments().size
+            val done = total - (newRrRemaining ?: total) + 1
+            "$done/$total done"
+        } else currentState.algorithmInfo
+
         _uiState.value = currentState.copy(
             isSpinning = false,
             lastSpinResult = outcome.spinResult,
-            spinProgress = 0f
+            spinProgress = 0f,
+            rrRemaining = newRrRemaining,
+            algorithmInfo = rrInfo
         )
+        
+        _spinsToday.value += 1
 
         // Clear pending outcome
         _pendingSpinOutcome.value = null
@@ -156,13 +221,48 @@ class WheelViewModel @Inject constructor(
      */
     fun setSelectionAlgorithm(algorithmType: SelectionAlgorithmFactory.AlgorithmType) {
         _selectedAlgorithm.value = algorithmType
+        val currentState = _uiState.value
+        if (currentState is WheelUiState.Success) {
+            _uiState.value = currentState.copy(
+                algorithmInfo = null,
+                rrRemaining = if (algorithmType == SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN) {
+                    currentState.wheel.getActiveSegments().size
+                } else null
+            )
+        }
     }
 
     /**
-     * Set spin duration.
+     * Set spin speed.
      */
-    fun setSpinDuration(durationMs: Long) {
-        _spinDuration.value = durationMs.coerceIn(2000L, 15000L) // 2-15 seconds
+    fun setSpinSpeed(speed: SpinSpeed) {
+        _spinSpeed.value = speed
+    }
+
+    /**
+     * Set seed for Seeded algorithm.
+     */
+    fun setSeed(seed: Long?) {
+        _seed.value = seed
+    }
+
+    /**
+     * Update segment weight for weighted algorithm.
+     */
+    fun updateSegmentWeight(segmentId: String, weight: Float) {
+        val currentState = _uiState.value
+        if (currentState !is WheelUiState.Success) return
+
+        val updatedSegments = currentState.wheel.segments.map {
+            if (it.id == segmentId) it.copy(weight = weight) else it
+        }
+        val updatedWheel = currentState.wheel.copy(segments = updatedSegments)
+        
+        _uiState.value = currentState.copy(wheel = updatedWheel)
+        
+        viewModelScope.launch {
+            updateWheelUseCase(updatedWheel)
+        }
     }
 
     override fun onCleared() {

@@ -64,7 +64,6 @@ fun RouletteApp() {
         Triple(RouletteScreen.Home, "Home", Icons.Filled.Home),
         Triple(RouletteScreen.Wheels, "Wheels", Icons.Filled.Refresh),
         Triple(RouletteScreen.Favourites, "Favourites", Icons.Filled.Favorite),
-        Triple(RouletteScreen.Profile, "Profile", Icons.Filled.Person)
     )
 
     Scaffold(

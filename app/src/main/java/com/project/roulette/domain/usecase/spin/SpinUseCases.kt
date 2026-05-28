@@ -34,7 +34,8 @@ class SpinWheelUseCase(
     suspend operator fun invoke(
         wheelId: String,
         algorithmType: SelectionAlgorithmFactory.AlgorithmType,
-        spinDuration: Long = 3000
+        spinDuration: Long = 3000,
+        seed: Long? = null
     ): Result<SpinOutcome> {
         return try {
             // Get the wheel using `first()` to obtain the latest value and avoid collecting indefinitely
@@ -51,7 +52,7 @@ class SpinWheelUseCase(
             }
 
             // Select segment using specified algorithm
-            val algorithm = selectionAlgorithmFactory.createAlgorithm(algorithmType)
+            val algorithm = selectionAlgorithmFactory.createAlgorithm(algorithmType, seed)
             val selectedSegment = algorithm.selectSegment(activeSegments)
                 ?: return Result.Error(Exception("Selection algorithm failed"))
 
@@ -126,8 +127,7 @@ class SpinWheelUseCase(
     /**
      * Calculate the final angle based on segment position.
      * Business logic: abstracted from UI layer.
-     * Uses segment weights to compute sweep sizes and returns the midpoint of the chosen segment
-     * as an angle in degrees measured clockwise from the top (0..360).
+     * Ensures the pointer lands within the segment and avoids dividers.
      */
     private fun calculateFinalAngle(
         segments: List<Segment>,
@@ -136,23 +136,16 @@ class SpinWheelUseCase(
         val selectedIndex = segments.indexOfFirst { it.id == selectedSegment.id }
         if (selectedIndex < 0) return 0f
 
-        // Compute weighted sweeps
-        val totalWeight = segments.sumOf { it.weight.toDouble() }.toFloat().coerceAtLeast(0.0001f)
-        var start = 0f
-        var midpoint = 0f
-        for ((index, segment) in segments.withIndex()) {
-            val sweep = (segment.weight / totalWeight) * 360f
-            if (index == selectedIndex) {
-                midpoint = start + sweep / 2f
-                break
-            }
-            start += sweep
-        }
+        // The UI uses equal slices (360 / count)
+        val sweep = 360f / segments.size
+        val startOfSegment = selectedIndex * sweep
 
-        // Push slightly toward the center to avoid exact boundary hits.
-        val sweepOfSelected = (segments[selectedIndex].weight / totalWeight) * 360f
-        val epsilon = (sweepOfSelected * 0.02f).coerceAtMost(2f) // at most 2 degrees or 2% of sweep
-        val finalAngle = (midpoint + epsilon) % 360f
+        // To avoid divider points, we stay within 20% to 80% of the slice
+        val minOffset = sweep * 0.2f
+        val maxOffset = sweep * 0.8f
+        val randomOffset = (minOffset + Math.random() * (maxOffset - minOffset)).toFloat()
+
+        val finalAngle = (startOfSegment + randomOffset) % 360f
         return (finalAngle + 360f) % 360f
     }
 

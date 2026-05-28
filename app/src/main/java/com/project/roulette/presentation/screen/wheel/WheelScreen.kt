@@ -1,46 +1,34 @@
 package com.project.roulette.presentation.screen.wheel
 
 import androidx.compose.animation.core.Animatable
-import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.CubicBezierEasing
 import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.CheckCircle
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.HelpOutline
+import androidx.compose.material.icons.filled.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.project.roulette.domain.usecase.selection.SelectionAlgorithmFactory
 import com.project.roulette.presentation.component.WheelCanvas
@@ -50,8 +38,6 @@ import kotlinx.coroutines.launch
 import com.project.roulette.util.loadInterstitial
 import com.project.roulette.util.showInterstitial
 import androidx.activity.compose.BackHandler
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.style.TextAlign
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -65,12 +51,14 @@ fun WheelScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val selectedAlgorithm by viewModel.selectedAlgorithm.collectAsStateWithLifecycle()
-    val spinDuration by viewModel.spinDuration.collectAsStateWithLifecycle()
+    val spinSpeed by viewModel.spinSpeed.collectAsStateWithLifecycle()
+    val spinsToday by viewModel.spinsToday.collectAsStateWithLifecycle()
+    val seed by viewModel.seed.collectAsStateWithLifecycle()
     val pendingOutcome by viewModel.pendingSpinOutcome.collectAsStateWithLifecycle()
 
     var menuExpanded by remember { mutableStateOf(false) }
+    var showAlgoInfo by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
-
     val context = LocalContext.current
 
     LaunchedEffect(wheelId) {
@@ -92,90 +80,75 @@ fun WheelScreen(
     LaunchedEffect(pendingOutcome) {
         val outcome = pendingOutcome
         if (outcome != null) {
-            val current = rotationAnim.value
-            val finalAngle = ((outcome.spinResult.finalAngle % 360f) + 360f) % 360f
-            val minFullRotations = 3
-            val rotations = minFullRotations
-            val epsilon = 0.5f
-            val currentMod = ((current % 360f) + 360f) % 360f
-            val desiredMod = (360f - finalAngle) % 360f
-            val deltaMod = ((desiredMod - currentMod) % 360f + 360f) % 360f
-            val target = current + rotations * 360f + deltaMod + epsilon
-            val duration = spinDuration.coerceIn(2000L, 15000L).toInt()
+            val state = uiState
+            if (state is WheelUiState.Success) {
+                val current = rotationAnim.value
+                val finalAngle = outcome.spinResult.finalAngle
+                val sweep = 360f / state.wheel.segments.size
+                
+                // Calculate target rotation so that finalAngle (relative to wheel start) 
+                // lands at the pointer (-90 degrees).
+                // WheelCanvas draws segment 0 centered at -90, so its start is at -90 - sweep/2.
+                val desiredMod = ((sweep / 2f) - finalAngle + 360f) % 360f
+                
+                val rotations = spinSpeed.rotations
+                val currentMod = ((current % 360f) + 360f) % 360f
+                val deltaMod = ((desiredMod - currentMod) % 360f + 360f) % 360f
+                val target = current + rotations * 360f + deltaMod
+                val duration = spinSpeed.durationMs.toInt()
 
-            scope.launch {
-                val adjustedDuration = (duration * 1.3f).toInt()
-                rotationAnim.animateTo(
-                    targetValue = target,
-                    animationSpec = tween(durationMillis = adjustedDuration, easing = FastOutSlowInEasing)
-                )
+                scope.launch {
+                    rotationAnim.animateTo(
+                        targetValue = target,
+                        animationSpec = tween(
+                            durationMillis = duration,
+                            easing = CubicBezierEasing(0.4f, 0.0f, 0.2f, 1f)
+                        )
+                    )
+                    viewModel.onAnimationComplete()
+                }
+            }
+        }
+    }
 
-                val wobbleDegrees = 6f
-                val wobbleDuration = 250
-                rotationAnim.animateTo(
-                    targetValue = target + wobbleDegrees,
-                    animationSpec = tween(durationMillis = wobbleDuration / 2, easing = LinearOutSlowInEasing)
-                )
-                rotationAnim.animateTo(
-                    targetValue = target,
-                    animationSpec = tween(durationMillis = wobbleDuration / 2, easing = FastOutSlowInEasing)
-                )
+    val snackbarHostState = remember { SnackbarHostState() }
 
-                viewModel.onAnimationComplete()
+    LaunchedEffect(spinsToday) {
+        if (selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN) {
+            val state = uiState
+            if (state is WheelUiState.Success) {
+                if (state.rrRemaining == state.wheel.getActiveSegments().size) {
+                    snackbarHostState.showSnackbar("New Round Started!")
+                }
             }
         }
     }
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {
                     when (val state = uiState) {
-                        is WheelUiState.Success -> Text(state.wheel.name)
+                        is WheelUiState.Success -> Text(state.wheel.name, fontWeight = FontWeight.Bold)
                         else -> Text("Wheel")
                     }
                 },
                 navigationIcon = {
-                    IconButton(
-                        onClick = {
-                            showInterstitial(context = context) {
-                                onNavigateBack()
-                            }
-                        }
-                    ) {
-                        Icon(Icons.Filled.ArrowBack, contentDescription = "Back")
+                    IconButton(onClick = { showInterstitial(context = context) { onNavigateBack() } }) {
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
+                    IconButton(onClick = { onNavigateToEdit(wheelId) }) {
+                        Icon(Icons.Filled.Edit, contentDescription = "Edit")
+                    }
                     IconButton(onClick = { menuExpanded = true }) {
                         Icon(Icons.Filled.MoreVert, contentDescription = "Menu")
                     }
-                    DropdownMenu(
-                        expanded = menuExpanded,
-                        onDismissRequest = { menuExpanded = false }
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("Edit") },
-                            onClick = {
-                                onNavigateToEdit(wheelId)
-                                menuExpanded = false
-                            },
-                            leadingIcon = { Icon(Icons.Filled.Edit, contentDescription = "Edit") }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("History") },
-                            onClick = {
-                                onNavigateToHistory(wheelId)
-                                menuExpanded = false
-                            }
-                        )
-                        DropdownMenuItem(
-                            text = { Text("Statistics") },
-                            onClick = {
-                                onNavigateToStatistics(wheelId)
-                                menuExpanded = false
-                            }
-                        )
+                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        DropdownMenuItem(text = { Text("History") }, onClick = { onNavigateToHistory(wheelId); menuExpanded = false })
+                        DropdownMenuItem(text = { Text("Statistics") }, onClick = { onNavigateToStatistics(wheelId); menuExpanded = false })
                     }
                 }
             )
@@ -183,141 +156,357 @@ fun WheelScreen(
     ) { padding ->
         when (val state = uiState) {
             is WheelUiState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
                 }
             }
-
             is WheelUiState.Success -> {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
-                        .padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                        .background(Color(0xFF121212))
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
                 ) {
+                    // Pills Row
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Surface(
+                            color = Color(0xFF1B5E20).copy(alpha = 0.2f),
+                            shape = CircleShape,
+                            border = BorderStroke(1.dp, Color(0xFF2E7D32))
+                        ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Box(modifier = Modifier.size(8.dp).background(Color(0xFF4CAF50), CircleShape))
+                                Spacer(Modifier.width(8.dp))
+                                Text("${state.wheel.segments.size} names", color = Color(0xFF4CAF50), fontSize = 12.sp)
+                            }
+                        }
+                        Surface(
+                            color = Color(0xFF212121),
+                            shape = CircleShape,
+                        ) {
+                            Text(
+                                "$spinsToday spun today",
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                color = Color.Gray,
+                                fontSize = 12.sp
+                            )
+                        }
+
+                        if (state.rrRemaining != null) {
+                            Surface(
+                                color = Color(0xFF673AB7).copy(alpha = 0.2f),
+                                shape = CircleShape,
+                                border = BorderStroke(1.dp, Color(0xFF673AB7))
+                            ) {
+                                Text(
+                                    "RR: ${state.rrRemaining} left",
+                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                                    color = Color(0xFF9575CD),
+                                    fontSize = 12.sp
+                                )
+                            }
+                        }
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    // Wheel
                     WheelCanvas(
                         wheel = state.wheel,
                         rotation = rotationAnim.value,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .size(280.dp)
+                            .clickable(
+                                interactionSource = remember { androidx.compose.foundation.interaction.MutableInteractionSource() },
+                                indication = null
+                            ) {
+                                if (!state.isSpinning) viewModel.spinWheel()
+                            }
                     )
 
-                    // Spin Result Dialog
-                    if (state.lastSpinResult != null) {
-                        AlertDialog(
-                            onDismissRequest = { viewModel.clearResult() },
-                            title = {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally
+                    Spacer(Modifier.height(32.dp))
+
+                    // Spin Speed Section
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.Speed, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Spin speed", color = Color.Gray)
+                        }
+                        Text(spinSpeed.label, color = Color(0xFF9575CD), fontWeight = FontWeight.Bold)
+                    }
+
+                    Slider(
+                        value = WheelViewModel.SpinSpeed.entries.indexOf(spinSpeed).toFloat(),
+                        onValueChange = { viewModel.setSpinSpeed(WheelViewModel.SpinSpeed.entries[it.toInt()]) },
+                        valueRange = 0f..4f,
+                        steps = 3,
+                        colors = SliderDefaults.colors(
+                            thumbColor = Color(0xFF673AB7),
+                            activeTrackColor = Color(0xFF673AB7),
+                            inactiveTrackColor = Color(0xFF212121)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                        Text("Slow", color = Color.DarkGray, fontSize = 10.sp)
+                        Text("Blazing", color = Color.DarkGray, fontSize = 10.sp)
+                    }
+
+                    // Algorithm Section Header
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.Memory, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Algorithm", color = Color.Gray)
+                        }
+                        TextButton(
+                            onClick = { showAlgoInfo = true },
+                            colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF9575CD))
+                        ) {
+                            Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("What's this?", fontSize = 12.sp)
+                        }
+                    }
+
+                    // Algorithm Grid
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            AlgorithmCard(
+                                title = "Uniform",
+                                description = "Equal odds for all",
+                                icon = Icons.Filled.Casino,
+                                selected = selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.UNIFORM,
+                                onClick = { viewModel.setSelectionAlgorithm(SelectionAlgorithmFactory.AlgorithmType.UNIFORM) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            AlgorithmCard(
+                                title = "Weighted",
+                                description = "Custom odds per name",
+                                icon = Icons.Filled.Balance,
+                                selected = selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.WEIGHTED,
+                                onClick = { viewModel.setSelectionAlgorithm(SelectionAlgorithmFactory.AlgorithmType.WEIGHTED) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            AlgorithmCard(
+                                title = "Seeded",
+                                description = "Reproducible result",
+                                icon = Icons.Filled.Tag,
+                                selected = selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.SEEDED,
+                                onClick = { viewModel.setSelectionAlgorithm(SelectionAlgorithmFactory.AlgorithmType.SEEDED) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            AlgorithmCard(
+                                title = "Round Robin",
+                                description = "Everyone gets a turn",
+                                icon = Icons.Filled.Autorenew,
+                                selected = selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN,
+                                onClick = { viewModel.setSelectionAlgorithm(SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN) },
+                                modifier = Modifier.weight(1f)
+                            )
+                        }
+                    }
+
+                    // Algorithm specific settings
+                    if (selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.SEEDED) {
+                        Spacer(Modifier.height(16.dp))
+                        OutlinedTextField(
+                            value = seed?.toString() ?: "",
+                            onValueChange = { viewModel.setSeed(it.toLongOrNull()) },
+                            label = { Text("Seed Number") },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = OutlinedTextFieldDefaults.colors(
+                                focusedBorderColor = Color(0xFF673AB7),
+                                unfocusedBorderColor = Color(0xFF212121)
+                            )
+                        )
+                    } else if (selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.WEIGHTED) {
+                        Spacer(Modifier.height(16.dp))
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .background(Color(0xFF1E1E1E), RoundedCornerShape(12.dp))
+                                .padding(12.dp)
+                        ) {
+                            Text("Custom Weights", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Spacer(Modifier.height(8.dp))
+                            state.wheel.segments.forEach { segment ->
+                                Row(
+                                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Icon(
-                                        Icons.Filled.CheckCircle,
-                                        contentDescription = null,
-                                        tint = Color(0xFF4CAF50),
-                                        modifier = Modifier.padding(bottom = 8.dp)
-                                    )
-                                    Text(
-                                        "Winner!",
-                                        style = MaterialTheme.typography.headlineSmall,
-                                        textAlign = TextAlign.Center
-                                    )
-                                }
-                            },
-                            text = {
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = Alignment.CenterHorizontally
-                                ) {
-                                    Text(
-                                        text = state.lastSpinResult.selectedSegmentName,
-                                        style = MaterialTheme.typography.displaySmall,
-                                        color = MaterialTheme.colorScheme.primary,
-                                        textAlign = TextAlign.Center,
-                                        modifier = Modifier.padding(vertical = 8.dp)
-                                    )
-                                }
-                            },
-                            confirmButton = {
-                                Box(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Button(onClick = { viewModel.clearResult() }) {
-                                        Text("OK")
+                                    Text(segment.name, color = Color.Gray, modifier = Modifier.weight(1f))
+                                    Row(verticalAlignment = Alignment.CenterVertically) {
+                                        Text(segment.weight.toInt().toString(), color = Color.White, modifier = Modifier.padding(horizontal = 8.dp))
+                                        Slider(
+                                            value = segment.weight,
+                                            onValueChange = { viewModel.updateSegmentWeight(segment.id, it) },
+                                            valueRange = 1f..5f,
+                                            steps = 3,
+                                            modifier = Modifier.width(120.dp),
+                                            colors = SliderDefaults.colors(
+                                                thumbColor = Color(0xFF673AB7),
+                                                activeTrackColor = Color(0xFF673AB7)
+                                            )
+                                        )
                                     }
                                 }
                             }
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .horizontalScroll(rememberScrollState()),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text("Algorithm:")
-                        SelectionAlgorithmFactory.getAllAlgorithmTypes().forEach { type ->
-                            val isSelectedType = (type == selectedAlgorithm)
-                            Button(
-                                onClick = { viewModel.setSelectionAlgorithm(type) },
-                                modifier = Modifier,
-                                enabled = !isSelectedType
-                            ) {
-                                val label = when (type) {
-                                    SelectionAlgorithmFactory.AlgorithmType.UNIFORM -> "UNI"
-                                    SelectionAlgorithmFactory.AlgorithmType.WEIGHTED -> "WGT"
-                                    SelectionAlgorithmFactory.AlgorithmType.SEEDED -> "SEED"
-                                    SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN -> "RR"
-                                }
-                                Text(label)
-                            }
                         }
                     }
 
-                    Row(modifier = Modifier.fillMaxWidth()) {
-                        Text("Selected: ${SelectionAlgorithmFactory.getAlgorithmName(selectedAlgorithm)}")
-                    }
+                    Spacer(Modifier.height(32.dp))
 
+                    // Spin Button
                     Button(
-                        onClick = {
-                            if (!state.isSpinning) {
-                                viewModel.spinWheel()
-                            }
-                        },
+                        onClick = { if (!state.isSpinning) viewModel.spinWheel() },
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 16.dp),
+                            .height(56.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7)),
                         enabled = !state.isSpinning
                     ) {
-                        Text(if (state.isSpinning) "Spinning..." else "SPIN WHEEL")
-                    }
-                }
-            }
-
-            is WheelUiState.Error -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(padding),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Error: ${state.message}")
-                        Button(onClick = { viewModel.loadWheel(wheelId) }) {
-                            Text("Retry")
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Filled.Refresh, contentDescription = null)
+                            Spacer(Modifier.width(8.dp))
+                            Text(if (state.isSpinning) "Spinning..." else "Spin Wheel", fontWeight = FontWeight.Bold)
                         }
                     }
+                    
+                    Spacer(Modifier.height(32.dp))
+                }
+
+                // Result Dialog
+                state.lastSpinResult?.let { result ->
+                    AlertDialog(
+                        onDismissRequest = { viewModel.clearResult() },
+                        containerColor = Color(0xFF1E1E1E),
+                        title = {
+                            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Icon(Icons.Filled.CheckCircle, contentDescription = null, tint = Color(0xFF4CAF50), modifier = Modifier.size(48.dp))
+                                Spacer(Modifier.height(8.dp))
+                                Text("Winner!", color = Color.White)
+                            }
+                        },
+                        text = {
+                            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    result.selectedSegmentName,
+                                    style = MaterialTheme.typography.headlineLarge,
+                                    color = Color(0xFF673AB7),
+                                    textAlign = TextAlign.Center
+                                )
+                                if (state.algorithmInfo != null) {
+                                    Spacer(Modifier.height(8.dp))
+                                    Text(
+                                        state.algorithmInfo,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = Color.Gray,
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        },
+                        confirmButton = {
+                            Button(onClick = { viewModel.clearResult() }, colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7))) {
+                                Text("OK")
+                            }
+                        }
+                    )
+                }
+
+                // Algo Info Dialog
+                if (showAlgoInfo) {
+                    AlertDialog(
+                        onDismissRequest = { showAlgoInfo = false },
+                        containerColor = Color(0xFF1E1E1E),
+                        title = { Text("Algorithms", color = Color.White) },
+                        text = {
+                            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                                AlgoInfoRow(Icons.Filled.Casino, "Uniform", "Every name has exactly the same chance.")
+                                AlgoInfoRow(Icons.Filled.Balance, "Weighted", "Names with higher weights are more likely to win.")
+                                AlgoInfoRow(Icons.Filled.Tag, "Seeded", "Using the same seed will always give the same sequence.")
+                                AlgoInfoRow(Icons.Filled.Autorenew, "Round Robin", "Cycles through all names. No repeats until new round.")
+                            }
+                        },
+                        confirmButton = {
+                            TextButton(onClick = { showAlgoInfo = false }) { Text("Got it", color = Color(0xFF9575CD)) }
+                        }
+                    )
                 }
             }
+            is WheelUiState.Error -> {
+                Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("Error: ${state.message}", color = Color.Red)
+                        Button(onClick = { viewModel.loadWheel(wheelId) }) { Text("Retry") }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun AlgoInfoRow(icon: ImageVector, title: String, description: String) {
+    Row(verticalAlignment = Alignment.Top) {
+        Icon(icon, contentDescription = null, tint = Color(0xFF9575CD), modifier = Modifier.size(20.dp))
+        Spacer(Modifier.width(12.dp))
+        Column {
+            Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text(description, color = Color.Gray, fontSize = 12.sp)
+        }
+    }
+}
+
+@Composable
+fun AlgorithmCard(
+    title: String,
+    description: String,
+    icon: ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .clickable { onClick() },
+        color = if (selected) Color(0xFF673AB7).copy(alpha = 0.1f) else Color(0xFF1E1E1E),
+        border = BorderStroke(1.dp, if (selected) Color(0xFF673AB7) else Color(0xFF212121))
+    ) {
+        Column(modifier = Modifier.padding(12.dp)) {
+            Icon(
+                icon,
+                contentDescription = null,
+                tint = if (selected) Color(0xFF9575CD) else Color.Gray,
+                modifier = Modifier.size(24.dp)
+            )
+            Spacer(Modifier.height(8.dp))
+            Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+            Text(description, color = Color.Gray, fontSize = 10.sp)
         }
     }
 }

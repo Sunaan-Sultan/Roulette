@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -18,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -31,7 +31,6 @@ import com.project.roulette.util.TimeUtils
 import com.project.roulette.presentation.screen.home.BannerAd
 import com.project.roulette.presentation.screen.wheels.WheelsFilterChipItem
 import kotlinx.datetime.Clock
-import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 
@@ -44,6 +43,26 @@ fun NotificationScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val currentFilter by viewModel.filter.collectAsStateWithLifecycle()
 
+    NotificationContent(
+        uiState = uiState,
+        currentFilter = currentFilter,
+        onFilterSelected = viewModel::setFilter,
+        onMarkAllRead = viewModel::markAllAsRead,
+        onNotificationClick = viewModel::markAsRead,
+        onNavigateBack = onNavigateBack
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun NotificationContent(
+    uiState: NotificationUiState,
+    currentFilter: NotificationFilter,
+    onFilterSelected: (NotificationFilter) -> Unit,
+    onMarkAllRead: () -> Unit,
+    onNotificationClick: (String) -> Unit,
+    onNavigateBack: () -> Unit
+) {
     Scaffold(
         bottomBar = {
             BannerAd(modifier = Modifier.fillMaxWidth())
@@ -57,30 +76,37 @@ fun NotificationScreen(
                 .padding(horizontal = 20.dp)
         ) {
             Spacer(Modifier.height(16.dp))
-            
+
+            Text(
+                text = "UPDATES",
+                style = MaterialTheme.typography.labelLarge,
+                color = TextSecondary,
+                letterSpacing = 1.sp
+            )
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Text(
+                    text = "Notifications",
+                    style = MaterialTheme.typography.displayMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+
+                TextButton(
+                    onClick = onMarkAllRead,
+                    contentPadding = PaddingValues(start = 6.dp, top = 8.dp)
+                ) {
                     Text(
-                        text = "UPDATES",
-                        style = MaterialTheme.typography.labelLarge,
-                        color = TextSecondary,
-                        letterSpacing = 1.sp
-                    )
-                    Text(
-                        text = "Notifications",
-                        style = MaterialTheme.typography.displayMedium,
+                        text = "Mark all read",
+                        color = PrimaryPurple,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        fontSize = 14.sp
                     )
                 }
-                
-//                TextButton(onClick = { viewModel.markAllAsRead() }) {
-//                    Text("Mark all read", color = PrimaryPurple, fontWeight = FontWeight.Bold)
-//                }
             }
 
             Spacer(Modifier.height(20.dp))
@@ -93,17 +119,17 @@ fun NotificationScreen(
                 WheelsFilterChipItem(
                     label = "All",
                     isSelected = currentFilter == NotificationFilter.ALL,
-                    onClick = { viewModel.setFilter(NotificationFilter.ALL) }
+                    onClick = { onFilterSelected(NotificationFilter.ALL) }
                 )
                 WheelsFilterChipItem(
                     label = "Unread",
                     isSelected = currentFilter == NotificationFilter.UNREAD,
-                    onClick = { viewModel.setFilter(NotificationFilter.UNREAD) }
+                    onClick = { onFilterSelected(NotificationFilter.UNREAD) }
                 )
                 WheelsFilterChipItem(
                     label = "Activity",
                     isSelected = currentFilter == NotificationFilter.ACTIVITY,
-                    onClick = { viewModel.setFilter(NotificationFilter.ACTIVITY) }
+                    onClick = { onFilterSelected(NotificationFilter.ACTIVITY) }
                 )
             }
 
@@ -142,7 +168,7 @@ fun NotificationScreen(
                                 items(notifications) { notification ->
                                     NotificationItem(
                                         notification = notification,
-                                        onClick = { viewModel.markAsRead(notification.id) }
+                                        onClick = { onNotificationClick(notification.id) }
                                     )
                                 }
                             }
@@ -256,5 +282,39 @@ fun EmptyNotificationsState() {
             Spacer(Modifier.height(16.dp))
             Text("No notifications yet", color = TextSecondary)
         }
+    }
+}
+
+@Preview(showBackground = true, backgroundColor = 0xFF050B18)
+@Composable
+fun NotificationScreenPreview() {
+    RouletteTheme {
+        NotificationContent(
+            uiState = NotificationUiState.Success(
+                notifications = listOf(
+                    Notification(
+                        id = "1",
+                        title = "Spin Result",
+                        message = "Your wheel Luck landed on Red! 🎯",
+                        type = NotificationType.SPIN_RESULT,
+                        timestamp = Clock.System.now(),
+                        isRead = false
+                    ),
+                    Notification(
+                        id = "2",
+                        title = "Milestone 🎉",
+                        message = "You've made 50 spins total! Keep the momentum going!",
+                        type = NotificationType.MILESTONE,
+                        timestamp = Clock.System.now(),
+                        isRead = true
+                    )
+                )
+            ),
+            currentFilter = NotificationFilter.ALL,
+            onFilterSelected = {},
+            onMarkAllRead = {},
+            onNotificationClick = {},
+            onNavigateBack = {}
+        )
     }
 }
