@@ -21,60 +21,6 @@ class NotificationViewModel @Inject constructor(
     private val repository: NotificationRepository
 ) : ViewModel() {
 
-    init {
-        // Add mock data for demonstration purposes if empty
-        viewModelScope.launch {
-            repository.getAllNotifications().first().let { result ->
-                if (result is Result.Success && result.data.isEmpty()) {
-                    val now = Clock.System.now()
-                    val mocks = listOf(
-                        com.project.roulette.domain.model.Notification(
-                            id = "1",
-                            title = "Spin Result",
-                            message = "Your wheel asdasdas landed on Alex! 🎯",
-                            type = com.project.roulette.domain.model.NotificationType.SPIN_RESULT,
-                            timestamp = now - 2.minutes,
-                            isRead = false
-                        ),
-                        com.project.roulette.domain.model.Notification(
-                            id = "2",
-                            title = "Milestone 🎉",
-                            message = "You've made 25 spins total. Keep the momentum going!",
-                            type = com.project.roulette.domain.model.NotificationType.MILESTONE,
-                            timestamp = now - 1.hours,
-                            isRead = false
-                        ),
-                        com.project.roulette.domain.model.Notification(
-                            id = "3",
-                            title = "Streak 🔥",
-                            message = "You're on a 3-day spin streak. Don't break it!",
-                            type = com.project.roulette.domain.model.NotificationType.STREAK,
-                            timestamp = now - 3.hours,
-                            isRead = false
-                        ),
-                        com.project.roulette.domain.model.Notification(
-                            id = "4",
-                            title = "Reminder",
-                            message = "You haven't spun Class Wheel in 3 days.",
-                            type = com.project.roulette.domain.model.NotificationType.REMINDER,
-                            timestamp = now - 1.days,
-                            isRead = true
-                        ),
-                        com.project.roulette.domain.model.Notification(
-                            id = "5",
-                            title = "Tip 💡",
-                            message = "Try adding more segments to New Wheel for more variety!",
-                            type = com.project.roulette.domain.model.NotificationType.TIP,
-                            timestamp = now - 2.days,
-                            isRead = true
-                        )
-                    )
-                    mocks.forEach { repository.addNotification(it) }
-                }
-            }
-        }
-    }
-
     private val _filter = MutableStateFlow(NotificationFilter.ALL)
     val filter: StateFlow<NotificationFilter> = _filter.asStateFlow()
 

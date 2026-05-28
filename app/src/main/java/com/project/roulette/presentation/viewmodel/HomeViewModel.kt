@@ -14,15 +14,10 @@ import com.project.roulette.presentation.model.HomeFilter
 import com.project.roulette.presentation.model.HomeUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.days
 
 @HiltViewModel
 class HomeViewModel @Inject constructor(
@@ -49,6 +44,39 @@ class HomeViewModel @Inject constructor(
 
     init {
         observeWheels()
+        checkReminders()
+    }
+
+    private fun checkReminders() {
+        viewModelScope.launch {
+            val result = getAllWheelsUseCase().first()
+            if (result is Result.Success) {
+                val now = kotlinx.datetime.Clock.System.now()
+                val threeDays = 3.days
+                result.data.forEach { wheel ->
+                    if (now - wheel.updatedAt > threeDays) {
+                        val notificationsResult = notificationRepository.getAllNotifications().first()
+                        if (notificationsResult is Result.Success) {
+                            val exists = notificationsResult.data.any { 
+                                it.type == com.project.roulette.domain.model.NotificationType.REMINDER && it.targetId == wheel.id
+                            }
+                            if (!exists) {
+                                notificationRepository.addNotification(
+                                    com.project.roulette.domain.model.Notification(
+                                        id = java.util.UUID.randomUUID().toString(),
+                                        title = "Reminder 🔔",
+                                        message = "You haven't spun ${wheel.name} in 3 days.",
+                                        type = com.project.roulette.domain.model.NotificationType.REMINDER,
+                                        timestamp = now,
+                                        targetId = wheel.id
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     @OptIn(ExperimentalCoroutinesApi::class)

@@ -78,9 +78,9 @@ fun NotificationScreen(
                     )
                 }
                 
-                TextButton(onClick = { viewModel.markAllAsRead() }) {
-                    Text("Mark all read", color = PrimaryPurple, fontWeight = FontWeight.Bold)
-                }
+//                TextButton(onClick = { viewModel.markAllAsRead() }) {
+//                    Text("Mark all read", color = PrimaryPurple, fontWeight = FontWeight.Bold)
+//                }
             }
 
             Spacer(Modifier.height(20.dp))

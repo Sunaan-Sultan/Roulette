@@ -3,6 +3,9 @@ package com.project.roulette.domain.usecase.spin
 import com.project.roulette.domain.model.Result
 import com.project.roulette.domain.model.Segment
 import com.project.roulette.domain.model.SpinResult
+import com.project.roulette.domain.model.Notification
+import com.project.roulette.domain.model.NotificationType
+import com.project.roulette.domain.repository.NotificationRepository
 import com.project.roulette.domain.repository.SpinHistoryRepository
 import com.project.roulette.domain.repository.WheelRepository
 import com.project.roulette.domain.usecase.selection.SelectionAlgorithmFactory
@@ -18,6 +21,7 @@ import java.util.UUID
 class SpinWheelUseCase(
     private val wheelRepository: WheelRepository,
     private val spinHistoryRepository: SpinHistoryRepository,
+    private val notificationRepository: NotificationRepository,
     private val selectionAlgorithmFactory: SelectionAlgorithmFactory
 ) {
     /**
@@ -40,7 +44,8 @@ class SpinWheelUseCase(
                 return Result.Error(Exception("Wheel not found"))
             }
 
-            val activeSegments = wheelResult.data.getActiveSegments()
+            val wheel = wheelResult.data
+            val activeSegments = wheel.getActiveSegments()
             if (activeSegments.isEmpty()) {
                 return Result.Error(Exception("No active segments to spin"))
             }
@@ -63,6 +68,47 @@ class SpinWheelUseCase(
 
             spinHistoryRepository.recordSpin(spinResult).onError {
                 throw it
+            }
+
+            // Create Notification for Spin Result
+            notificationRepository.addNotification(
+                Notification(
+                    id = UUID.randomUUID().toString(),
+                    title = "Spin Result",
+                    message = "Your wheel ${wheel.name} landed on ${selectedSegment.name}! 🎯",
+                    type = NotificationType.SPIN_RESULT,
+                    timestamp = Clock.System.now(),
+                    targetId = wheelId
+                )
+            )
+
+            // Check for Milestone (e.g., multiples of 25 spins)
+            val totalSpins = spinHistoryRepository.getGlobalSpinCount().first()
+            if (totalSpins > 0 && totalSpins % 25 == 0) {
+                notificationRepository.addNotification(
+                    Notification(
+                        id = UUID.randomUUID().toString(),
+                        title = "Milestone 🎉",
+                        message = "You've made $totalSpins spins total! Keep the momentum going!",
+                        type = NotificationType.MILESTONE,
+                        timestamp = Clock.System.now()
+                    )
+                )
+            }
+
+            // Check for Streak (Simple check: if spun today and yesterday)
+            // Implementation of streak logic would be more complex, 
+            // but let's add a placeholder notification for demonstration.
+            if (totalSpins == 10) { // Just an example trigger
+                 notificationRepository.addNotification(
+                    Notification(
+                        id = UUID.randomUUID().toString(),
+                        title = "Streak 🔥",
+                        message = "You're on a roll! 10 spins recorded.",
+                        type = NotificationType.STREAK,
+                        timestamp = Clock.System.now()
+                    )
+                )
             }
 
             Result.Success(

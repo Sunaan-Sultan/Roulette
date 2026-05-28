@@ -48,13 +48,19 @@ object UseCaseModule {
 
     @Singleton
     @Provides
-    fun provideCreateWheelUseCase(wheelRepository: WheelRepository): CreateWheelUseCase =
-        CreateWheelUseCase(wheelRepository)
+    fun provideCreateWheelUseCase(
+        wheelRepository: WheelRepository,
+        notificationRepository: com.project.roulette.domain.repository.NotificationRepository
+    ): CreateWheelUseCase =
+        CreateWheelUseCase(wheelRepository, notificationRepository)
 
     @Singleton
     @Provides
-    fun provideUpdateWheelUseCase(wheelRepository: WheelRepository): UpdateWheelUseCase =
-        UpdateWheelUseCase(wheelRepository)
+    fun provideUpdateWheelUseCase(
+        wheelRepository: WheelRepository,
+        notificationRepository: com.project.roulette.domain.repository.NotificationRepository
+    ): UpdateWheelUseCase =
+        UpdateWheelUseCase(wheelRepository, notificationRepository)
 
     @Singleton
     @Provides
@@ -68,8 +74,11 @@ object UseCaseModule {
 
     @Singleton
     @Provides
-    fun provideToggleFavoriteUseCase(wheelRepository: WheelRepository): ToggleFavoriteUseCase =
-        ToggleFavoriteUseCase(wheelRepository)
+    fun provideToggleFavoriteUseCase(
+        wheelRepository: WheelRepository,
+        notificationRepository: com.project.roulette.domain.repository.NotificationRepository
+    ): ToggleFavoriteUseCase =
+        ToggleFavoriteUseCase(wheelRepository, notificationRepository)
 
     @Singleton
     @Provides
@@ -85,9 +94,10 @@ object UseCaseModule {
     fun provideSpinWheelUseCase(
         wheelRepository: WheelRepository,
         spinHistoryRepository: SpinHistoryRepository,
+        notificationRepository: com.project.roulette.domain.repository.NotificationRepository,
         selectionAlgorithmFactory: SelectionAlgorithmFactory
     ): SpinWheelUseCase =
-        SpinWheelUseCase(wheelRepository, spinHistoryRepository, selectionAlgorithmFactory)
+        SpinWheelUseCase(wheelRepository, spinHistoryRepository, notificationRepository, selectionAlgorithmFactory)
 
     @Singleton
     @Provides
