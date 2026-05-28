@@ -71,10 +71,18 @@ class WheelViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.value = WheelUiState.Loading
             getWheelByIdUseCase(wheelId).collect { result ->
-                _uiState.value = when (result) {
-                    is Result.Success -> WheelUiState.Success(wheel = result.data)
-                    is Result.Error -> WheelUiState.Error(result.exception.message ?: "Failed to load wheel")
-                    is Result.Loading -> WheelUiState.Loading
+                if (result is Result.Success) {
+                    val currentState = _uiState.value
+                    if (currentState is WheelUiState.Success) {
+                        // Merge the new wheel data while preserving UI state like lastSpinResult
+                        _uiState.value = currentState.copy(wheel = result.data)
+                    } else {
+                        _uiState.value = WheelUiState.Success(wheel = result.data)
+                    }
+                } else if (result is Result.Error) {
+                    _uiState.value = WheelUiState.Error(result.exception.message ?: "Failed to load wheel")
+                } else if (result is Result.Loading && _uiState.value !is WheelUiState.Success) {
+                    _uiState.value = WheelUiState.Loading
                 }
             }
             
@@ -111,8 +119,10 @@ class WheelViewModel @Inject constructor(
                 // Update UI to show spinning state
                 _uiState.value = currentState.copy(isSpinning = true, lastSpinResult = null)
 
-                // Play sound and haptic feedback
-                soundManager.playSpinStart()
+                // Play sound and haptic feedback if enabled
+                if (currentState.wheel.spinSound) {
+                    soundManager.playSpinStart()
+                }
                 hapticFeedback.spinVibration()
 
                 // Execute spin selection (suspend use case)
@@ -175,8 +185,10 @@ class WheelViewModel @Inject constructor(
         val currentState = _uiState.value
         if (currentState !is WheelUiState.Success) return
 
-        // Trigger completion feedback
-        soundManager.playSpinEnd()
+        // Trigger completion feedback if sound enabled
+        if (currentState.wheel.spinSound) {
+            soundManager.playSpinEnd()
+        }
         hapticFeedback.successPattern()
 
         // Update UI with spin result and stop spinning
@@ -212,7 +224,25 @@ class WheelViewModel @Inject constructor(
     fun clearResult() {
         val currentState = _uiState.value
         if (currentState is WheelUiState.Success) {
+            val result = currentState.lastSpinResult
+            val wheel = currentState.wheel
+            
+            // Clear result first to hide dialog
             _uiState.value = currentState.copy(lastSpinResult = null)
+
+            // If "Remove after pick" is enabled, deactivate the segment
+            if (wheel.removeAfterPick && result != null) {
+                val updatedSegments = wheel.segments.map {
+                    if (it.id == result.selectedSegmentId) it.copy(isActive = false) else it
+                }
+                // Check if we still have enough segments to continue spinning (at least 2)
+                if (updatedSegments.count { it.isActive } >= 2) {
+                    val updatedWheel = wheel.copy(segments = updatedSegments)
+                    viewModelScope.launch {
+                        updateWheelUseCase(updatedWheel)
+                    }
+                }
+            }
         }
     }
 
@@ -266,6 +296,23 @@ class WheelViewModel @Inject constructor(
         val updatedSegments = currentState.wheel.segments.map {
             if (it.id == segmentId) it.copy(weight = weight) else it
         }
+        val updatedWheel = currentState.wheel.copy(segments = updatedSegments)
+        
+        _uiState.value = currentState.copy(wheel = updatedWheel)
+        
+        viewModelScope.launch {
+            updateWheelUseCase(updatedWheel)
+        }
+    }
+
+    /**
+     * Reactivate all segments (reset wheel).
+     */
+    fun resetWheel() {
+        val currentState = _uiState.value
+        if (currentState !is WheelUiState.Success) return
+
+        val updatedSegments = currentState.wheel.segments.map { it.copy(isActive = true) }
         val updatedWheel = currentState.wheel.copy(segments = updatedSegments)
         
         _uiState.value = currentState.copy(wheel = updatedWheel)

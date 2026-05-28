@@ -13,7 +13,10 @@ data class Wheel(
     val createdAt: Instant,
     val updatedAt: Instant,
     val description: String = "",
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val spinSound: Boolean = true,
+    val removeAfterPick: Boolean = false,
+    val themePaletteIndex: Int = 0
 ) {
     init {
         require(name.isNotBlank()) { "Wheel name cannot be blank" }

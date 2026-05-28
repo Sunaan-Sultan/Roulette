@@ -148,6 +148,7 @@ fun WheelScreen(
                         Icon(Icons.Filled.MoreVert, contentDescription = "Menu")
                     }
                     DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
+                        DropdownMenuItem(text = { Text("Reset Wheel") }, onClick = { viewModel.resetWheel(); menuExpanded = false })
                         DropdownMenuItem(text = { Text("History") }, onClick = { onNavigateToHistory(wheelId); menuExpanded = false })
                         DropdownMenuItem(text = { Text("Statistics") }, onClick = { onNavigateToStatistics(wheelId); menuExpanded = false })
                     }

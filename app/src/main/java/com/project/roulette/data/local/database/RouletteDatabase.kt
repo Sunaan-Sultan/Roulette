@@ -14,7 +14,7 @@ import com.project.roulette.data.local.database.entity.NotificationEntity
  */
 @Database(
     entities = [WheelEntity::class, SpinHistoryEntity::class, NotificationEntity::class],
-    version = 3,
+    version = 4,
     exportSchema = false
 )
 abstract class RouletteDatabase : RoomDatabase() {

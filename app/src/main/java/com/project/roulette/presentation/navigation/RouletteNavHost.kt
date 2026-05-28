@@ -114,9 +114,17 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
             val viewModel: EditorViewModel = hiltViewModel()
             EditorScreen(
                 viewModel = viewModel,
+                wheelId = null,
                 isNew = true,
                 onNavigateBack = { navController.popBackStack() },
-                onSaved = { navController.popBackStack() }
+                onPreview = { id ->
+                    navController.navigate(RouletteScreen.Wheel.forId(id))
+                },
+                onSaved = { id ->
+                    navController.navigate(RouletteScreen.Wheel.forId(id)) {
+                        popUpTo(RouletteScreen.CreateWheel.route) { inclusive = true }
+                    }
+                }
             )
         }
 
@@ -125,11 +133,18 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
             val viewModel: EditorViewModel = hiltViewModel()
 
             EditorScreen(
-                wheelId = wheelId,
                 viewModel = viewModel,
+                wheelId = wheelId,
                 isNew = false,
                 onNavigateBack = { navController.popBackStack() },
-                onSaved = { navController.popBackStack() }
+                onPreview = { id ->
+                    navController.navigate(RouletteScreen.Wheel.forId(id))
+                },
+                onSaved = { id ->
+                    navController.navigate(RouletteScreen.Wheel.forId(id)) {
+                        popUpTo(RouletteScreen.EditWheel.route) { inclusive = true }
+                    }
+                }
             )
         }
 

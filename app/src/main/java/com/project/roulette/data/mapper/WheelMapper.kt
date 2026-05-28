@@ -53,7 +53,10 @@ class WheelMapper @Inject constructor() {
             createdAt = wheel.createdAt.toEpochMilliseconds(),
             updatedAt = wheel.updatedAt.toEpochMilliseconds(),
             segments = segmentsJson,
-            isFavorite = wheel.isFavorite
+            isFavorite = wheel.isFavorite,
+            spinSound = wheel.spinSound,
+            removeAfterPick = wheel.removeAfterPick,
+            themePaletteIndex = wheel.themePaletteIndex
         )
     }
 
@@ -73,7 +76,10 @@ class WheelMapper @Inject constructor() {
             createdAt = Instant.fromEpochMilliseconds(entity.createdAt),
             updatedAt = Instant.fromEpochMilliseconds(entity.updatedAt),
             description = entity.description,
-            isFavorite = entity.isFavorite
+            isFavorite = entity.isFavorite,
+            spinSound = entity.spinSound,
+            removeAfterPick = entity.removeAfterPick,
+            themePaletteIndex = entity.themePaletteIndex
         )
     }
 

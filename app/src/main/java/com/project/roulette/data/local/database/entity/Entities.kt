@@ -16,7 +16,10 @@ data class WheelEntity(
     val createdAt: Long, // epoch milliseconds
     val updatedAt: Long, // epoch milliseconds
     val segments: String, // JSON serialized list of SegmentEntity
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val spinSound: Boolean = true,
+    val removeAfterPick: Boolean = false,
+    val themePaletteIndex: Int = 0
 )
 
 /**

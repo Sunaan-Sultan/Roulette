@@ -36,18 +36,32 @@ class EditorViewModel @Inject constructor(
      * Initialize editor for creating a new wheel.
      */
     fun initializeNew() {
-        val initialSegments = listOf(
-            Segment(UUID.randomUUID().toString(), "Option 1", Color.Red, 1f),
-            Segment(UUID.randomUUID().toString(), "Option 2", Color.Green, 1f),
-            Segment(UUID.randomUUID().toString(), "Option 3", Color.Blue, 1f)
+        val themeColors = listOf(
+            Color(0xFF673AB7), Color(0xFF00796B), Color(0xFFD84315), Color(0xFF1976D2),
+            Color(0xFFC2185B), Color(0xFFFFA000), Color(0xFF388E3C), Color(0xFF616161)
         )
+        val defaultPaletteIndex = 0
+        val paletteBaseColor = themeColors[defaultPaletteIndex]
+        
+        val initialSegments = listOf("Option 1", "Option 2", "Option 3").mapIndexed { i, name ->
+            val hsv = FloatArray(3)
+            android.graphics.Color.colorToHSV(paletteBaseColor.toArgb(), hsv)
+            hsv[2] *= (0.6f + (i % 5) * 0.1f).coerceIn(0.3f, 1.0f)
+            Segment(
+                id = UUID.randomUUID().toString(),
+                name = name,
+                color = Color(android.graphics.Color.HSVToColor(hsv)),
+                weight = 1f
+            )
+        }
         val now = Clock.System.now()
         val newWheel = Wheel(
             id = UUID.randomUUID().toString(),
             name = "New Wheel",
             segments = initialSegments,
             createdAt = now,
-            updatedAt = now
+            updatedAt = now,
+            themePaletteIndex = defaultPaletteIndex
         )
         _uiState.value = EditorUiState.Success(
             wheel = newWheel,
@@ -113,13 +127,23 @@ class EditorViewModel @Inject constructor(
     /**
      * Add a new segment.
      */
-    fun addSegment(name: String, color: Color) {
+    fun addSegment(name: String) {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success && currentState.wheel != null) {
+            val themeColors = listOf(
+                Color(0xFF673AB7), Color(0xFF00796B), Color(0xFFD84315), Color(0xFF1976D2),
+                Color(0xFFC2185B), Color(0xFFFFA000), Color(0xFF388E3C), Color(0xFF616161)
+            )
+            val paletteBaseColor = themeColors[currentState.wheel.themePaletteIndex]
+            val index = currentState.wheel.segments.size
+            val hsv = FloatArray(3)
+            android.graphics.Color.colorToHSV(paletteBaseColor.toArgb(), hsv)
+            hsv[2] *= (0.6f + (index % 5) * 0.1f).coerceIn(0.3f, 1.0f)
+            
             val newSegment = Segment(
                 id = UUID.randomUUID().toString(),
                 name = name,
-                color = color,
+                color = Color(android.graphics.Color.HSVToColor(hsv)),
                 weight = 1f
             )
             val updated = currentState.wheel.copy(
@@ -261,6 +285,120 @@ class EditorViewModel @Inject constructor(
                     saveError = e.message ?: "Unknown error",
                     isSaved = false
                 )
+            }
+        }
+    }
+
+    /**
+     * Update spin sound setting.
+     */
+    fun updateSpinSound(enabled: Boolean) {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success && currentState.wheel != null) {
+            val updated = currentState.wheel.copy(spinSound = enabled)
+            _uiState.value = currentState.copy(wheel = updated, isSaved = false)
+        }
+    }
+
+    /**
+     * Update remove after pick setting.
+     */
+    fun updateRemoveAfterPick(enabled: Boolean) {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success && currentState.wheel != null) {
+            val updated = currentState.wheel.copy(removeAfterPick = enabled)
+            _uiState.value = currentState.copy(wheel = updated, isSaved = false)
+        }
+    }
+
+    /**
+     * Update theme palette index and refresh all segment colors.
+     */
+    fun updateThemePalette(index: Int) {
+        val currentState = _uiState.value
+        val themeColors = listOf(
+            Color(0xFF673AB7), Color(0xFF00796B), Color(0xFFD84315), Color(0xFF1976D2),
+            Color(0xFFC2185B), Color(0xFFFFA000), Color(0xFF388E3C), Color(0xFF616161)
+        )
+        if (currentState is EditorUiState.Success && currentState.wheel != null) {
+            val paletteBaseColor = themeColors[index]
+            val updatedSegments = currentState.wheel.segments.mapIndexed { i, segment ->
+                val hsv = FloatArray(3)
+                android.graphics.Color.colorToHSV(paletteBaseColor.toArgb(), hsv)
+                hsv[2] *= (0.6f + (i % 5) * 0.1f).coerceIn(0.3f, 1.0f)
+                segment.copy(color = Color(android.graphics.Color.HSVToColor(hsv)))
+            }
+            val updated = currentState.wheel.copy(
+                themePaletteIndex = index,
+                segments = updatedSegments
+            )
+            _uiState.value = currentState.copy(wheel = updated, isSaved = false)
+        }
+    }
+
+    private fun Color.toArgb(): Int {
+        return (this.alpha * 255.0f + 0.5f).toInt() shl 24 or
+               ((this.red * 255.0f + 0.5f).toInt() shl 16) or
+               ((this.green * 255.0f + 0.5f).toInt() shl 8) or
+               (this.blue * 255.0f + 0.5f).toInt()
+    }
+
+    /**
+     * Import names from a comma or newline separated string.
+     */
+    fun importNames(input: String) {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success && currentState.wheel != null) {
+            val names = input.split(Regex("[,\\n]"))
+                .map { it.trim() }
+                .filter { it.isNotBlank() }
+            
+            if (names.isEmpty()) return
+
+            val themeColors = listOf(
+                Color(0xFF673AB7), Color(0xFF00796B), Color(0xFFD84315), Color(0xFF1976D2),
+                Color(0xFFC2185B), Color(0xFFFFA000), Color(0xFF388E3C), Color(0xFF616161)
+            )
+            val paletteBaseColor = themeColors[currentState.wheel.themePaletteIndex]
+            val baseIndex = currentState.wheel.segments.size
+
+            val newSegments = names.mapIndexed { i, name ->
+                val hsv = FloatArray(3)
+                android.graphics.Color.colorToHSV(paletteBaseColor.toArgb(), hsv)
+                hsv[2] *= (0.6f + ((baseIndex + i) % 5) * 0.1f).coerceIn(0.3f, 1.0f)
+                
+                Segment(
+                    id = UUID.randomUUID().toString(),
+                    name = name,
+                    color = Color(android.graphics.Color.HSVToColor(hsv)),
+                    weight = 1f
+                )
+            }
+            
+            val updated = currentState.wheel.copy(
+                segments = currentState.wheel.segments + newSegments,
+                updatedAt = Clock.System.now()
+            )
+            _uiState.value = currentState.copy(wheel = updated, isSaved = false)
+        }
+    }
+
+    /**
+     * Move segment up in the list.
+     */
+    fun moveSegmentUp(segmentId: String) {
+        val currentState = _uiState.value
+        if (currentState is EditorUiState.Success && currentState.wheel != null) {
+            val segments = currentState.wheel.segments.toMutableList()
+            val index = segments.indexOfFirst { it.id == segmentId }
+            if (index > 0) {
+                val segment = segments.removeAt(index)
+                segments.add(index - 1, segment)
+                val updated = currentState.wheel.copy(
+                    segments = segments,
+                    updatedAt = Clock.System.now()
+                )
+                _uiState.value = currentState.copy(wheel = updated, isSaved = false)
             }
         }
     }
