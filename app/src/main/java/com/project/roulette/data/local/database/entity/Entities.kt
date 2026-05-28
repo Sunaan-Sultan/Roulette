@@ -44,3 +44,17 @@ data class SpinHistoryEntity(
     val spinDuration: Long,
     val finalAngle: Float
 )
+
+/**
+ * Room entity for Notifications.
+ */
+@Entity(tableName = "notifications")
+data class NotificationEntity(
+    @PrimaryKey val id: String,
+    val title: String,
+    val message: String,
+    val type: String, // enum name
+    val timestamp: Long,
+    val isRead: Boolean = false,
+    val targetId: String? = null
+)

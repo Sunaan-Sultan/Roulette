@@ -6,19 +6,21 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 import com.project.roulette.data.local.database.entity.SpinHistoryEntity
 import com.project.roulette.data.local.database.entity.WheelEntity
+import com.project.roulette.data.local.database.entity.NotificationEntity
 
 /**
  * Room database configuration for the Roulette app.
  * Singleton pattern: single instance managed by DI container.
  */
 @Database(
-    entities = [WheelEntity::class, SpinHistoryEntity::class],
-    version = 2,
+    entities = [WheelEntity::class, SpinHistoryEntity::class, NotificationEntity::class],
+    version = 3,
     exportSchema = false
 )
 abstract class RouletteDatabase : RoomDatabase() {
     abstract fun wheelDao(): WheelDao
     abstract fun spinHistoryDao(): SpinHistoryDao
+    abstract fun notificationDao(): NotificationDao
 
     companion object {
         @Volatile

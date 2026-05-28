@@ -29,5 +29,6 @@ sealed class RouletteScreen(val route: String) {
     }
 
     object Favourites : RouletteScreen("favourites")
+    object Notifications : RouletteScreen("notifications")
     object Profile : RouletteScreen("profile")
 }

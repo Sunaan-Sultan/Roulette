@@ -16,6 +16,7 @@ sealed class HomeUiState {
     data class Success(
         val wheels: List<Wheel>,
         val wheelSpinCounts: Map<String, Int> = emptyMap(),
+        val unreadNotificationCount: Int = 0,
         val totalWheels: Int = 0,
         val totalSpins: Int = 0,
         val spinsToday: Int = 0,
@@ -73,4 +74,19 @@ sealed class EditorUiState {
         val isSaved: Boolean = false // flag set when save completes successfully
     ) : EditorUiState()
     data class Error(val message: String) : EditorUiState()
+}
+
+// Notification screen state
+sealed class NotificationUiState {
+    object Loading : NotificationUiState()
+    data class Success(
+        val notifications: List<com.project.roulette.domain.model.Notification>,
+        val unreadCount: Int = 0,
+        val currentFilter: NotificationFilter = NotificationFilter.ALL
+    ) : NotificationUiState()
+    data class Error(val message: String) : NotificationUiState()
+}
+
+enum class NotificationFilter {
+    ALL, UNREAD, ACTIVITY
 }

@@ -8,6 +8,7 @@ import androidx.navigation.compose.composable
 import com.project.roulette.presentation.screen.home.HomeScreen
 import com.project.roulette.presentation.screen.wheels.WheelsScreen
 import com.project.roulette.presentation.screen.favourites.FavouritesScreen
+import com.project.roulette.presentation.screen.notifications.NotificationScreen
 import com.project.roulette.presentation.screen.wheel.WheelScreen
 import com.project.roulette.presentation.screen.editor.EditorScreen
 import com.project.roulette.presentation.screen.history.HistoryScreen
@@ -23,6 +24,7 @@ import androidx.compose.ui.platform.LocalLayoutDirection
 import com.project.roulette.presentation.viewmodel.EditorViewModel
 import com.project.roulette.presentation.viewmodel.HistoryViewModel
 import com.project.roulette.presentation.viewmodel.StatisticsViewModel
+import com.project.roulette.presentation.viewmodel.NotificationViewModel
 
 @Composable
 fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValues = PaddingValues()) {
@@ -53,6 +55,9 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
                 },
                 onNavigateToCreate = {
                     navController.navigate(RouletteScreen.CreateWheel.route)
+                },
+                onNavigateToNotifications = {
+                    navController.navigate(RouletteScreen.Notifications.route)
                 }
             )
         }
@@ -66,6 +71,9 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
                 },
                 onNavigateToCreate = {
                     navController.navigate(RouletteScreen.CreateWheel.route)
+                },
+                onNavigateToNotifications = {
+                    navController.navigate(RouletteScreen.Notifications.route)
                 }
             )
         }
@@ -77,6 +85,14 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
                 onNavigateToWheel = { wheelId ->
                     navController.navigate(RouletteScreen.Wheel.forId(wheelId))
                 }
+            )
+        }
+
+        composable(RouletteScreen.Notifications.route) {
+            val viewModel: NotificationViewModel = hiltViewModel()
+            NotificationScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

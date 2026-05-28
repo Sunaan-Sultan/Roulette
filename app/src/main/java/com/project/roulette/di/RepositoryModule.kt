@@ -6,6 +6,8 @@ import com.project.roulette.data.repository.WheelRepositoryImpl
 import com.project.roulette.domain.repository.SpinHistoryRepository
 import com.project.roulette.domain.repository.StatisticsRepository
 import com.project.roulette.domain.repository.WheelRepository
+import com.project.roulette.domain.repository.NotificationRepository
+import com.project.roulette.data.repository.NotificationRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -36,5 +38,11 @@ abstract class RepositoryModule {
     abstract fun bindStatisticsRepository(
         impl: StatisticsRepositoryImpl
     ): StatisticsRepository
+
+    @Singleton
+    @Binds
+    abstract fun bindNotificationRepository(
+        impl: NotificationRepositoryImpl
+    ): NotificationRepository
 }
 

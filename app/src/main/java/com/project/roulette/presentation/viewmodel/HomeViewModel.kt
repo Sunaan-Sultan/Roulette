@@ -31,7 +31,8 @@ class HomeViewModel @Inject constructor(
     private val deleteWheelUseCase: DeleteWheelUseCase,
     private val searchWheelsUseCase: SearchWheelsUseCase,
     private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
-    private val getGlobalStatsUseCase: GetGlobalStatsUseCase
+    private val getGlobalStatsUseCase: GetGlobalStatsUseCase,
+    private val notificationRepository: com.project.roulette.domain.repository.NotificationRepository
 ) : ViewModel() {
 
     private val _filter = MutableStateFlow(HomeFilter.ALL)
@@ -57,9 +58,10 @@ class HomeViewModel @Inject constructor(
                 _filter,
                 _searchQuery,
                 getGlobalStatsUseCase(),
-                getGlobalStatsUseCase.getSpinCounts()
-            ) { filter, query, globalStats, spinCounts ->
-                HomeParams(filter, query, globalStats, spinCounts)
+                getGlobalStatsUseCase.getSpinCounts(),
+                notificationRepository.getUnreadCount()
+            ) { filter, query, globalStats, spinCounts, unreadCount ->
+                HomeParams(filter, query, globalStats, spinCounts, unreadCount)
             }.flatMapLatest { params ->
                 val wheelsFlow = if (params.query.isNotEmpty()) {
                     searchWheelsUseCase(params.query)
@@ -81,6 +83,7 @@ class HomeViewModel @Inject constructor(
                             HomeUiState.Success(
                                 wheels = filteredWheels,
                                 wheelSpinCounts = params.spinCounts,
+                                unreadNotificationCount = params.unreadCount,
                                 totalWheels = result.data.size,
                                 totalSpins = params.globalStats.totalSpins,
                                 spinsToday = params.globalStats.spinsToday,
@@ -149,5 +152,6 @@ data class HomeParams(
     val filter: HomeFilter,
     val query: String,
     val globalStats: com.project.roulette.domain.usecase.wheel.GlobalStats,
-    val spinCounts: Map<String, Int>
+    val spinCounts: Map<String, Int>,
+    val unreadCount: Int
 )

@@ -36,7 +36,8 @@ import com.project.roulette.util.showInterstitial
 fun HomeScreen(
     viewModel: HomeViewModel,
     onNavigateToWheel: (String) -> Unit,
-    onNavigateToCreate: () -> Unit
+    onNavigateToCreate: () -> Unit,
+    onNavigateToNotifications: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
@@ -104,16 +105,29 @@ fun HomeScreen(
                 )
                 
                 IconButton(
-                    onClick = { /* Notification action */ },
+                    onClick = onNavigateToNotifications,
                     modifier = Modifier
                         .clip(CircleShape)
                         .background(SurfaceDark)
                 ) {
-                    Icon(
-                        Icons.Filled.Notifications,
-                        contentDescription = "Notifications",
-                        tint = Color.White
-                    )
+                    BadgedBox(
+                        badge = {
+                            if (uiState is HomeUiState.Success && (uiState as HomeUiState.Success).unreadNotificationCount > 0) {
+                                Badge(
+                                    containerColor = Color.Red,
+                                    contentColor = Color.White
+                                ) {
+                                    Text((uiState as HomeUiState.Success).unreadNotificationCount.toString())
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            Icons.Filled.Notifications,
+                            contentDescription = "Notifications",
+                            tint = Color.White
+                        )
+                    }
                 }
             }
 

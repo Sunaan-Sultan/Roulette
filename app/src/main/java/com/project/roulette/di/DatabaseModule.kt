@@ -4,6 +4,7 @@ import android.content.Context
 import com.project.roulette.data.local.database.RouletteDatabase
 import com.project.roulette.data.local.database.SpinHistoryDao
 import com.project.roulette.data.local.database.WheelDao
+import com.project.roulette.data.local.database.NotificationDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -32,4 +33,9 @@ object DatabaseModule {
     @Singleton
     fun provideSpinHistoryDao(database: RouletteDatabase): SpinHistoryDao =
         database.spinHistoryDao()
+
+    @Provides
+    @Singleton
+    fun provideNotificationDao(database: RouletteDatabase): NotificationDao =
+        database.notificationDao()
 }

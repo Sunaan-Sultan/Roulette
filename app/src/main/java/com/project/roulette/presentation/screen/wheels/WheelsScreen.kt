@@ -37,7 +37,8 @@ import com.project.roulette.presentation.screen.home.WheelCard
 fun WheelsScreen(
     viewModel: HomeViewModel,
     onNavigateToWheel: (String) -> Unit,
-    onNavigateToCreate: () -> Unit
+    onNavigateToCreate: () -> Unit,
+    onNavigateToNotifications: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
@@ -101,6 +102,32 @@ fun WheelsScreen(
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
+
+                IconButton(
+                    onClick = onNavigateToNotifications,
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(SurfaceDark)
+                ) {
+                    BadgedBox(
+                        badge = {
+                            if (uiState is HomeUiState.Success && (uiState as HomeUiState.Success).unreadNotificationCount > 0) {
+                                Badge(
+                                    containerColor = Color.Red,
+                                    contentColor = Color.White
+                                ) {
+                                    Text((uiState as HomeUiState.Success).unreadNotificationCount.toString())
+                                }
+                            }
+                        }
+                    ) {
+                        Icon(
+                            Icons.Filled.Notifications,
+                            contentDescription = "Notifications",
+                            tint = Color.White
+                        )
+                    }
+                }
             }
 
             Spacer(Modifier.height(20.dp))

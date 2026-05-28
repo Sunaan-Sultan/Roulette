@@ -82,6 +82,30 @@ interface SpinHistoryDao {
     suspend fun getAllSpinsForWheelSync(wheelId: String): List<com.project.roulette.data.local.database.entity.SpinHistoryEntity>
 }
 
+/**
+ * Data Access Object for Notification operations.
+ */
+@Dao
+interface NotificationDao {
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun insertNotification(notification: com.project.roulette.data.local.database.entity.NotificationEntity)
+
+    @Query("SELECT * FROM notifications ORDER BY timestamp DESC")
+    fun getAllNotifications(): Flow<List<com.project.roulette.data.local.database.entity.NotificationEntity>>
+
+    @Query("SELECT COUNT(*) FROM notifications WHERE isRead = 0")
+    fun getUnreadCount(): Flow<Int>
+
+    @Query("UPDATE notifications SET isRead = 1 WHERE id = :id")
+    suspend fun markAsRead(id: String)
+
+    @Query("UPDATE notifications SET isRead = 1")
+    suspend fun markAllAsRead()
+
+    @Query("DELETE FROM notifications WHERE id = :id")
+    suspend fun deleteNotification(id: String)
+}
+
 data class WheelSpinCount(
     val wheelId: String,
     val count: Int
