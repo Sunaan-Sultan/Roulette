@@ -101,19 +101,6 @@ fun WheelsScreen(
                     fontWeight = FontWeight.Bold,
                     color = Color.White
                 )
-                
-                IconButton(
-                    onClick = { /* Filter action */ },
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(SurfaceDark)
-                ) {
-                    Icon(
-                        Icons.Filled.Settings,
-                        contentDescription = "Filter",
-                        tint = Color.White
-                    )
-                }
             }
 
             Spacer(Modifier.height(20.dp))

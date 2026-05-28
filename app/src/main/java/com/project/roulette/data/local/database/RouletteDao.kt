@@ -67,10 +67,10 @@ interface SpinHistoryDao {
     suspend fun getTotalSpinCount(wheelId: String): Int
 
     @Query("SELECT COUNT(*) FROM spin_history")
-    suspend fun getGlobalSpinCount(): Int
+    fun getGlobalSpinCountFlow(): Flow<Int>
 
     @Query("SELECT COUNT(*) FROM spin_history WHERE spinTimestamp >= :startOfDay")
-    suspend fun getSpinsTodayCount(startOfDay: Long): Int
+    fun getSpinsTodayCountFlow(startOfDay: Long): Flow<Int>
 
     @Query("DELETE FROM spin_history WHERE wheelId = :wheelId")
     suspend fun clearWheelHistory(wheelId: String)

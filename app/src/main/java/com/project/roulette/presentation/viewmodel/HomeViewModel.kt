@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -56,36 +57,43 @@ class HomeViewModel @Inject constructor(
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun observeWheels() {
         viewModelScope.launch {
-            combine(_filter, _searchQuery) { filter, query ->
-                Pair(filter, query)
-            }.flatMapLatest { (_, query) ->
-                if (query.isNotEmpty()) {
+            combine(
+                _filter,
+                _searchQuery,
+                getGlobalStatsUseCase()
+            ) { filter, query, globalStats ->
+                Triple(filter, query, globalStats)
+            }.flatMapLatest { (filter, query, globalStats) ->
+                val wheelsFlow = if (query.isNotEmpty()) {
                     searchWheelsUseCase(query)
                 } else {
                     getAllWheelsUseCase()
                 }
-            }.collect { result ->
-                val globalStats = getGlobalStatsUseCase()
-                _uiState.value = when (result) {
-                    is Result.Success -> {
-                        val filteredWheels = when (_filter.value) {
-                            HomeFilter.ALL -> result.data
-                            HomeFilter.RECENT -> result.data.sortedByDescending { it.updatedAt }
-                            HomeFilter.FAVOURITES -> result.data.filter { it.isFavorite }
-                            HomeFilter.MOST_USED -> result.data // TODO: implement most used sorting
+
+                wheelsFlow.map { result: com.project.roulette.domain.model.Result<List<com.project.roulette.domain.model.Wheel>> ->
+                    when (result) {
+                        is com.project.roulette.domain.model.Result.Success -> {
+                            val filteredWheels = when (filter) {
+                                HomeFilter.ALL -> result.data
+                                HomeFilter.RECENT -> result.data.sortedByDescending { it.updatedAt }
+                                HomeFilter.FAVOURITES -> result.data.filter { it.isFavorite }
+                                HomeFilter.MOST_USED -> result.data
+                            }
+                            HomeUiState.Success(
+                                wheels = filteredWheels,
+                                totalWheels = result.data.size,
+                                totalSpins = globalStats.totalSpins,
+                                spinsToday = globalStats.spinsToday,
+                                selectedWheelId = _selectedWheelId.value,
+                                currentFilter = filter
+                            )
                         }
-                        HomeUiState.Success(
-                            wheels = filteredWheels,
-                            totalWheels = result.data.size,
-                            totalSpins = globalStats.totalSpins,
-                            spinsToday = globalStats.spinsToday,
-                            selectedWheelId = _selectedWheelId.value,
-                            currentFilter = _filter.value
-                        )
+                        is com.project.roulette.domain.model.Result.Error -> HomeUiState.Error(result.exception.message ?: "Unknown error")
+                        is com.project.roulette.domain.model.Result.Loading -> HomeUiState.Loading
                     }
-                    is Result.Error -> HomeUiState.Error(result.exception.message ?: "Unknown error")
-                    is Result.Loading -> HomeUiState.Loading
                 }
+            }.collect { state ->
+                _uiState.value = state
             }
         }
     }

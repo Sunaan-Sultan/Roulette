@@ -1,6 +1,7 @@
 package com.project.roulette.domain.usecase.wheel
 
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import com.project.roulette.domain.repository.WheelRepository
 import com.project.roulette.domain.model.Result
 import com.project.roulette.domain.model.Wheel
@@ -62,19 +63,17 @@ class GetGlobalStatsUseCase(
     private val wheelRepository: WheelRepository,
     private val spinHistoryRepository: com.project.roulette.domain.repository.SpinHistoryRepository
 ) {
-    suspend operator fun invoke(): GlobalStats {
-        val wheelsCount = try {
-            // This is a bit suboptimal but works for now. 
-            // Better to have a dedicated count query in repository.
-            // For now let's just use a fixed value or try to get it if easy.
-            0 // Default
-        } catch (e: Exception) { 0 }
-        
-        return GlobalStats(
-            totalWheels = 0, // Will be updated in ViewModel from wheels list
-            totalSpins = spinHistoryRepository.getGlobalSpinCount(),
-            spinsToday = spinHistoryRepository.getGlobalSpinsTodayCount()
-        )
+    operator fun invoke(): Flow<GlobalStats> {
+        return combine(
+            spinHistoryRepository.getGlobalSpinCount(),
+            spinHistoryRepository.getGlobalSpinsTodayCount()
+        ) { total, today ->
+            GlobalStats(
+                totalWheels = 0, // ViewModel handles this
+                totalSpins = total,
+                spinsToday = today
+            )
+        }
     }
 }
 

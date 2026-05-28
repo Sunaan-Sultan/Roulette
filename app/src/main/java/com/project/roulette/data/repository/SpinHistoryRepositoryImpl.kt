@@ -60,16 +60,16 @@ class SpinHistoryRepositoryImpl @Inject constructor(
     override suspend fun getTotalSpinCount(wheelId: String): Int =
         spinHistoryDao.getTotalSpinCount(wheelId)
 
-    override suspend fun getGlobalSpinCount(): Int =
-        spinHistoryDao.getGlobalSpinCount()
+    override fun getGlobalSpinCount(): Flow<Int> =
+        spinHistoryDao.getGlobalSpinCountFlow()
 
-    override suspend fun getGlobalSpinsTodayCount(): Int {
+    override fun getGlobalSpinsTodayCount(): Flow<Int> {
         val calendar = java.util.Calendar.getInstance()
         calendar.set(java.util.Calendar.HOUR_OF_DAY, 0)
         calendar.set(java.util.Calendar.MINUTE, 0)
         calendar.set(java.util.Calendar.SECOND, 0)
         calendar.set(java.util.Calendar.MILLISECOND, 0)
         val startOfDay = calendar.timeInMillis
-        return spinHistoryDao.getSpinsTodayCount(startOfDay)
+        return spinHistoryDao.getSpinsTodayCountFlow(startOfDay)
     }
 }

@@ -41,13 +41,13 @@ interface SpinHistoryRepository {
     suspend fun getTotalSpinCount(wheelId: String): Int
 
     /**
-     * Get global spin count
+     * Get global spin count flow
      */
-    suspend fun getGlobalSpinCount(): Int
+    fun getGlobalSpinCount(): Flow<Int>
 
     /**
-     * Get global spins today
+     * Get global spins today flow
      */
-    suspend fun getGlobalSpinsTodayCount(): Int
+    fun getGlobalSpinsTodayCount(): Flow<Int>
 }
 
