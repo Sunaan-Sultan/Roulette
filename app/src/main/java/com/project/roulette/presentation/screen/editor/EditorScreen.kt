@@ -24,6 +24,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.compose.ui.graphics.toArgb
 import com.project.roulette.domain.model.Segment
 import com.project.roulette.presentation.component.AlertDialogBox
 import com.project.roulette.presentation.model.EditorUiState
@@ -367,10 +368,10 @@ private fun EditorSectionCard(title: String, content: @Composable ColumnScope.()
         modifier = Modifier.fillMaxWidth(),
         color = SurfaceDark,
         shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(1.dp, SurfaceDarker)
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text(title, color = TextSecondary, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
+            Text(title, color = TextSecondary.copy(alpha = 0.8f), fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
             content()
         }
     }
@@ -388,7 +389,7 @@ private fun EditorToggleCard(
         modifier = Modifier.fillMaxWidth(),
         color = SurfaceDark,
         shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(1.dp, SurfaceDarker)
+        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
     ) {
         Row(
             modifier = Modifier.padding(20.dp),
@@ -397,7 +398,7 @@ private fun EditorToggleCard(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                 Box(
-                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(TextSecondary.copy(alpha = 0.1f)),
+                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(TextSecondary.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(icon, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(20.dp))
@@ -405,7 +406,7 @@ private fun EditorToggleCard(
                 Spacer(Modifier.width(16.dp))
                 Column {
                     Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Text(description, color = TextSecondary, fontSize = 13.sp)
+                    Text(description, color = TextSecondary.copy(alpha = 0.8f), fontSize = 13.sp)
                 }
             }
             Switch(
@@ -433,110 +434,134 @@ private fun SegmentEditorCard(
     onUpdate: (String, Float) -> Unit
 ) {
     var name by remember(segment.name) { mutableStateOf(segment.name.replace("\u200B", "")) }
+    
+    // Calculate a brighter color for UI accents and text to ensure visibility
+    val accentColor = remember(segment.color) {
+        val hsv = FloatArray(3)
+        android.graphics.Color.colorToHSV(segment.color.toArgb(), hsv)
+        hsv[1] = (hsv[1] * 0.8f).coerceIn(0.3f, 0.7f) // Reduce saturation
+        hsv[2] = 0.95f // High brightness
+        Color(android.graphics.Color.HSVToColor(hsv))
+    }
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = segment.color.copy(alpha = 0.12f),
+        color = SurfaceDark,
         shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(1.dp, segment.color.copy(alpha = 0.3f))
+        border = BorderStroke(1.dp, segment.color.copy(alpha = 0.5f))
     ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(modifier = Modifier.size(8.dp).background(segment.color, CircleShape))
-                    Spacer(Modifier.width(10.dp))
-                    Text("SEGMENT ${index + 1}", color = segment.color, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.sp)
-                }
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    // Move Up Button
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (index > 0) segment.color.copy(alpha = 0.12f) else SurfaceDarker.copy(alpha = 0.5f))
-                            .clickable(enabled = index > 0) { onMoveUp() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Filled.ExpandLess,
-                            contentDescription = "Move Up",
-                            tint = if (index > 0) segment.color else Color.DarkGray,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-
-                    // Remove Button
-                    Box(
-                        modifier = Modifier
-                            .size(36.dp)
-                            .clip(RoundedCornerShape(10.dp))
-                            .background(if (canDelete) Color.Red.copy(alpha = 0.1f) else SurfaceDarker.copy(alpha = 0.5f))
-                            .clickable(enabled = canDelete) { onRemove() },
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Filled.DeleteOutline,
-                            contentDescription = "Remove",
-                            tint = if (canDelete) Color(0xFFE57373) else Color.DarkGray,
-                            modifier = Modifier.size(20.dp)
-                        )
-                    }
-                }
-            }
-
-            Surface(
-                modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
-                color = DeepNavyBlack.copy(alpha = 0.5f),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                TextField(
-                    value = name,
-                    onValueChange = {
-                        name = it
-                        onUpdate(it, segment.weight)
-                    },
+        Box(modifier = Modifier.background(segment.color.copy(alpha = 0.08f))) {
+            Column(modifier = Modifier.padding(20.dp)) {
+                Row(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = Color.Transparent,
-                        unfocusedContainerColor = Color.Transparent,
-                        focusedIndicatorColor = Color.Transparent,
-                        unfocusedIndicatorColor = Color.Transparent,
-                        cursorColor = Color.White,
-                        focusedTextColor = Color.White,
-                        unfocusedTextColor = Color.White
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(modifier = Modifier.size(8.dp).background(accentColor, CircleShape))
+                        Spacer(Modifier.width(10.dp))
+                        Text(
+                            "SEGMENT ${index + 1}", 
+                            color = accentColor.copy(alpha = 0.9f), 
+                            fontSize = 12.sp, 
+                            fontWeight = FontWeight.Bold, 
+                            letterSpacing = 1.2.sp
+                        )
+                    }
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        // Move Up Button
+                        Surface(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clickable(enabled = index > 0) { onMoveUp() },
+                            color = if (index > 0) segment.color.copy(alpha = 0.15f) else SurfaceDarker.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(12.dp),
+                            border = if (index > 0) BorderStroke(1.dp, accentColor.copy(alpha = 0.2f)) else null
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Filled.ExpandLess,
+                                    contentDescription = "Move Up",
+                                    tint = if (index > 0) accentColor else Color.DarkGray,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+
+                        // Remove Button
+                        Surface(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clickable(enabled = canDelete) { onRemove() },
+                            color = if (canDelete) Color.Red.copy(alpha = 0.1f) else SurfaceDarker.copy(alpha = 0.5f),
+                            shape = RoundedCornerShape(12.dp),
+                            border = if (canDelete) BorderStroke(1.dp, Color.Red.copy(alpha = 0.2f)) else null
+                        ) {
+                            Box(contentAlignment = Alignment.Center) {
+                                Icon(
+                                    Icons.Filled.DeleteOutline,
+                                    contentDescription = "Remove",
+                                    tint = if (canDelete) Color(0xFFEF5350) else Color.DarkGray,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Surface(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    color = DeepNavyBlack.copy(alpha = 0.7f),
+                    shape = RoundedCornerShape(16.dp),
+                    border = BorderStroke(1.5.dp, segment.color.copy(alpha = 0.4f))
+                ) {
+                    TextField(
+                        value = name,
+                        onValueChange = {
+                            name = it
+                            onUpdate(it, segment.weight)
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = Color.Transparent,
+                            unfocusedContainerColor = Color.Transparent,
+                            focusedIndicatorColor = Color.Transparent,
+                            unfocusedIndicatorColor = Color.Transparent,
+                            cursorColor = accentColor,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        ),
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
+                        placeholder = { Text("Segment name", color = TextSecondary.copy(alpha = 0.3f)) }
+                    )
+                }
+
+                Row(
+                    modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text("Weight (probability)", color = Color.White.copy(alpha = 0.5f), fontSize = 13.sp)
+                    Text("${String.format(Locale.US, "%.1f", segment.weight)}x", color = accentColor, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                }
+
+                Slider(
+                    value = segment.weight,
+                    onValueChange = { onUpdate(segment.name, it) },
+                    valueRange = 1f..5f,
+                    steps = 7,
+                    colors = SliderDefaults.colors(
+                        thumbColor = Color.White,
+                        activeTrackColor = accentColor,
+                        inactiveTrackColor = Color.White.copy(alpha = 0.1f),
+                        activeTickColor = Color.Transparent,
+                        inactiveTickColor = Color.Transparent
                     ),
-                    textStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                    placeholder = { Text("Segment name", color = TextSecondary) }
+                    modifier = Modifier.fillMaxWidth()
                 )
             }
-
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text("Weight (probability)", color = segment.color, fontSize = 13.sp)
-                Text("${String.format(Locale.US, "%.1f", segment.weight)}x", color = segment.color, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            }
-
-            Slider(
-                value = segment.weight,
-                onValueChange = { onUpdate(segment.name, it) },
-                valueRange = 1f..5f,
-                steps = 7, // 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0
-                colors = SliderDefaults.colors(
-                    thumbColor = Color.Gray,
-                    activeTrackColor = segment.color,
-                    inactiveTrackColor = Color.Black.copy(alpha = 0.3f),
-                    activeTickColor = Color.Transparent,
-                    inactiveTickColor = Color.Transparent
-                ),
-                modifier = Modifier.fillMaxWidth()
-            )
         }
     }
 }
