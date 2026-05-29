@@ -75,9 +75,6 @@ fun HomeScreen(
                 }
             }
         },
-        bottomBar = {
-            BannerAd(modifier = Modifier.fillMaxWidth())
-        },
         containerColor = DeepNavyBlack
     ) { padding ->
         Column(
@@ -391,20 +388,4 @@ fun WheelCard(
             }
         }
     }
-}
-
-@Composable
-fun BannerAd(modifier: Modifier = Modifier) {
-    androidx.compose.ui.viewinterop.AndroidView(
-        modifier = modifier
-            .fillMaxWidth()
-            .navigationBarsPadding(),
-        factory = { context ->
-            com.google.android.gms.ads.AdView(context).apply {
-                setAdSize(com.google.android.gms.ads.AdSize.BANNER)
-                adUnitId = "ca-app-pub-9720007236604856/8011792580"
-                loadAd(com.google.android.gms.ads.AdRequest.Builder().build())
-            }
-        }
-    )
 }

@@ -28,7 +28,6 @@ import com.project.roulette.presentation.model.NotificationUiState
 import com.project.roulette.presentation.viewmodel.NotificationViewModel
 import com.project.roulette.ui.theme.*
 import com.project.roulette.util.TimeUtils
-import com.project.roulette.presentation.screen.home.BannerAd
 import com.project.roulette.presentation.screen.wheels.WheelsFilterChipItem
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
@@ -64,9 +63,6 @@ fun NotificationContent(
     onNavigateBack: () -> Unit
 ) {
     Scaffold(
-        bottomBar = {
-            BannerAd(modifier = Modifier.fillMaxWidth())
-        },
         containerColor = DeepNavyBlack
     ) { padding ->
         Column(

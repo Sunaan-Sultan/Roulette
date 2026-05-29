@@ -1,7 +1,6 @@
 package com.project.roulette.presentation.screen.wheels
 
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,21 +16,17 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.project.roulette.domain.model.Wheel
 import com.project.roulette.presentation.model.HomeFilter
 import com.project.roulette.presentation.model.HomeUiState
 import com.project.roulette.presentation.viewmodel.HomeViewModel
 import com.project.roulette.ui.theme.*
-import com.project.roulette.util.TimeUtils
 import com.project.roulette.util.loadInterstitial
 import com.project.roulette.util.showInterstitial
 import com.project.roulette.util.loadSwitchInterstitial
 import com.project.roulette.util.showSwitchInterstitial
-import com.project.roulette.presentation.screen.home.BannerAd
 import com.project.roulette.presentation.screen.home.WheelCard
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -73,9 +68,6 @@ fun WheelsScreen(
                     Text("Create Wheel", fontWeight = FontWeight.Bold, color = Color.White)
                 }
             }
-        },
-        bottomBar = {
-            BannerAd(modifier = Modifier.fillMaxWidth())
         },
         containerColor = DeepNavyBlack
     ) { padding ->

@@ -5,7 +5,9 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
@@ -32,6 +34,7 @@ import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
+import com.project.roulette.util.BannerAd
 import com.project.roulette.presentation.navigation.RouletteNavHost
 import com.project.roulette.presentation.navigation.RouletteScreen
 import com.project.roulette.ui.theme.DeepNavyBlack
@@ -127,36 +130,51 @@ fun RouletteApp() {
                 else -> false
             }
 
-            if (showBottomBar) {
-                NavigationBar(
-                    containerColor = DeepNavyBlack,
-                    contentColor = Color.White
-                ) {
-                    items.forEach { (screen, label, icon) ->
-                        val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
-                        NavigationBarItem(
-                            icon = { Icon(icon, contentDescription = label) },
-                            label = { Text(label, fontSize = 12.sp) },
-                            selected = selected,
-                            colors = NavigationBarItemDefaults.colors(
-                                selectedIconColor = PrimaryPurple,
-                                selectedTextColor = PrimaryPurple,
-                                unselectedIconColor = TextSecondary,
-                                unselectedTextColor = TextSecondary,
-                                indicatorColor = Color.Transparent
-                            ),
-                            onClick = {
-                                if (screen.route != RouletteScreen.Profile.route) {
-                                    navController.navigate(screen.route) {
-                                        popUpTo(navController.graph.findStartDestination().id) {
-                                            saveState = true
+            Column {
+                // Show Banner Ad only on Home, Wheels, Favourites, and Notifications screens
+                val showAd = when (currentDestination?.route) {
+                    RouletteScreen.Home.route,
+                    RouletteScreen.Wheels.route,
+                    RouletteScreen.Favourites.route,
+                    RouletteScreen.Notifications.route -> true
+                    else -> false
+                }
+
+                if (showAd) {
+                    BannerAd(modifier = Modifier.fillMaxWidth())
+                }
+
+                if (showBottomBar) {
+                    NavigationBar(
+                        containerColor = DeepNavyBlack,
+                        contentColor = Color.White
+                    ) {
+                        items.forEach { (screen, label, icon) ->
+                            val selected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
+                            NavigationBarItem(
+                                icon = { Icon(icon, contentDescription = label) },
+                                label = { Text(label, fontSize = 12.sp) },
+                                selected = selected,
+                                colors = NavigationBarItemDefaults.colors(
+                                    selectedIconColor = PrimaryPurple,
+                                    selectedTextColor = PrimaryPurple,
+                                    unselectedIconColor = TextSecondary,
+                                    unselectedTextColor = TextSecondary,
+                                    indicatorColor = Color.Transparent
+                                ),
+                                onClick = {
+                                    if (screen.route != RouletteScreen.Profile.route) {
+                                        navController.navigate(screen.route) {
+                                            popUpTo(navController.graph.findStartDestination().id) {
+                                                saveState = true
+                                            }
+                                            launchSingleTop = true
+                                            restoreState = true
                                         }
-                                        launchSingleTop = true
-                                        restoreState = true
                                     }
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
             }

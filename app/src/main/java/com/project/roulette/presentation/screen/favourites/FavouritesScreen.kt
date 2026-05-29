@@ -29,7 +29,6 @@ import com.project.roulette.presentation.model.HomeFilter
 import com.project.roulette.presentation.model.HomeUiState
 import com.project.roulette.presentation.viewmodel.HomeViewModel
 import com.project.roulette.ui.theme.*
-import com.project.roulette.presentation.screen.home.BannerAd
 import com.project.roulette.presentation.screen.wheels.WheelsFilterChipItem
 import com.project.roulette.util.loadSwitchInterstitial
 import com.project.roulette.util.showSwitchInterstitial
@@ -50,9 +49,6 @@ fun FavouritesScreen(
     }
 
     Scaffold(
-        bottomBar = {
-            BannerAd(modifier = Modifier.fillMaxWidth())
-        },
         containerColor = DeepNavyBlack
     ) { padding ->
         Column(
