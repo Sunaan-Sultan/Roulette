@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -30,6 +31,8 @@ import com.project.roulette.presentation.viewmodel.HomeViewModel
 import com.project.roulette.ui.theme.*
 import com.project.roulette.presentation.screen.home.BannerAd
 import com.project.roulette.presentation.screen.wheels.WheelsFilterChipItem
+import com.project.roulette.util.loadSwitchInterstitial
+import com.project.roulette.util.showSwitchInterstitial
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,9 +42,11 @@ fun FavouritesScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val currentFilter by viewModel.filter.collectAsStateWithLifecycle()
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         viewModel.setFilter(HomeFilter.FAVOURITES)
+        loadSwitchInterstitial(context)
     }
 
     Scaffold(
@@ -123,13 +128,21 @@ fun FavouritesScreen(
                                     FeaturedFavouriteCard(
                                         wheel = wheel,
                                         spinCount = spinCount,
-                                        onSelect = { onNavigateToWheel(wheel.id) }
+                                        onSelect = {
+                                            showSwitchInterstitial(context) {
+                                                onNavigateToWheel(wheel.id)
+                                            }
+                                        }
                                     )
                                 } else {
                                     SmallFavouriteCard(
                                         wheel = wheel,
                                         spinCount = spinCount,
-                                        onSelect = { onNavigateToWheel(wheel.id) }
+                                        onSelect = {
+                                            showSwitchInterstitial(context) {
+                                                onNavigateToWheel(wheel.id)
+                                            }
+                                        }
                                     )
                                 }
                             }

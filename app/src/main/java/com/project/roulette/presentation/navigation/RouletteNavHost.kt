@@ -1,5 +1,8 @@
 package com.project.roulette.presentation.navigation
 
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -36,7 +39,19 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
             start = paddingValues.calculateStartPadding(layoutDirection),
             end = paddingValues.calculateEndPadding(layoutDirection),
             bottom = paddingValues.calculateBottomPadding()
-        )
+        ),
+        enterTransition = {
+            slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(400))
+        },
+        exitTransition = {
+            slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(400))
+        },
+        popEnterTransition = {
+            slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(400))
+        },
+        popExitTransition = {
+            slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(400))
+        }
     ) {
         composable(RouletteScreen.Splash.route) {
             com.project.roulette.presentation.screen.splash.SplashScreen(onTimeout = {

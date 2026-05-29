@@ -139,6 +139,28 @@ fun WheelScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // Tick sound logic
+    var lastBoundaryIndex by remember { mutableIntStateOf(-1) }
+    LaunchedEffect(rotationAnim.value) {
+        val state = uiState
+        if (state is WheelUiState.Success && state.isSpinning && state.wheel.spinSound) {
+            val segmentCount = state.wheel.getActiveSegments().size
+            if (segmentCount > 0) {
+                val sweep = 360f / segmentCount
+                // Adding a small offset (sweep/2) makes the tick sound 
+                // happen when the pointer is in the middle of a divider line
+                val currentBoundaryIndex = ((rotationAnim.value + (sweep / 2f)) / sweep).toInt()
+                
+                if (lastBoundaryIndex != -1 && currentBoundaryIndex != lastBoundaryIndex) {
+                    viewModel.playTickSound()
+                }
+                lastBoundaryIndex = currentBoundaryIndex
+            }
+        } else {
+            lastBoundaryIndex = -1
+        }
+    }
+
     LaunchedEffect(spinsToday) {
         if (selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN) {
             val state = uiState

@@ -25,8 +25,8 @@ android {
         applicationId "com.project.roulette"
         minSdk 24
         targetSdk 36
-        versionCode 6
-        versionName "1.5"
+        versionCode 18
+        versionName "1.8"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -81,6 +81,7 @@ dependencies {
     implementation libs.kotlinx.datetime
 
     implementation(libs.play.services.ads)
+    implementation libs.play.app.update.ktx
     implementation libs.firebase.config
 
     testImplementation libs.junit

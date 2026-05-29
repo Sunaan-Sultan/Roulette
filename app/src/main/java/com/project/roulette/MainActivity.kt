@@ -1,38 +1,44 @@
 package com.project.roulette
 
-import android.annotation.SuppressLint
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.Scaffold
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
-import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
-import com.google.android.gms.ads.MobileAds
-import com.project.roulette.presentation.navigation.RouletteNavHost
-import com.project.roulette.presentation.navigation.RouletteScreen
-import com.project.roulette.ui.theme.RouletteTheme
-import dagger.hilt.android.AndroidEntryPoint
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.Icon
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.sp
-import com.project.roulette.ui.theme.*
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
+import com.google.android.gms.ads.MobileAds
+import com.google.android.play.core.appupdate.AppUpdateManager
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.appupdate.AppUpdateOptions
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.UpdateAvailability
+import com.project.roulette.presentation.navigation.RouletteNavHost
+import com.project.roulette.presentation.navigation.RouletteScreen
+import com.project.roulette.ui.theme.DeepNavyBlack
+import com.project.roulette.ui.theme.PrimaryPurple
+import com.project.roulette.ui.theme.RouletteTheme
+import com.project.roulette.ui.theme.TextSecondary
+import dagger.hilt.android.AndroidEntryPoint
 
 /**
  * Main Activity for Roulette app.
@@ -40,8 +46,25 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
  */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    private lateinit var appUpdateManager: AppUpdateManager
+    private val updateType = AppUpdateType.IMMEDIATE
+
+    private val updateLauncher = registerForActivityResult(
+        ActivityResultContracts.StartIntentSenderForResult()
+    ) { result ->
+        if (result.resultCode != RESULT_OK) {
+            // For force update, if user cancels or it fails, we check again
+            checkForUpdates()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        appUpdateManager = AppUpdateManagerFactory.create(this)
+        checkForUpdates()
+
         enableEdgeToEdge()
 
         MobileAds.initialize(this) {}
@@ -49,6 +72,33 @@ class MainActivity : ComponentActivity() {
         setContent {
             RouletteTheme(darkTheme = true) {
                 RouletteApp()
+            }
+        }
+    }
+
+    private fun checkForUpdates() {
+        appUpdateManager.appUpdateInfo.addOnSuccessListener { info ->
+            if (info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                && info.isUpdateTypeAllowed(updateType)
+            ) {
+                appUpdateManager.startUpdateFlowForResult(
+                    info,
+                    updateLauncher,
+                    AppUpdateOptions.newBuilder(updateType).build()
+                )
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        appUpdateManager.appUpdateInfo.addOnSuccessListener { info ->
+            if (info.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS) {
+                appUpdateManager.startUpdateFlowForResult(
+                    info,
+                    updateLauncher,
+                    AppUpdateOptions.newBuilder(updateType).build()
+                )
             }
         }
     }

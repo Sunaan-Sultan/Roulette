@@ -1,87 +1,140 @@
 package com.project.roulette.util.audio
 
 import android.content.Context
+import android.media.AudioAttributes
 import android.media.AudioManager
+import android.media.MediaPlayer
+import android.media.SoundPool
 import android.media.ToneGenerator
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import androidx.core.content.ContextCompat
+import com.project.roulette.R
 import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
 /**
  * Manages audio feedback (sound effects).
- * Demonstrates Abstraction: encapsulates audio complexity.
- * Single Responsibility: only handles sound playback.
  */
 @Singleton
 class SoundManager @Inject constructor(@ApplicationContext private val context: Context) {
-    // Use ToneGenerator so we can play simple tones without external resources
-    private var toneGenerator: ToneGenerator? = try {
-        ToneGenerator(AudioManager.STREAM_MUSIC, 100)
-    } catch (e: Exception) {
-        null
+    private val soundPool: SoundPool = SoundPool.Builder()
+        .setMaxStreams(10)
+        .setAudioAttributes(
+            AudioAttributes.Builder()
+                .setUsage(AudioAttributes.USAGE_GAME)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .build()
+        )
+        .build()
+
+    private var tickSoundId: Int = 0
+    private var isTickLoaded = false
+    
+    private var mediaPlayer: MediaPlayer? = null
+    
+    // Fallback pip sound
+    private val toneGenerator = ToneGenerator(AudioManager.STREAM_MUSIC, 100)
+
+    init {
+        soundPool.setOnLoadCompleteListener { _, sampleId, status ->
+            if (sampleId == tickSoundId && status == 0) {
+                isTickLoaded = true
+            }
+        }
+        loadSounds()
+    }
+
+    private fun loadSounds() {
+        try {
+            tickSoundId = soundPool.load(context, R.raw.wheel_tick, 1)
+        } catch (e: Exception) {
+            // Ignore, will use fallback
+        }
     }
 
     /**
-     * Play spin start sound (short whoosh/tick).
+     * Play spin start sound.
      */
     fun playSpinStart() {
         try {
-            // Short start beep (200ms)
-            toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 180)
-        } catch (e: Exception) {
-            // ignore
-        }
+            toneGenerator.startTone(ToneGenerator.TONE_PROP_BEEP, 100)
+        } catch (e: Exception) {}
     }
 
     /**
-     * Play spin end sound (victory/selection sound).
+     * Play a single tick sound (call this when wheel rotates past a segment).
      */
+    fun playTick() {
+        if (isTickLoaded) {
+            val result = soundPool.play(tickSoundId, 1f, 1f, 1, 0, 1.2f)
+            if (result == 0) {
+                // Play fallback if play fails
+                playFallbackTick()
+            }
+        } else {
+            playFallbackTick()
+        }
+    }
+
+    private fun playFallbackTick() {
+        try {
+            toneGenerator.startTone(ToneGenerator.TONE_CDMA_PIP, 50)
+        } catch (e: Exception) {}
+    }
+
+    /**
+     * Play winner applause sound using MediaPlayer for maximum compatibility.
+     */
+    fun playWinnerClap() {
+        try {
+            stopWinnerSound()
+            mediaPlayer = MediaPlayer.create(context, R.raw.winner_claps).apply {
+                setOnCompletionListener { 
+                    it.release()
+                    if (mediaPlayer == it) mediaPlayer = null
+                }
+                start()
+            }
+        } catch (e: Exception) {
+            // Fallback victory tone
+            try {
+                toneGenerator.startTone(ToneGenerator.TONE_PROP_ACK, 500)
+            } catch (ex: Exception) {}
+        }
+    }
+
     fun playSpinEnd() {
-        try {
-            // A slightly longer confirmation tone
-            toneGenerator?.startTone(ToneGenerator.TONE_PROP_ACK, 320)
-        } catch (e: Exception) {
-            // ignore
-        }
+        playWinnerClap()
     }
 
     /**
-     * Play click sound for UI interactions.
-     */
-    fun playClick() {
-        try {
-            toneGenerator?.startTone(ToneGenerator.TONE_PROP_BEEP, 120)
-        } catch (e: Exception) {
-            // ignore
-        }
-    }
-
-    /**
-     * Stop any ongoing tone.
+     * Stop all sounds (especially the long applause).
      */
     fun stopAll() {
+        stopWinnerSound()
+        soundPool.autoPause()
+    }
+    
+    private fun stopWinnerSound() {
         try {
-            toneGenerator?.stopTone()
-        } catch (e: Exception) {
-            // ignore
-        }
+            mediaPlayer?.let {
+                if (it.isPlaying) it.stop()
+                it.release()
+            }
+            mediaPlayer = null
+        } catch (e: Exception) {}
     }
 
     /**
      * Release resources.
      */
     fun release() {
-        try {
-            toneGenerator?.release()
-        } catch (e: Exception) {
-            // ignore
-        }
-        toneGenerator = null
+        stopAll()
+        soundPool.release()
+        toneGenerator.release()
     }
 }
 

@@ -227,6 +227,9 @@ class WheelViewModel @Inject constructor(
             val result = currentState.lastSpinResult
             val wheel = currentState.wheel
             
+            // Stop celebratory sounds immediately
+            soundManager.stopAll()
+
             // Clear result first to hide dialog
             _uiState.value = currentState.copy(lastSpinResult = null)
 
@@ -329,6 +332,9 @@ class WheelViewModel @Inject constructor(
         val currentState = _uiState.value
         if (currentState !is WheelUiState.Success) return
 
+        // Stop sounds when dialog is dismissed via removal
+        soundManager.stopAll()
+
         val updatedSegments = currentState.wheel.segments.map {
             if (it.id == segmentId) it.copy(isActive = false) else it
         }
@@ -341,9 +347,16 @@ class WheelViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Play a single tick sound (called from UI during animation).
+     */
+    fun playTickSound() {
+        soundManager.playTick()
+    }
+
     override fun onCleared() {
         super.onCleared()
-        soundManager.release()
+        // Do not release the Singleton SoundManager here as it's used across the app
         hapticFeedback.cancel()
     }
 }
