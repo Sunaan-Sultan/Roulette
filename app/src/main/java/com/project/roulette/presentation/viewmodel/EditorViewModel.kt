@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.project.roulette.ui.theme.ThemePalette
 import kotlinx.datetime.Clock
 import java.util.UUID
 import javax.inject.Inject
@@ -32,11 +33,6 @@ class EditorViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow<EditorUiState>(EditorUiState.Success())
     val uiState: StateFlow<EditorUiState> = _uiState.asStateFlow()
-
-    private val themeColors = listOf(
-        Color(0xFF673AB7), Color(0xFF00796B), Color(0xFFD84315), Color(0xFF1976D2),
-        Color(0xFFC2185B), Color(0xFFFFA000), Color(0xFF388E3C), Color(0xFF616161)
-    )
 
     /**
      * Initialize editor for creating a new wheel.
@@ -209,7 +205,7 @@ class EditorViewModel @Inject constructor(
     private fun updateSegmentColors() {
         val currentState = _uiState.value
         if (currentState is EditorUiState.Success && currentState.wheel != null) {
-            val baseColor = themeColors[currentState.wheel.themePaletteIndex]
+            val baseColor = ThemePalette[currentState.wheel.themePaletteIndex]
             val updatedSegments = currentState.wheel.segments.mapIndexed { i, seg ->
                 val hsv = FloatArray(3)
                 android.graphics.Color.colorToHSV(baseColor.toArgb(), hsv)

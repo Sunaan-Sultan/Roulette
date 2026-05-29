@@ -24,3 +24,14 @@ val TileCoral = Color(0xFFFF7675)
 val TileBlue = Color(0xFF0984E3)
 val TilePink = Color(0xFFE84393)
 val TileOrange = Color(0xFFE17055)
+
+val ThemePalette = listOf(
+    Color(0xFF673AB7), // Purple
+    Color(0xFF00796B), // Green/Teal
+    Color(0xFFD84315), // Deep Orange/Rust
+    Color(0xFF1976D2), // Blue
+    Color(0xFFC2185B), // Pink
+    Color(0xFFFFA000), // Amber/Orange
+    Color(0xFF388E3C), // Green
+    Color(0xFF616161)  // Gray
+)

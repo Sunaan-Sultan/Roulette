@@ -26,6 +26,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -45,6 +46,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.project.roulette.util.loadInterstitial
 import com.project.roulette.util.showInterstitial
+import com.project.roulette.ui.theme.ThemePalette
 import androidx.activity.compose.BackHandler
 import kotlin.random.Random
 
@@ -64,6 +66,23 @@ fun WheelScreen(
     val spinsToday by viewModel.spinsToday.collectAsStateWithLifecycle()
     val seed by viewModel.seed.collectAsStateWithLifecycle()
     val pendingOutcome by viewModel.pendingSpinOutcome.collectAsStateWithLifecycle()
+
+    val themeColor = remember(uiState) {
+        val state = uiState
+        if (state is WheelUiState.Success) {
+            ThemePalette.getOrNull(state.wheel.themePaletteIndex) ?: ThemePalette[0]
+        } else {
+            ThemePalette[0]
+        }
+    }
+    
+    val lighterThemeColor = remember(themeColor) {
+        val hsv = FloatArray(3)
+        android.graphics.Color.colorToHSV(themeColor.toArgb(), hsv)
+        hsv[1] *= 0.6f // Less saturated
+        hsv[2] = (hsv[2] + 1f) / 2f // Brighter
+        Color(android.graphics.Color.HSVToColor(hsv))
+    }
 
     var menuExpanded by remember { mutableStateOf(false) }
     var showAlgoInfo by remember { mutableStateOf(false) }
@@ -184,17 +203,17 @@ fun WheelScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Surface(
-                            color = Color(0xFF1B5E20).copy(alpha = 0.2f),
+                            color = themeColor.copy(alpha = 0.2f),
                             shape = CircleShape,
-                            border = BorderStroke(1.dp, Color(0xFF2E7D32))
+                            border = BorderStroke(1.dp, themeColor.copy(alpha = 0.5f))
                         ) {
                             Row(
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Box(modifier = Modifier.size(8.dp).background(Color(0xFF4CAF50), CircleShape))
+                                Box(modifier = Modifier.size(8.dp).background(lighterThemeColor, CircleShape))
                                 Spacer(Modifier.width(8.dp))
-                                Text("${state.wheel.getActiveSegments().size} names", color = Color(0xFF4CAF50), fontSize = 12.sp)
+                                Text("${state.wheel.getActiveSegments().size} names", color = lighterThemeColor, fontSize = 12.sp)
                             }
                         }
                         Surface(
@@ -211,14 +230,14 @@ fun WheelScreen(
 
                         if (state.rrRemaining != null) {
                             Surface(
-                                color = Color(0xFF673AB7).copy(alpha = 0.2f),
+                                color = themeColor.copy(alpha = 0.2f),
                                 shape = CircleShape,
-                                border = BorderStroke(1.dp, Color(0xFF673AB7))
+                                border = BorderStroke(1.dp, themeColor)
                             ) {
                                 Text(
                                     "RR: ${state.rrRemaining} left",
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                    color = Color(0xFF9575CD),
+                                    color = lighterThemeColor,
                                     fontSize = 12.sp
                                 )
                             }
@@ -231,6 +250,7 @@ fun WheelScreen(
                     WheelCanvas(
                         wheel = state.wheel,
                         rotation = rotationAnim.value,
+                        themeColor = themeColor,
                         modifier = Modifier
                             .size(280.dp)
                             .clickable(
@@ -254,7 +274,7 @@ fun WheelScreen(
                             Spacer(Modifier.width(8.dp))
                             Text("Spin speed", color = Color.Gray)
                         }
-                        Text(spinSpeed.label, color = Color(0xFF9575CD), fontWeight = FontWeight.Bold)
+                        Text(spinSpeed.label, color = lighterThemeColor, fontWeight = FontWeight.Bold)
                     }
 
                     Slider(
@@ -263,9 +283,11 @@ fun WheelScreen(
                         valueRange = 0f..4f,
                         steps = 3,
                         colors = SliderDefaults.colors(
-                            thumbColor = Color(0xFF673AB7),
-                            activeTrackColor = Color(0xFF673AB7),
-                            inactiveTrackColor = Color(0xFF212121)
+                            thumbColor = themeColor,
+                            activeTrackColor = themeColor,
+                            inactiveTrackColor = Color(0xFF212121),
+                            activeTickColor = themeColor.copy(alpha = 0.5f),
+                            inactiveTickColor = Color.DarkGray
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
@@ -287,7 +309,7 @@ fun WheelScreen(
                         }
                         TextButton(
                             onClick = { showAlgoInfo = true },
-                            colors = ButtonDefaults.textButtonColors(contentColor = Color(0xFF9575CD))
+                            colors = ButtonDefaults.textButtonColors(contentColor = lighterThemeColor)
                         ) {
                             Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(4.dp))
@@ -304,7 +326,9 @@ fun WheelScreen(
                                 icon = Icons.Filled.Casino,
                                 selected = selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.UNIFORM,
                                 onClick = { viewModel.setSelectionAlgorithm(SelectionAlgorithmFactory.AlgorithmType.UNIFORM) },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                themeColor = themeColor,
+                                lighterThemeColor = lighterThemeColor
                             )
                             AlgorithmCard(
                                 title = "Weighted",
@@ -312,7 +336,9 @@ fun WheelScreen(
                                 icon = Icons.Filled.Balance,
                                 selected = selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.WEIGHTED,
                                 onClick = { viewModel.setSelectionAlgorithm(SelectionAlgorithmFactory.AlgorithmType.WEIGHTED) },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                themeColor = themeColor,
+                                lighterThemeColor = lighterThemeColor
                             )
                         }
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -322,7 +348,9 @@ fun WheelScreen(
                                 icon = Icons.Filled.Tag,
                                 selected = selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.SEEDED,
                                 onClick = { viewModel.setSelectionAlgorithm(SelectionAlgorithmFactory.AlgorithmType.SEEDED) },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                themeColor = themeColor,
+                                lighterThemeColor = lighterThemeColor
                             )
                             AlgorithmCard(
                                 title = "Round Robin",
@@ -330,7 +358,9 @@ fun WheelScreen(
                                 icon = Icons.Filled.Autorenew,
                                 selected = selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN,
                                 onClick = { viewModel.setSelectionAlgorithm(SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN) },
-                                modifier = Modifier.weight(1f)
+                                modifier = Modifier.weight(1f),
+                                themeColor = themeColor,
+                                lighterThemeColor = lighterThemeColor
                             )
                         }
                     }
@@ -347,13 +377,13 @@ fun WheelScreen(
                             },
                             trailingIcon = {
                                 IconButton(onClick = { viewModel.setSeed((100..999999).random().toLong()) }) {
-                                    Icon(Icons.Filled.Casino, contentDescription = "Random Seed", tint = Color(0xFF9575CD))
+                                    Icon(Icons.Filled.Casino, contentDescription = "Random Seed", tint = lighterThemeColor)
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
-                                focusedBorderColor = Color(0xFF673AB7),
+                                focusedBorderColor = themeColor,
                                 unfocusedBorderColor = Color(0xFF212121),
                                 focusedSupportingTextColor = Color.Gray,
                                 unfocusedSupportingTextColor = Color.Gray
@@ -385,8 +415,11 @@ fun WheelScreen(
                                             steps = 3,
                                             modifier = Modifier.width(120.dp),
                                             colors = SliderDefaults.colors(
-                                                thumbColor = Color(0xFF673AB7),
-                                                activeTrackColor = Color(0xFF673AB7)
+                                                thumbColor = themeColor,
+                                                activeTrackColor = themeColor,
+                                                inactiveTrackColor = Color(0xFF212121),
+                                                activeTickColor = themeColor.copy(alpha = 0.5f),
+                                                inactiveTickColor = Color.DarkGray
                                             )
                                         )
                                     }
@@ -404,7 +437,10 @@ fun WheelScreen(
                             .fillMaxWidth()
                             .height(56.dp),
                         shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7)),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = themeColor,
+                            contentColor = Color.White
+                        ),
                         enabled = !state.isSpinning
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -423,6 +459,8 @@ fun WheelScreen(
                         result = result,
                         wheel = state.wheel,
                         spinsToday = spinsToday,
+                        themeColor = themeColor,
+                        lighterThemeColor = lighterThemeColor,
                         onDismiss = { viewModel.clearResult() },
                         onSpinAgain = {
                             viewModel.clearResult()
@@ -461,28 +499,36 @@ fun WheelScreen(
                             AlgoInfoDetail(
                                 icon = Icons.Filled.Casino,
                                 title = "Uniform Random",
-                                description = "The classic fair choice. Every name on the wheel has an mathematically identical chance of being picked. It's like flipping a perfectly balanced coin or rolling a fair dice."
+                                description = "The classic fair choice. Every name on the wheel has an mathematically identical chance of being picked. It's like flipping a perfectly balanced coin or rolling a fair dice.",
+                                themeColor = themeColor,
+                                lighterThemeColor = lighterThemeColor
                             )
                             Spacer(Modifier.height(20.dp))
                             
                             AlgoInfoDetail(
                                 icon = Icons.Filled.Balance,
                                 title = "Weighted Random",
-                                description = "Allows you to bias the results. If one name has a weight of 5 and another has 1, the first name is 5 times more likely to win. Perfect for 'Luck-based' games where some entries are more valuable than others."
+                                description = "Allows you to bias the results. If one name has a weight of 5 and another has 1, the first name is 5 times more likely to win. Perfect for 'Luck-based' games where some entries are more valuable than others.",
+                                themeColor = themeColor,
+                                lighterThemeColor = lighterThemeColor
                             )
                             Spacer(Modifier.height(20.dp))
                             
                             AlgoInfoDetail(
                                 icon = Icons.Filled.Tag,
                                 title = "Seeded Sequence",
-                                description = "A deterministic approach. Using the same seed number will always produce the exact same sequence of winners. This is useful for running fair competitions where everyone can verify the result by using the same seed."
+                                description = "A deterministic approach. Using the same seed number will always produce the exact same sequence of winners. This is useful for running fair competitions where everyone can verify the result by using the same seed.",
+                                themeColor = themeColor,
+                                lighterThemeColor = lighterThemeColor
                             )
                             Spacer(Modifier.height(20.dp))
                             
                             AlgoInfoDetail(
                                 icon = Icons.Filled.Autorenew,
                                 title = "Round Robin",
-                                description = "Ensures everyone gets a turn. It shuffles all names into a hidden queue. Each spin picks the next person until the queue is empty, then it reshuffles for a new round. No one wins twice until everyone has won once."
+                                description = "Ensures everyone gets a turn. It shuffles all names into a hidden queue. Each spin picks the next person until the queue is empty, then it reshuffles for a new round. No one wins twice until everyone has won once.",
+                                themeColor = themeColor,
+                                lighterThemeColor = lighterThemeColor
                             )
                         }
                     }
@@ -505,6 +551,8 @@ fun WinnerDialog(
     result: SpinResult,
     wheel: Wheel,
     spinsToday: Int,
+    themeColor: Color,
+    lighterThemeColor: Color,
     onDismiss: () -> Unit,
     onSpinAgain: () -> Unit,
     onRemoveFromWheel: () -> Unit
@@ -519,7 +567,7 @@ fun WinnerDialog(
                 .background(Color.Black.copy(alpha = 0.6f)),
             contentAlignment = Alignment.Center
         ) {
-            ConfettiEffect()
+            ConfettiEffect(themeColor = themeColor)
 
             Surface(
                 modifier = Modifier
@@ -536,7 +584,7 @@ fun WinnerDialog(
                             .background(
                                 Brush.horizontalGradient(
                                     listOf(
-                                        Color(0xFF673AB7),
+                                        themeColor,
                                         Color(0xFF00BCD4),
                                         Color(0xFFFFC107),
                                         Color(0xFFFF5252)
@@ -573,14 +621,14 @@ fun WinnerDialog(
                             modifier = Modifier
                                 .size(100.dp)
                                 .scale(scale)
-                                .background(Color(0xFF673AB7).copy(alpha = alpha), CircleShape)
+                                .background(themeColor.copy(alpha = alpha), CircleShape)
                         )
 
                         Box(
                             modifier = Modifier
                                 .size(80.dp)
                                 .background(Color(0xFF121212), CircleShape)
-                                .border(2.dp, Color(0xFF673AB7).copy(alpha = 0.5f), CircleShape),
+                                .border(2.dp, themeColor.copy(alpha = 0.5f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
                             Text("🎉", fontSize = 40.sp)
@@ -630,8 +678,8 @@ fun WinnerDialog(
                         MetaChip(
                             icon = Icons.Filled.History,
                             text = "Spin #$spinsToday",
-                            containerColor = Color(0xFF673AB7).copy(alpha = 0.2f),
-                            contentColor = Color(0xFF9575CD)
+                            containerColor = themeColor.copy(alpha = 0.2f),
+                            contentColor = lighterThemeColor
                         )
                         MetaChip(
                             icon = Icons.Filled.Timer,
@@ -678,7 +726,7 @@ fun WinnerDialog(
                             onClick = onDismiss,
                             modifier = Modifier.weight(1f).height(48.dp),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF673AB7))
+                            colors = ButtonDefaults.buttonColors(containerColor = themeColor)
                         ) {
                             Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
@@ -728,9 +776,9 @@ fun MetaChip(icon: ImageVector, text: String, containerColor: Color, contentColo
 }
 
 @Composable
-fun ConfettiEffect() {
+fun ConfettiEffect(themeColor: Color) {
     val confettiCount = 20
-    val colors = listOf(Color(0xFF673AB7), Color(0xFF00BCD4), Color(0xFFFFC107), Color(0xFFFF5252))
+    val colors = listOf(themeColor, Color(0xFF00BCD4), Color(0xFFFFC107), Color(0xFFFF5252))
     
     repeat(confettiCount) {
         val xProgress = remember { Random.nextFloat() }
@@ -760,15 +808,15 @@ fun ConfettiEffect() {
 }
 
 @Composable
-fun AlgoInfoDetail(icon: ImageVector, title: String, description: String) {
+fun AlgoInfoDetail(icon: ImageVector, title: String, description: String, themeColor: Color, lighterThemeColor: Color) {
     Row(verticalAlignment = Alignment.Top) {
         Surface(
-            color = Color(0xFF673AB7).copy(alpha = 0.2f),
+            color = themeColor.copy(alpha = 0.2f),
             shape = RoundedCornerShape(8.dp),
             modifier = Modifier.size(40.dp)
         ) {
             Box(contentAlignment = Alignment.Center) {
-                Icon(icon, contentDescription = null, tint = Color(0xFF9575CD), modifier = Modifier.size(20.dp))
+                Icon(icon, contentDescription = null, tint = lighterThemeColor, modifier = Modifier.size(20.dp))
             }
         }
         Spacer(Modifier.width(16.dp))
@@ -786,6 +834,8 @@ fun AlgorithmCard(
     description: String,
     icon: ImageVector,
     selected: Boolean,
+    themeColor: Color,
+    lighterThemeColor: Color,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -793,14 +843,14 @@ fun AlgorithmCard(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .clickable { onClick() },
-        color = if (selected) Color(0xFF673AB7).copy(alpha = 0.1f) else Color(0xFF1E1E1E),
-        border = BorderStroke(1.dp, if (selected) Color(0xFF673AB7) else Color(0xFF212121))
+        color = if (selected) themeColor.copy(alpha = 0.1f) else Color(0xFF1E1E1E),
+        border = BorderStroke(1.dp, if (selected) themeColor else Color(0xFF212121))
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Icon(
                 icon,
                 contentDescription = null,
-                tint = if (selected) Color(0xFF9575CD) else Color.Gray,
+                tint = if (selected) lighterThemeColor else Color.Gray,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(Modifier.height(8.dp))

@@ -29,7 +29,8 @@ fun WheelCanvas(
     wheel: Wheel,
     modifier: Modifier = Modifier,
     rotation: Float = 0f,
-    wheelSize: Dp = 260.dp
+    wheelSize: Dp = 260.dp,
+    themeColor: Color = Color(0xFF6C5CE7)
 ) {
     val segments = wheel.getActiveSegments()
     
@@ -145,7 +146,7 @@ fun WheelCanvas(
 
             // Pass 5: Center Hub
             drawCircle(
-                color = Color(0xFF45408A),
+                color = themeColor,
                 radius = radius * 0.1f,
                 center = Offset(centerX, centerY)
             )
@@ -174,7 +175,7 @@ fun WheelCanvas(
             
             drawPath(
                 path = path,
-                color = Color(0xFFB3B8D3) // Pale Lavender from reference
+                color = themeColor // Match theme
             )
         }
     }

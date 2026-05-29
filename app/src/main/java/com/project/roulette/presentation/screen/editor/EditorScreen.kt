@@ -48,6 +48,23 @@ fun EditorScreen(
     val scope = rememberCoroutineScope()
     var showImportDialog by remember { mutableStateOf(false) }
 
+    val themeColor = remember(uiState) {
+        val state = uiState
+        if (state is EditorUiState.Success && state.wheel != null) {
+            ThemePalette.getOrNull(state.wheel.themePaletteIndex) ?: ThemePalette[0]
+        } else {
+            ThemePalette[0]
+        }
+    }
+
+    val lighterThemeColor = remember(themeColor) {
+        val hsv = FloatArray(3)
+        android.graphics.Color.colorToHSV(themeColor.toArgb(), hsv)
+        hsv[1] *= 0.6f // Less saturated
+        hsv[2] = (hsv[2] + 1f) / 2f // Brighter
+        Color(android.graphics.Color.HSVToColor(hsv))
+    }
+
     LaunchedEffect(Unit) {
         if (isNew) {
             viewModel.initializeNew()
@@ -65,17 +82,6 @@ fun EditorScreen(
             current.wheel?.let { onSaved(it.id) }
         }
     }
-
-    val themeColors = listOf(
-        Color(0xFF673AB7), // Purple
-        Color(0xFF00796B), // Green/Teal
-        Color(0xFFD84315), // Deep Orange/Rust
-        Color(0xFF1976D2), // Blue
-        Color(0xFFC2185B), // Pink
-        Color(0xFFFFA000), // Amber/Orange
-        Color(0xFF388E3C), // Green
-        Color(0xFF616161)  // Gray
-    )
 
     Scaffold(
         topBar = {
@@ -95,11 +101,11 @@ fun EditorScreen(
                                 // For now, we use the ID.
                                 onPreview(state.wheel.id)
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple.copy(alpha = 0.2f)),
+                            colors = ButtonDefaults.buttonColors(containerColor = themeColor.copy(alpha = 0.2f)),
                             modifier = Modifier.padding(end = 8.dp),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("Preview", color = PrimaryPurple, fontWeight = FontWeight.Bold)
+                            Text("Preview", color = lighterThemeColor, fontWeight = FontWeight.Bold)
                         }
                     }
                 },
@@ -112,7 +118,7 @@ fun EditorScreen(
         when (val state = uiState) {
             is EditorUiState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = PrimaryPurple)
+                    CircularProgressIndicator(color = themeColor)
                 }
             }
 
@@ -130,25 +136,34 @@ fun EditorScreen(
                         item {
                             EditorSectionCard(title = "WHEEL NAME") {
                                 var localName by remember(state.wheel.name) { mutableStateOf(state.wheel.name.replace("\u200B", "")) }
-                                TextField(
-                                    value = localName,
-                                    onValueChange = { 
-                                        localName = it
-                                        viewModel.updateWheelName(it)
-                                    },
-                                    placeholder = { Text("New Wheel", color = TextSecondary) },
-                                    modifier = Modifier.fillMaxWidth(),
-                                    colors = TextFieldDefaults.colors(
-                                        focusedContainerColor = Color.Transparent,
-                                        unfocusedContainerColor = Color.Transparent,
-                                        focusedIndicatorColor = Color.Transparent,
-                                        unfocusedIndicatorColor = Color.Transparent,
-                                        cursorColor = Color.White,
-                                        focusedTextColor = Color.White,
-                                        unfocusedTextColor = Color.White
-                                    ),
-                                    textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
-                                )
+                                Surface(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 12.dp),
+                                    color = DeepNavyBlack.copy(alpha = 0.7f),
+                                    shape = RoundedCornerShape(16.dp),
+                                    border = BorderStroke(1.5.dp, themeColor.copy(alpha = 0.4f))
+                                ) {
+                                    TextField(
+                                        value = localName,
+                                        onValueChange = { 
+                                            localName = it
+                                            viewModel.updateWheelName(it)
+                                        },
+                                        placeholder = { Text("New Wheel", color = TextSecondary.copy(alpha = 0.3f)) },
+                                        modifier = Modifier.fillMaxWidth(),
+                                        colors = TextFieldDefaults.colors(
+                                            focusedContainerColor = Color.Transparent,
+                                            unfocusedContainerColor = Color.Transparent,
+                                            focusedIndicatorColor = Color.Transparent,
+                                            unfocusedIndicatorColor = Color.Transparent,
+                                            cursorColor = lighterThemeColor,
+                                            focusedTextColor = Color.White,
+                                            unfocusedTextColor = Color.White
+                                        ),
+                                        textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
+                                    )
+                                }
                             }
                         }
 
@@ -158,7 +173,7 @@ fun EditorScreen(
                                     modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
                                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                                 ) {
-                                    themeColors.forEachIndexed { index, color ->
+                                    ThemePalette.forEachIndexed { index, color ->
                                         Box(
                                             modifier = Modifier
                                                 .size(36.dp)
@@ -187,7 +202,8 @@ fun EditorScreen(
                                 title = "Spin sound",
                                 description = "Play tick sound while spinning",
                                 checked = state.wheel.spinSound,
-                                onCheckedChange = { viewModel.updateSpinSound(it) }
+                                onCheckedChange = { viewModel.updateSpinSound(it) },
+                                themeColor = themeColor
                             )
                         }
 
@@ -197,7 +213,8 @@ fun EditorScreen(
                                 title = "Remove after pick",
                                 description = "Picked names won't repeat",
                                 checked = state.wheel.removeAfterPick,
-                                onCheckedChange = { viewModel.updateRemoveAfterPick(it) }
+                                onCheckedChange = { viewModel.updateRemoveAfterPick(it) },
+                                themeColor = themeColor
                             )
                         }
 
@@ -211,13 +228,13 @@ fun EditorScreen(
                                     Text("Segments", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color.White)
                                     Spacer(Modifier.width(12.dp))
                                     Surface(
-                                        color = PrimaryPurple.copy(alpha = 0.2f),
+                                        color = themeColor.copy(alpha = 0.2f),
                                         shape = RoundedCornerShape(12.dp)
                                     ) {
                                         Text(
                                             state.wheel.segments.size.toString(),
                                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                                            color = PrimaryPurple,
+                                            color = lighterThemeColor,
                                             fontWeight = FontWeight.Bold,
                                             fontSize = 14.sp
                                         )
@@ -238,7 +255,7 @@ fun EditorScreen(
                                         onClick = {
                                             viewModel.addSegment("New Option")
                                         },
-                                        colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
+                                        colors = ButtonDefaults.buttonColors(containerColor = themeColor),
                                         shape = RoundedCornerShape(12.dp),
                                         modifier = Modifier.height(40.dp)
                                     ) {
@@ -271,7 +288,7 @@ fun EditorScreen(
                                     .padding(vertical = 24.dp)
                                     .height(64.dp),
                                 shape = RoundedCornerShape(20.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
+                                colors = ButtonDefaults.buttonColors(containerColor = themeColor),
                                 enabled = !state.isSaving
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -304,7 +321,7 @@ fun EditorScreen(
                                         modifier = Modifier.fillMaxWidth().height(180.dp),
                                         shape = RoundedCornerShape(16.dp),
                                         colors = OutlinedTextFieldDefaults.colors(
-                                            focusedBorderColor = PrimaryPurple,
+                                            focusedBorderColor = themeColor,
                                             unfocusedBorderColor = SurfaceDark,
                                             focusedTextColor = Color.White,
                                             unfocusedTextColor = Color.White,
@@ -320,7 +337,7 @@ fun EditorScreen(
                                         viewModel.importNames(importText)
                                         showImportDialog = false
                                     },
-                                    colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
+                                    colors = ButtonDefaults.buttonColors(containerColor = themeColor),
                                     shape = RoundedCornerShape(12.dp)
                                 ) {
                                     Text("Import", fontWeight = FontWeight.Bold)
@@ -352,7 +369,7 @@ fun EditorScreen(
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Text("Error: ${state.message}", color = Color.Red, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                         Spacer(Modifier.height(16.dp))
-                        Button(onClick = { viewModel.initializeNew() }, colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)) {
+                        Button(onClick = { viewModel.initializeNew() }, colors = ButtonDefaults.buttonColors(containerColor = themeColor)) {
                             Text("Retry")
                         }
                     }
@@ -383,7 +400,8 @@ private fun EditorToggleCard(
     title: String,
     description: String,
     checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit
+    onCheckedChange: (Boolean) -> Unit,
+    themeColor: Color
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
@@ -414,7 +432,7 @@ private fun EditorToggleCard(
                 onCheckedChange = onCheckedChange,
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = Color.White,
-                    checkedTrackColor = PrimaryPurple,
+                    checkedTrackColor = themeColor,
                     uncheckedThumbColor = TextSecondary,
                     uncheckedTrackColor = SurfaceDarker,
                     uncheckedBorderColor = Color.Transparent
