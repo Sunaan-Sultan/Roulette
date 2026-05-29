@@ -85,7 +85,7 @@ fun WheelsScreen(
                 .padding(padding)
                 .padding(horizontal = 20.dp)
         ) {
-            
+            Spacer(Modifier.height(16.dp))
             // Header
             Text(
                 text = "EXPLORE",
