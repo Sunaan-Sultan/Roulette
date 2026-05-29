@@ -61,7 +61,7 @@ fun WheelCanvas(
             val centerX = size.width / 2f
             val centerY = size.height / 2f
             val sweep = 360f / segments.size
-            
+
             rotate(rotation, Offset(centerX, centerY)) {
                 var startAngle = -90f - (sweep / 2f)
                 segments.forEach { segment ->
@@ -165,14 +165,14 @@ fun WheelCanvas(
             val radius = wheelSize.toPx() / 2f
             val pointerWidth = 20.dp.toPx()
             val pointerHeight = 16.dp.toPx()
-            
+
             val path = androidx.compose.ui.graphics.Path().apply {
                 moveTo(centerX - pointerWidth / 2, centerY - radius - 4f)
                 lineTo(centerX + pointerWidth / 2, centerY - radius - 4f)
                 lineTo(centerX, centerY - radius + pointerHeight)
                 close()
             }
-            
+
             drawPath(
                 path = path,
                 color = themeColor // Match theme

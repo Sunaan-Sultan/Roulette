@@ -1,8 +1,8 @@
 package com.project.roulette.presentation.navigation
 
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -18,6 +18,8 @@ import com.project.roulette.presentation.screen.history.HistoryScreen
 import com.project.roulette.presentation.screen.statistics.StatisticsScreen
 import com.project.roulette.presentation.viewmodel.HomeViewModel
 import com.project.roulette.presentation.viewmodel.WheelViewModel
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.Text
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
@@ -41,16 +43,16 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
             bottom = paddingValues.calculateBottomPadding()
         ),
         enterTransition = {
-            slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(400))
+            fadeIn(animationSpec = tween(250))
         },
         exitTransition = {
-            slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(400))
+            fadeOut(animationSpec = tween(250))
         },
         popEnterTransition = {
-            slideInHorizontally(initialOffsetX = { -it }, animationSpec = tween(400))
+            fadeIn(animationSpec = tween(250))
         },
         popExitTransition = {
-            slideOutHorizontally(targetOffsetX = { it }, animationSpec = tween(400))
+            fadeOut(animationSpec = tween(250))
         }
     ) {
         composable(RouletteScreen.Splash.route) {
@@ -179,6 +181,13 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
+        }
+
+        composable(RouletteScreen.Settings.route) {
+            // Placeholder for Settings screen
+            Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
+                Text("Settings Screen", color = androidx.compose.ui.graphics.Color.White)
+            }
         }
     }
 }

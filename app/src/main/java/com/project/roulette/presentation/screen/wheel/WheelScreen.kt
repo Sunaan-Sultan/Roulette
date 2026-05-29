@@ -806,7 +806,7 @@ fun ConfettiEffect(themeColor: Color) {
         val xProgress = remember { Random.nextFloat() }
         val duration = remember { 3000 + Random.nextInt(2000) }
         val delay = remember { Random.nextInt(5000) }
-        
+
         val infiniteTransition = rememberInfiniteTransition(label = "confetti")
         val yOffset by infiniteTransition.animateFloat(
             initialValue = 1.2f,
