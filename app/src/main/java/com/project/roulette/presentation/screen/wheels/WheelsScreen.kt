@@ -29,6 +29,8 @@ import com.project.roulette.ui.theme.*
 import com.project.roulette.util.TimeUtils
 import com.project.roulette.util.loadInterstitial
 import com.project.roulette.util.showInterstitial
+import com.project.roulette.util.loadSwitchInterstitial
+import com.project.roulette.util.showSwitchInterstitial
 import com.project.roulette.presentation.screen.home.BannerAd
 import com.project.roulette.presentation.screen.home.WheelCard
 
@@ -48,6 +50,7 @@ fun WheelsScreen(
 
     LaunchedEffect(Unit) {
         loadInterstitial(context)
+        loadSwitchInterstitial(context)
     }
 
     Scaffold(
@@ -235,8 +238,10 @@ fun WheelsScreen(
                                         wheel = wheel,
                                         isActive = wheel.id == state.selectedWheelId,
                                         onSelect = {
-                                            viewModel.selectWheel(wheel.id)
-                                            onNavigateToWheel(wheel.id)
+                                            showSwitchInterstitial(context) {
+                                                viewModel.selectWheel(wheel.id)
+                                                onNavigateToWheel(wheel.id)
+                                            }
                                         },
                                         onToggleFavorite = {
                                             viewModel.toggleFavorite(wheel.id, wheel.isFavorite)

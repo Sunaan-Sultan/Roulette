@@ -30,6 +30,8 @@ import com.project.roulette.ui.theme.*
 import com.project.roulette.util.TimeUtils
 import com.project.roulette.util.loadInterstitial
 import com.project.roulette.util.showInterstitial
+import com.project.roulette.util.loadSwitchInterstitial
+import com.project.roulette.util.showSwitchInterstitial
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +49,7 @@ fun HomeScreen(
 
     LaunchedEffect(Unit) {
         loadInterstitial(context)
+        loadSwitchInterstitial(context)
         // Reset filter to ALL when coming to Home
         viewModel.setFilter(HomeFilter.ALL)
     }
@@ -206,8 +209,10 @@ fun HomeScreen(
                                         wheel = wheel,
                                         isActive = wheel.id == state.selectedWheelId,
                                         onSelect = {
-                                            viewModel.selectWheel(wheel.id)
-                                            onNavigateToWheel(wheel.id)
+                                            showSwitchInterstitial(context) {
+                                                viewModel.selectWheel(wheel.id)
+                                                onNavigateToWheel(wheel.id)
+                                            }
                                         },
                                         onToggleFavorite = {
                                             viewModel.toggleFavorite(wheel.id, wheel.isFavorite)

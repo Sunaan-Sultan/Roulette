@@ -10,6 +10,7 @@ import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 
 var mInterstitialAd: InterstitialAd? = null
+var mSwitchInterstitialAd: InterstitialAd? = null
 
 fun loadInterstitial(context: Context) {
     val adRequest = AdRequest.Builder().build()
@@ -36,6 +37,26 @@ fun loadInterstitial(context: Context) {
     )
 }
 
+fun loadSwitchInterstitial(context: Context) {
+    val adRequest = AdRequest.Builder().build()
+    val adUnitId = "ca-app-pub-9720007236604856/7907828064"
+
+    InterstitialAd.load(
+        context,
+        adUnitId,
+        adRequest,
+        object : InterstitialAdLoadCallback() {
+            override fun onAdFailedToLoad(adError: LoadAdError) {
+                mSwitchInterstitialAd = null
+            }
+
+            override fun onAdLoaded(interstitialAd: InterstitialAd) {
+                mSwitchInterstitialAd = interstitialAd
+            }
+        }
+    )
+}
+
 fun showInterstitial(context: Context, onAdDismissed: () -> Unit) {
     val activity = context as? Activity
 
@@ -54,6 +75,29 @@ fun showInterstitial(context: Context, onAdDismissed: () -> Unit) {
         }
         // Show the ad
         mInterstitialAd?.show(activity)
+    } else {
+        onAdDismissed()
+    }
+}
+
+fun showSwitchInterstitial(context: Context, onAdDismissed: () -> Unit) {
+    val activity = context as? Activity
+
+    if (mSwitchInterstitialAd != null && activity != null) {
+        mSwitchInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+            override fun onAdDismissedFullScreenContent() {
+                mSwitchInterstitialAd = null
+                loadSwitchInterstitial(context)
+                onAdDismissed()
+            }
+
+            override fun onAdFailedToShowFullScreenContent(adError: AdError) {
+                mSwitchInterstitialAd = null
+                onAdDismissed()
+            }
+        }
+        // Show the ad
+        mSwitchInterstitialAd?.show(activity)
     } else {
         onAdDismissed()
     }
