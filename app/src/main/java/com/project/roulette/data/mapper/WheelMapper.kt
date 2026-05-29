@@ -67,7 +67,19 @@ class WheelMapper @Inject constructor() {
             emptyList()
         }
 
-        val segments = segmentEntities.map { entityToSegment(it) }
+        var segments = segmentEntities.map { entityToSegment(it) }
+        
+        // Ensure domain model invariants are satisfied (at least one segment)
+        if (segments.isEmpty()) {
+            segments = listOf(
+                Segment(
+                    id = UUID.randomUUID().toString(),
+                    name = "Default Option",
+                    color = Color.Gray,
+                    weight = 1f
+                )
+            )
+        }
 
         return Wheel(
             id = entity.id,

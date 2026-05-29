@@ -22,7 +22,7 @@ import kotlin.math.sin
 
 /**
  * Composable for drawing the spinning wheel.
- * Uses drawArc and weights to compute sector sizes and fixes text rotation.
+ * High-fidelity design matching reference images.
  */
 @Composable
 fun WheelCanvas(
@@ -33,141 +33,148 @@ fun WheelCanvas(
 ) {
     val segments = wheel.getActiveSegments()
     
-    // Exact colors from the reference image and expanded variety
-    val jewelTones = listOf(
-        Color(0xFF1E2736), // Deep Slate Blue
-        Color(0xFF2D264D), // Deep Purple
-        Color(0xFF1A332B), // Dark Forest Green
-        Color(0xFF3B241A), // Deep Rust Brown
-        Color(0xFF3D1B1B), // Deep Burgundy
-        Color(0xFF0D2C33), // Dark Teal
-        Color(0xFF2A1A2F), // Deep Plum
-        Color(0xFF1A1F2B), // Midnight Navy
-        Color(0xFF2E2B1A), // Dark Olive
-        Color(0xFF3D2A1B)  // Dark Sienna
-    )
-    
-    // Lighter versions for text to match the image style
-    val textColors = listOf(
-        Color(0xFF82B1FF), // Light Blue
-        Color(0xFFB39DDB), // Light Purple
-        Color(0xFF81C784), // Light Green
-        Color(0xFFFFAB91), // Light Peach/Rust
-        Color(0xFFFF8A80), // Light Red/Coral
-        Color(0xFF80DEEA), // Light Cyan
-        Color(0xFFF48FB1), // Light Pink
-        Color(0xFF9FA8DA), // Light Indigo
-        Color(0xFFE6EE9C), // Light Lime/Yellow
-        Color(0xFFFFCC80)  // Light Orange
-    )
+    // Calculate readable text colors based on the segment backgrounds
+    val textColors = segments.map { segment ->
+        val hsv = FloatArray(3)
+        android.graphics.Color.colorToHSV(segment.color.toArgb(), hsv)
+        hsv[1] *= 0.3f // Desaturate
+        hsv[2] = (hsv[2] + 1f) / 2f // Brighten
+        Color(android.graphics.Color.HSVToColor(hsv))
+    }
 
     Box(
-        modifier = modifier.size(wheelSize + 20.dp),
+        modifier = modifier.size(wheelSize + 60.dp),
         contentAlignment = Alignment.Center
     ) {
-        // Outer Ring
-        Canvas(modifier = Modifier.size(wheelSize + 12.dp)) {
+        // 1. Outer Halo / Ambient Pop (The dark background glow seen in reference)
+        Canvas(modifier = Modifier.size(wheelSize + 48.dp)) {
             drawCircle(
-                color = Color(0xFF121212),
-                radius = size.width / 2f,
-                style = Stroke(width = 8f)
-            )
-            drawCircle(
-                color = Color(0xFF1E1E2C),
-                radius = size.width / 2f - 4f,
-                style = Stroke(width = 2f)
+                color = Color(0xFF141424), // Dark Navy/Purple Pop
+                radius = size.width / 2f
             )
         }
 
-        Canvas(modifier = Modifier.size(wheelSize)) {
+        // 2. Multi-color ambient spill
+        Canvas(modifier = Modifier.size(wheelSize + 36.dp)) {
             if (segments.isEmpty()) return@Canvas
-
-            val radius = wheelSize.toPx() / 2f
             val centerX = size.width / 2f
             val centerY = size.height / 2f
-
             val sweep = 360f / segments.size
-
-            // Apply rotation
+            
             rotate(rotation, Offset(centerX, centerY)) {
-                val startAngleOffset = -90f - (sweep / 2f)
-                
-                // First pass: Draw all background sectors
-                var currentAngle = startAngleOffset
-                segments.forEachIndexed { index, _ ->
+                var startAngle = -90f - (sweep / 2f)
+                segments.forEach { segment ->
                     drawArc(
-                        color = jewelTones[index % jewelTones.size],
-                        startAngle = currentAngle,
+                        color = segment.color.copy(alpha = 0.2f),
+                        startAngle = startAngle,
                         sweepAngle = sweep,
                         useCenter = true
                     )
-                    currentAngle += sweep
+                    startAngle += sweep
                 }
+            }
+        }
 
-                // Second pass: Draw all divider lines on top of the sectors
-                currentAngle = startAngleOffset
-                segments.forEachIndexed { _, _ ->
-                    val lineAngleRad = currentAngle * PI.toFloat() / 180f
+        // 3. Main Wheel (Segments + Divider + Flush Border)
+        Canvas(modifier = Modifier.size(wheelSize + 12.dp)) {
+            if (segments.isEmpty()) return@Canvas
+
+            val centerX = size.width / 2f
+            val centerY = size.height / 2f
+            val radius = wheelSize.toPx() / 2f
+            val sweep = 360f / segments.size
+
+            // Pass 1: Draw Arcs
+            rotate(rotation, Offset(centerX, centerY)) {
+                var startAngle = -90f - (sweep / 2f)
+                segments.forEachIndexed { index, segment ->
+                    drawArc(
+                        color = segment.color,
+                        startAngle = startAngle,
+                        sweepAngle = sweep,
+                        useCenter = true,
+                        size = androidx.compose.ui.geometry.Size(radius * 2, radius * 2),
+                        topLeft = Offset(centerX - radius, centerY - radius)
+                    )
+                    startAngle += sweep
+                }
+            }
+
+            // Pass 2: Draw Dividers on top of arcs
+            rotate(rotation, Offset(centerX, centerY)) {
+                var startAngle = -90f - (sweep / 2f)
+                segments.forEach { _ ->
+                    val lineAngleRad = startAngle * PI.toFloat() / 180f
                     drawLine(
-                        color = Color.Black.copy(alpha = 0.7f),
+                        color = Color.Black.copy(alpha = 0.8f),
                         start = Offset(centerX, centerY),
                         end = Offset(
                             centerX + radius * cos(lineAngleRad),
                             centerY + radius * sin(lineAngleRad)
                         ),
-                        strokeWidth = 4f
+                        strokeWidth = 6f
                     )
-                    currentAngle += sweep
-                }
-
-                // Third pass: Draw all labels on top of everything
-                currentAngle = startAngleOffset
-                segments.forEachIndexed { index, segment ->
-                    val midAngle = currentAngle + sweep / 2f
-                    drawSectorLabel(
-                        midAngle, 
-                        centerX, 
-                        centerY, 
-                        radius, 
-                        segment.name, 
-                        textColors[index % textColors.size]
-                    )
-                    currentAngle += sweep
+                    startAngle += sweep
                 }
             }
 
-            // Hub - Purple center with dark border
+            // Pass 3: Draw Text
+            rotate(rotation, Offset(centerX, centerY)) {
+                var startAngle = -90f - (sweep / 2f)
+                segments.forEachIndexed { index, segment ->
+                    val midAngle = startAngle + sweep / 2f
+                    drawSectorLabel(midAngle, centerX, centerY, radius, segment.name, textColors[index])
+                    startAngle += sweep
+                }
+            }
+
+            // Pass 4: Draw Border Flush to Edge
             drawCircle(
-                color = Color(0xFF45408A), // Inner Purple
+                color = Color(0xFF050505),
+                radius = radius,
+                center = Offset(centerX, centerY),
+                style = Stroke(width = 10f)
+            )
+            // Inner highlight ring
+            drawCircle(
+                color = Color(0xFF1E1E2C),
+                radius = radius - 4f,
+                center = Offset(centerX, centerY),
+                style = Stroke(width = 2f)
+            )
+
+            // Pass 5: Center Hub
+            drawCircle(
+                color = Color(0xFF45408A),
                 radius = radius * 0.1f,
                 center = Offset(centerX, centerY)
             )
             drawCircle(
-                color = Color(0xFF121212), // Border
+                color = Color(0xFF121212),
                 radius = radius * 0.1f,
                 center = Offset(centerX, centerY),
                 style = Stroke(width = 4f)
             )
         }
 
-        // Pointer (Small light triangle at top)
+        // 4. Fixed Pointer at the Top
         Canvas(modifier = Modifier.size(wheelSize)) {
             val centerX = size.width / 2f
             val centerY = size.height / 2f
             val radius = wheelSize.toPx() / 2f
-            val pointerWidth = 16.dp.toPx()
-            val pointerHeight = 12.dp.toPx()
+            val pointerWidth = 20.dp.toPx()
+            val pointerHeight = 16.dp.toPx()
             
             val path = androidx.compose.ui.graphics.Path().apply {
-                moveTo(centerX - pointerWidth / 2, centerY - radius - 2f)
-                lineTo(centerX + pointerWidth / 2, centerY - radius - 2f)
+                moveTo(centerX - pointerWidth / 2, centerY - radius - 4f)
+                lineTo(centerX + pointerWidth / 2, centerY - radius - 4f)
                 lineTo(centerX, centerY - radius + pointerHeight)
                 close()
             }
             
             drawPath(
                 path = path,
-                color = Color(0xFFB3B8D3) // Pale Lavender/Grey from image
+                color = Color(0xFFB3B8D3) // Pale Lavender from reference
             )
         }
     }
@@ -182,8 +189,6 @@ private fun DrawScope.drawSectorLabel(
     color: Color
 ) {
     val angleRad = (angleDegrees) * PI.toFloat() / 180f
-    
-    // Start text further from center
     val startRadius = radius * 0.4f
     val textX = centerX + startRadius * cos(angleRad)
     val textY = centerY + startRadius * sin(angleRad)
@@ -191,7 +196,7 @@ private fun DrawScope.drawSectorLabel(
     drawContext.canvas.nativeCanvas.apply {
         val paint = android.graphics.Paint().apply {
             this.color = color.toArgb()
-            textSize = 32f
+            textSize = 34f
             textAlign = android.graphics.Paint.Align.LEFT
             typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
             isAntiAlias = true
@@ -200,10 +205,8 @@ private fun DrawScope.drawSectorLabel(
         save()
         translate(textX, textY)
         rotate(angleDegrees)
-        
         val maxChars = 10
         val displayName = if (text.length > maxChars) text.take(maxChars - 1) + "…" else text
-
         drawText(displayName, 0f, 10f, paint)
         restore()
     }

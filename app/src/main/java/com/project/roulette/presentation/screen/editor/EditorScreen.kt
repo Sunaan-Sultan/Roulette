@@ -256,8 +256,8 @@ fun EditorScreen(
                                 canDelete = state.wheel.segments.size > 2,
                                 onRemove = { viewModel.removeSegment(segment.id) },
                                 onMoveUp = { viewModel.moveSegmentUp(segment.id) },
-                                onUpdate = { name, color, weight ->
-                                    viewModel.updateSegment(segment.id, name, color, weight)
+                                onUpdate = { name, weight ->
+                                    viewModel.updateSegment(segment.id, name, weight)
                                 }
                             )
                         }
@@ -430,7 +430,7 @@ private fun SegmentEditorCard(
     canDelete: Boolean,
     onRemove: () -> Unit,
     onMoveUp: () -> Unit,
-    onUpdate: (String, Color, Float) -> Unit
+    onUpdate: (String, Float) -> Unit
 ) {
     var name by remember(segment.name) { mutableStateOf(segment.name.replace("\u200B", "")) }
 
@@ -497,7 +497,7 @@ private fun SegmentEditorCard(
                     value = name,
                     onValueChange = {
                         name = it
-                        onUpdate(it, segment.color, segment.weight)
+                        onUpdate(it, segment.weight)
                     },
                     modifier = Modifier.fillMaxWidth(),
                     colors = TextFieldDefaults.colors(
@@ -525,7 +525,7 @@ private fun SegmentEditorCard(
 
             Slider(
                 value = segment.weight,
-                onValueChange = { onUpdate(segment.name, segment.color, it) },
+                onValueChange = { onUpdate(segment.name, it) },
                 valueRange = 1f..5f,
                 steps = 7, // 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0, 4.5, 5.0
                 colors = SliderDefaults.colors(

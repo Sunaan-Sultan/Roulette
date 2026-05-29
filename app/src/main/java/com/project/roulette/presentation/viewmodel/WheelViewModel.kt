@@ -322,6 +322,25 @@ class WheelViewModel @Inject constructor(
         }
     }
 
+    /**
+     * Deactivate a segment (remove from wheel session-wise or permanently).
+     */
+    fun deactivateSegment(segmentId: String) {
+        val currentState = _uiState.value
+        if (currentState !is WheelUiState.Success) return
+
+        val updatedSegments = currentState.wheel.segments.map {
+            if (it.id == segmentId) it.copy(isActive = false) else it
+        }
+        val updatedWheel = currentState.wheel.copy(segments = updatedSegments)
+        
+        _uiState.value = currentState.copy(wheel = updatedWheel, lastSpinResult = null)
+        
+        viewModelScope.launch {
+            updateWheelUseCase(updatedWheel)
+        }
+    }
+
     override fun onCleared() {
         super.onCleared()
         soundManager.release()

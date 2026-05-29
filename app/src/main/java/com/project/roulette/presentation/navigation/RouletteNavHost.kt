@@ -120,10 +120,8 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
                 onPreview = { id ->
                     navController.navigate(RouletteScreen.Wheel.forId(id))
                 },
-                onSaved = { id ->
-                    navController.navigate(RouletteScreen.Wheel.forId(id)) {
-                        popUpTo(RouletteScreen.CreateWheel.route) { inclusive = true }
-                    }
+                onSaved = { _ ->
+                    navController.popBackStack()
                 }
             )
         }
@@ -140,10 +138,8 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
                 onPreview = { id ->
                     navController.navigate(RouletteScreen.Wheel.forId(id))
                 },
-                onSaved = { id ->
-                    navController.navigate(RouletteScreen.Wheel.forId(id)) {
-                        popUpTo(RouletteScreen.EditWheel.route) { inclusive = true }
-                    }
+                onSaved = { _ ->
+                    navController.popBackStack()
                 }
             )
         }
