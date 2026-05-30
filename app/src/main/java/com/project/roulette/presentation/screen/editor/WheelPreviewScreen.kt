@@ -24,8 +24,9 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.project.roulette.domain.model.Wheel
 import com.project.roulette.presentation.component.WheelCanvas
+import com.project.roulette.presentation.component.WinnerDialog
+import com.project.roulette.presentation.component.HistoryItem
 import com.project.roulette.presentation.model.WheelUiState
-import com.project.roulette.presentation.screen.wheel.WinnerDialog
 import com.project.roulette.presentation.viewmodel.PreviewViewModel
 import com.project.roulette.ui.theme.DeepNavyBlack
 import com.project.roulette.ui.theme.SurfaceDark
@@ -363,42 +364,6 @@ fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
                 color = Color.Gray,
                 textAlign = TextAlign.Center
             )
-        }
-    }
-}
-
-@Composable
-fun HistoryItem(name: String, color: Color, isLatest: Boolean) {
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = SurfaceDark,
-        shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, if (isLatest) color.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.05f))
-    ) {
-        Row(
-            modifier = Modifier.padding(12.dp),
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Box(modifier = Modifier.size(12.dp).background(color, CircleShape))
-                Spacer(Modifier.width(12.dp))
-                Text(name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            }
-            if (isLatest) {
-                Surface(
-                    color = color.copy(alpha = 0.2f),
-                    shape = RoundedCornerShape(4.dp)
-                ) {
-                    Text(
-                        "LATEST",
-                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                        color = color,
-                        fontSize = 8.sp,
-                        fontWeight = FontWeight.ExtraBold
-                    )
-                }
-            }
         }
     }
 }
