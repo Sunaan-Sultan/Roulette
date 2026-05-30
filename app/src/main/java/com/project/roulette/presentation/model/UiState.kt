@@ -49,11 +49,25 @@ sealed class WheelUiState {
 sealed class HistoryUiState {
     object Loading : HistoryUiState()
     data class Success(
-        val wheelName: String,
-        val spinResults: List<SpinResult>
+        val wheel: Wheel,
+        val spinResults: List<SpinResult>,
+        val filteredResults: List<SpinResult>,
+        val totalSpins: Int,
+        val avgDuration: Float,
+        val mostPickedName: String?,
+        val winDistribution: List<DistributionItem>,
+        val selectedFilter: String? = null,
+        val isDescending: Boolean = true
     ) : HistoryUiState()
     data class Error(val message: String) : HistoryUiState()
 }
+
+data class DistributionItem(
+    val name: String,
+    val count: Int,
+    val percentage: Int,
+    val color: androidx.compose.ui.graphics.Color
+)
 
 // Statistics screen state
 sealed class StatisticsUiState {
