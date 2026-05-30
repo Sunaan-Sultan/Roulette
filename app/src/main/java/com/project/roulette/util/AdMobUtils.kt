@@ -19,8 +19,8 @@ fun loadInterstitial(context: Context) {
 //    val adUnitId = "ca-app-pub-3940256099942544/1033173712"
 
     // Live ad ID
-//     val adUnitId = "ca-app-pub-9720007236604856/1522157778"
-    val adUnitId = ""
+     val adUnitId = "ca-app-pub-9720007236604856/1522157778"
+//    val adUnitId = ""
 
     InterstitialAd.load(
         context,
@@ -40,8 +40,8 @@ fun loadInterstitial(context: Context) {
 
 fun loadSwitchInterstitial(context: Context) {
     val adRequest = AdRequest.Builder().build()
-//    val adUnitId = "ca-app-pub-9720007236604856/7907828064"
-    val adUnitId = ""
+    val adUnitId = "ca-app-pub-9720007236604856/7907828064"
+//    val adUnitId = ""
 
     InterstitialAd.load(
         context,

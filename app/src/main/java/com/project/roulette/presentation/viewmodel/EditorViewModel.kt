@@ -7,16 +7,13 @@ import androidx.compose.ui.graphics.toArgb
 import com.project.roulette.domain.model.Result
 import com.project.roulette.domain.model.Segment
 import com.project.roulette.domain.model.Wheel
+import com.project.roulette.domain.repository.PreferenceRepository
 import com.project.roulette.domain.usecase.wheel.CreateWheelUseCase
 import com.project.roulette.domain.usecase.wheel.GetWheelByIdUseCase
 import com.project.roulette.domain.usecase.wheel.UpdateWheelUseCase
 import com.project.roulette.presentation.model.EditorUiState
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import com.project.roulette.ui.theme.ThemePalette
 import kotlinx.datetime.Clock
@@ -30,7 +27,8 @@ import javax.inject.Inject
 class EditorViewModel @Inject constructor(
     private val getWheelByIdUseCase: GetWheelByIdUseCase,
     private val createWheelUseCase: CreateWheelUseCase,
-    private val updateWheelUseCase: UpdateWheelUseCase
+    private val updateWheelUseCase: UpdateWheelUseCase,
+    private val preferenceRepository: PreferenceRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<EditorUiState>(EditorUiState.Success())
@@ -40,27 +38,34 @@ class EditorViewModel @Inject constructor(
      * Initialize editor for creating a new wheel.
      */
     fun initializeNew() {
-        val defaultPaletteIndex = 0
-        val now = Clock.System.now()
+        viewModelScope.launch {
+            val paletteIdx = preferenceRepository.paletteIndex.first()
+            val removeAfter = preferenceRepository.removeAfterPickEnabled.first()
+            val sound = preferenceRepository.spinSoundEnabled.first()
+            
+            val now = Clock.System.now()
 
-        // Prepare initial segments to avoid Wheel validation error (must have at least one)
-        val initialNames = listOf("Option 1", "Option 2", "Option 3")
-        val initialSegments = initialNames.map {
-            Segment(id = UUID.randomUUID().toString(), name = it, color = Color.Gray, weight = 1f, isActive = true)
+            // Prepare initial segments to avoid Wheel validation error (must have at least one)
+            val initialNames = listOf("Option 1", "Option 2", "Option 3")
+            val initialSegments = initialNames.map {
+                Segment(id = UUID.randomUUID().toString(), name = it, color = Color.Gray, weight = 1f, isActive = true)
+            }
+
+            val newWheel = Wheel(
+                id = UUID.randomUUID().toString(),
+                name = "New Wheel",
+                segments = initialSegments,
+                createdAt = now,
+                updatedAt = now,
+                themePaletteIndex = paletteIdx,
+                removeAfterPick = removeAfter,
+                spinSound = sound
+            )
+            _uiState.value = EditorUiState.Success(wheel = newWheel, isNew = true)
+
+            // Apply initial theme
+            updateSegmentColors()
         }
-
-        val newWheel = Wheel(
-            id = UUID.randomUUID().toString(),
-            name = "New Wheel",
-            segments = initialSegments,
-            createdAt = now,
-            updatedAt = now,
-            themePaletteIndex = defaultPaletteIndex
-        )
-        _uiState.value = EditorUiState.Success(wheel = newWheel, isNew = true)
-
-        // Apply initial theme
-        updateSegmentColors()
     }
 
     /**

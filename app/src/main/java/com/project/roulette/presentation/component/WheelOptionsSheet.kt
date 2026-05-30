@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.project.roulette.domain.model.Wheel
+import com.project.roulette.ui.theme.RouletteTheme
 import com.project.roulette.ui.theme.DeepNavyBlack
 import com.project.roulette.ui.theme.SurfaceDark
 
@@ -77,7 +78,7 @@ fun WheelOptionsSheet(
                         icon = Icons.Filled.Edit,
                         title = "Edit Wheel",
                         description = "Change names & weights",
-                        color = Color(0xFF6C5CE7),
+                        color = RouletteTheme.colors.primary,
                         onClick = onEdit
                     )
                     HorizontalDivider(color = Color.White.copy(alpha = 0.05f), modifier = Modifier.padding(horizontal = 16.dp))
@@ -100,7 +101,7 @@ fun WheelOptionsSheet(
                                 onCheckedChange = { onToggleFavorite() },
                                 colors = SwitchDefaults.colors(
                                     checkedThumbColor = Color.White,
-                                    checkedTrackColor = Color(0xFFFFA000)
+                                    checkedTrackColor = RouletteTheme.colors.primary
                                 )
                             )
                         }

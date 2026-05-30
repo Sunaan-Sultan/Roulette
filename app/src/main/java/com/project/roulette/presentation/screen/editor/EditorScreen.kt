@@ -100,11 +100,11 @@ fun EditorScreen(
                             onClick = { 
                                 onPreview(state.wheel)
                             },
-                            colors = ButtonDefaults.buttonColors(containerColor = themeColor.copy(alpha = 0.2f)),
+                            colors = ButtonDefaults.buttonColors(containerColor = RouletteTheme.colors.primary.copy(alpha = 0.2f)),
                             modifier = Modifier.padding(end = 8.dp),
                             shape = RoundedCornerShape(12.dp)
                         ) {
-                            Text("Preview", color = lighterThemeColor, fontWeight = FontWeight.Bold)
+                            Text("Preview", color = RouletteTheme.colors.accent, fontWeight = FontWeight.Bold)
                         }
                     }
                 },
@@ -117,7 +117,7 @@ fun EditorScreen(
         when (val state = uiState) {
             is EditorUiState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = themeColor)
+                    CircularProgressIndicator(color = RouletteTheme.colors.primary)
                 }
             }
 
@@ -287,7 +287,7 @@ fun EditorScreen(
                                     .padding(vertical = 24.dp)
                                     .height(64.dp),
                                 shape = RoundedCornerShape(20.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = themeColor),
+                                colors = ButtonDefaults.buttonColors(containerColor = RouletteTheme.colors.primary),
                                 enabled = !state.isSaving
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -431,7 +431,7 @@ private fun EditorToggleCard(
                 onCheckedChange = onCheckedChange,
                 colors = SwitchDefaults.colors(
                     checkedThumbColor = Color.White,
-                    checkedTrackColor = themeColor,
+                    checkedTrackColor = RouletteTheme.colors.primary,
                     uncheckedThumbColor = TextSecondary,
                     uncheckedTrackColor = SurfaceDarker,
                     uncheckedBorderColor = Color.Transparent

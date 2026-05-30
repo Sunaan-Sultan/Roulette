@@ -25,13 +25,23 @@ val TileBlue = Color(0xFF0984E3)
 val TilePink = Color(0xFFE84393)
 val TileOrange = Color(0xFFE17055)
 
-val ThemePalette = listOf(
-    Color(0xFF673AB7), // Purple
-    Color(0xFF00796B), // Green/Teal
-    Color(0xFFD84315), // Deep Orange/Rust
-    Color(0xFF1976D2), // Blue
-    Color(0xFFC2185B), // Pink
-    Color(0xFFFFA000), // Amber/Orange
-    Color(0xFF388E3C), // Green
-    Color(0xFF616161)  // Gray
+// Theme Palettes
+data class RoulettePalette(
+    val name: String,
+    val primary: Color,
+    val accent: Color,
+    val surface: Color = SurfaceDark
 )
+
+val Palettes = listOf(
+    RoulettePalette("Purple", Color(0xFF6C5CE7), Color(0xFFA29BFE)),
+    RoulettePalette("Teal", Color(0xFF00B894), Color(0xFF55E6C1)),
+    RoulettePalette("Rose", Color(0xFFE84393), Color(0xFFFD79A8)),
+    RoulettePalette("Ocean", Color(0xFF0984E3), Color(0xFF74B9FF)),
+    RoulettePalette("Amber", Color(0xFFFFA000), Color(0xFFFFC107)),
+    RoulettePalette("Coral", Color(0xFFFF7675), Color(0xFFFAB1A0)),
+    RoulettePalette("Mint", Color(0xFF27AE60), Color(0xFF2ECC71)),
+    RoulettePalette("Crimson", Color(0xFFD63031), Color(0xFFFF7675))
+)
+
+val ThemePalette = Palettes.map { it.primary }

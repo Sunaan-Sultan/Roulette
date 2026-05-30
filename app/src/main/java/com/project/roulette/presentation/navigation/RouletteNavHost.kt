@@ -33,6 +33,8 @@ import com.project.roulette.presentation.viewmodel.EditorViewModel
 import com.project.roulette.presentation.viewmodel.HistoryViewModel
 import com.project.roulette.presentation.viewmodel.StatisticsViewModel
 import com.project.roulette.presentation.viewmodel.NotificationViewModel
+import com.project.roulette.presentation.viewmodel.SettingsViewModel
+import com.project.roulette.presentation.screen.settings.SettingsScreen
 import com.project.roulette.presentation.screen.editor.WheelPreviewScreen
 import com.project.roulette.presentation.viewmodel.PreviewViewModel
 import androidx.navigation.navArgument
@@ -223,10 +225,11 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
         }
 
         composable(RouletteScreen.Settings.route) {
-            // Placeholder for Settings screen
-            Box(modifier = Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.Alignment.Center) {
-                Text("Settings Screen", color = androidx.compose.ui.graphics.Color.White)
-            }
+            val viewModel: SettingsViewModel = hiltViewModel()
+            SettingsScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
     }
 }

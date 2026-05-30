@@ -31,7 +31,7 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import com.project.roulette.presentation.navigation.RouletteScreen
-import com.project.roulette.ui.theme.PrimaryPurple
+import com.project.roulette.ui.theme.RouletteTheme
 
 /**
  * Floating bottom navigation bar component.
@@ -81,7 +81,7 @@ fun BottomBar(
                     val isSelected = currentDestination?.hierarchy?.any { it.route == screen.route } == true
 
                     val backgroundColor by animateColorAsState(
-                        targetValue = if (isSelected) PrimaryPurple else Color.Transparent,
+                        targetValue = if (isSelected) RouletteTheme.colors.primary else Color.Transparent,
                         animationSpec = tween(300),
                         label = "nav_item_bg"
                     )

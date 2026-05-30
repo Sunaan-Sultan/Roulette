@@ -32,6 +32,7 @@ import com.project.roulette.presentation.model.DistributionItem
 import com.project.roulette.presentation.model.HistoryUiState
 import com.project.roulette.presentation.viewmodel.HistoryEffect
 import com.project.roulette.presentation.viewmodel.HistoryViewModel
+import com.project.roulette.ui.theme.RouletteTheme
 import com.project.roulette.util.PdfExporter
 import com.project.roulette.ui.theme.DeepNavyBlack
 import com.project.roulette.ui.theme.SurfaceDark
@@ -127,7 +128,7 @@ fun HistoryScreen(
         when (val state = uiState) {
             is HistoryUiState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Color(0xFF6C5CE7))
+                    CircularProgressIndicator(color = RouletteTheme.colors.primary)
                 }
             }
 
@@ -148,7 +149,7 @@ fun HistoryScreen(
                             StatCard(
                                 value = state.totalSpins.toString(),
                                 label = "Total spins",
-                                color = Color(0xFF6C5CE7),
+                                color = RouletteTheme.colors.primary,
                                 modifier = Modifier.weight(1f)
                             )
                             StatCard(
@@ -199,7 +200,7 @@ fun HistoryScreen(
                                     if (state.isDescending) "Sort ↓" else "Sort ↑",
                                     fontSize = 12.sp,
                                     fontWeight = FontWeight.Bold,
-                                    color = Color(0xFF6C5CE7)
+                                    color = RouletteTheme.colors.primary
                                 )
                             }
                         }
@@ -282,13 +283,13 @@ private fun WinDistributionCard(distribution: List<DistributionItem>, totalSpins
             ) {
                 Text("Win distribution", fontWeight = FontWeight.Bold, color = Color.White)
                 Surface(
-                    color = Color(0xFF6C5CE7).copy(alpha = 0.2f),
+                    color = RouletteTheme.colors.primary.copy(alpha = 0.2f),
                     shape = CircleShape
                 ) {
                     Text(
                         "$totalSpins spins",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-                        color = Color(0xFF6C5CE7),
+                        color = RouletteTheme.colors.primary,
                         fontSize = 11.sp,
                         fontWeight = FontWeight.Bold
                     )
@@ -342,7 +343,7 @@ private fun FilterChipsRow(names: List<String>, selectedName: String?, onSelect:
                 label = { Text("All") },
                 shape = CircleShape,
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = Color(0xFF6C5CE7),
+                    selectedContainerColor = RouletteTheme.colors.primary,
                     selectedLabelColor = Color.White,
                     containerColor = SurfaceDark,
                     labelColor = Color.Gray
@@ -357,12 +358,12 @@ private fun FilterChipsRow(names: List<String>, selectedName: String?, onSelect:
                 label = { Text(name) },
                 shape = CircleShape,
                 colors = FilterChipDefaults.filterChipColors(
-                    selectedContainerColor = Color(0xFF6C5CE7).copy(alpha = 0.2f),
+                    selectedContainerColor = RouletteTheme.colors.primary.copy(alpha = 0.2f),
                     selectedLabelColor = Color.White,
                     containerColor = SurfaceDark,
                     labelColor = Color.Gray
                 ),
-                border = BorderStroke(1.dp, if (selectedName == name) Color(0xFF6C5CE7) else Color.Transparent)
+                border = BorderStroke(1.dp, if (selectedName == name) RouletteTheme.colors.primary else Color.Transparent)
             )
         }
     }
@@ -447,7 +448,7 @@ private fun HistoryCard(spinResult: SpinResult, color: Color, spinNumber: Int, i
             if (isLatest) {
                 Surface(
                     modifier = Modifier.align(Alignment.TopEnd),
-                    color = Color(0xFF6C5CE7),
+                    color = RouletteTheme.colors.primary,
                     shape = RoundedCornerShape(bottomStart = 12.dp, topEnd = 24.dp)
                 ) {
                     Text(

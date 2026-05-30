@@ -41,6 +41,7 @@ import com.project.roulette.presentation.model.TimelineItem
 import com.project.roulette.presentation.viewmodel.StatisticsEffect
 import com.project.roulette.presentation.viewmodel.StatisticsViewModel
 import com.project.roulette.util.PdfExporter
+import com.project.roulette.ui.theme.RouletteTheme
 import com.project.roulette.ui.theme.DeepNavyBlack
 import com.project.roulette.ui.theme.SurfaceDark
 import com.project.roulette.ui.theme.SurfaceDarker
@@ -113,7 +114,7 @@ fun StatisticsScreen(
         when (val state = uiState) {
             is StatisticsUiState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator(color = Color(0xFF6C5CE7))
+                    CircularProgressIndicator(color = RouletteTheme.colors.primary)
                 }
             }
 
@@ -134,7 +135,7 @@ fun StatisticsScreen(
                             StatCard(
                                 value = state.statistics.totalSpins.toString(),
                                 label = "Total spins",
-                                color = Color(0xFF6C5CE7),
+                                color = RouletteTheme.colors.primary,
                                 modifier = Modifier.weight(1f)
                             )
                             StatCard(
@@ -293,7 +294,7 @@ private fun SelectionDistributionCard(
                                 .weight(1f)
                                 .fillMaxHeight()
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (chartType == ChartType.BAR) Color(0xFF6C5CE7) else Color.Transparent)
+                                .background(if (chartType == ChartType.BAR) RouletteTheme.colors.primary else Color.Transparent)
                                 .clickable { if (chartType != ChartType.BAR) onToggle() },
                             contentAlignment = Alignment.Center
                         ) {
@@ -304,7 +305,7 @@ private fun SelectionDistributionCard(
                                 .weight(1f)
                                 .fillMaxHeight()
                                 .clip(RoundedCornerShape(12.dp))
-                                .background(if (chartType == ChartType.RING) Color(0xFF6C5CE7) else Color.Transparent)
+                                .background(if (chartType == ChartType.RING) RouletteTheme.colors.primary else Color.Transparent)
                                 .clickable { if (chartType != ChartType.RING) onToggle() },
                             contentAlignment = Alignment.Center
                         ) {
@@ -468,7 +469,7 @@ private fun SpinTimelineCard(timeline: List<TimelineItem>) {
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = Color(0xFF6C5CE7), modifier = Modifier.size(18.dp))
+                Icon(Icons.AutoMirrored.Filled.TrendingUp, null, tint = RouletteTheme.colors.primary, modifier = Modifier.size(18.dp))
                 Spacer(Modifier.width(12.dp))
                 Text("Spin timeline", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 16.sp)
             }

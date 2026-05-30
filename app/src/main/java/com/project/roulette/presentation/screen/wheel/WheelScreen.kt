@@ -65,7 +65,6 @@ fun WheelScreen(
     val spinsToday by viewModel.spinsToday.collectAsStateWithLifecycle()
     val seed by viewModel.seed.collectAsStateWithLifecycle()
     val pendingOutcome by viewModel.pendingSpinOutcome.collectAsStateWithLifecycle()
-    val recentSpins by viewModel.recentSpins.collectAsStateWithLifecycle()
 
     val themeColor = remember(uiState) {
         val state = uiState
@@ -507,7 +506,7 @@ fun WheelScreen(
                         )
                         Spacer(Modifier.height(12.dp))
                         
-                        if (recentSpins.isEmpty()) {
+                        if (state.recentSpins.isEmpty()) {
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -524,7 +523,7 @@ fun WheelScreen(
                             }
                         } else {
                             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                recentSpins.forEachIndexed { index, result ->
+                                state.recentSpins.forEachIndexed { index, result ->
                                     val segment = state.wheel.segments.find { it.id == result.selectedSegmentId }
                                     HistoryItem(
                                         name = result.selectedSegmentName,

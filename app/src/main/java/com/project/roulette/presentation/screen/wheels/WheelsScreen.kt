@@ -57,7 +57,7 @@ fun WheelsScreen(
                     }
                 },
                 shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
+                colors = ButtonDefaults.buttonColors(containerColor = RouletteTheme.colors.primary),
                 modifier = Modifier
                     .height(56.dp)
                     .padding(end = 8.dp)
@@ -139,10 +139,10 @@ fun WheelsScreen(
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = Color.Transparent,
-                    focusedBorderColor = PrimaryPurple,
+                    focusedBorderColor = RouletteTheme.colors.primary,
                     unfocusedContainerColor = SurfaceDark,
                     focusedContainerColor = SurfaceDark,
-                    cursorColor = PrimaryPurple,
+                    cursorColor = RouletteTheme.colors.primary,
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White
                 ),
@@ -210,7 +210,7 @@ fun WheelsScreen(
                 when (val state = uiState) {
                     is HomeUiState.Loading -> {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = PrimaryPurple)
+                            CircularProgressIndicator(color = RouletteTheme.colors.primary)
                         }
                     }
 
@@ -302,7 +302,7 @@ fun WheelsFilterChipItem(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(20.dp),
-        color = if (isSelected) PrimaryPurple else SurfaceDark,
+        color = if (isSelected) RouletteTheme.colors.primary else SurfaceDark,
         modifier = Modifier.height(40.dp)
     ) {
         Box(

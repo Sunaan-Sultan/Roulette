@@ -30,6 +30,10 @@ import com.project.roulette.ui.theme.DeepNavyBlack
 import com.project.roulette.ui.theme.RouletteTheme
 import dagger.hilt.android.AndroidEntryPoint
 
+import com.project.roulette.presentation.viewmodel.SettingsViewModel
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+
 /**
  * Main Activity for Roulette app.
  * Uses Hilt for dependency injection and Compose for UI.
@@ -60,7 +64,10 @@ class MainActivity : ComponentActivity() {
         MobileAds.initialize(this) {}
 
         setContent {
-            RouletteTheme(darkTheme = true) {
+            val settingsViewModel: SettingsViewModel = hiltViewModel()
+            val paletteIndex by settingsViewModel.paletteIndex.collectAsStateWithLifecycle()
+
+            RouletteTheme(darkTheme = true, paletteIndex = paletteIndex) {
                 RouletteApp()
             }
         }

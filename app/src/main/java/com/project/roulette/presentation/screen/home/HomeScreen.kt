@@ -63,7 +63,7 @@ fun HomeScreen(
                     }
                 },
                 shape = RoundedCornerShape(28.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple),
+                colors = ButtonDefaults.buttonColors(containerColor = RouletteTheme.colors.primary),
                 modifier = Modifier
                     .height(56.dp)
                     .padding(end = 8.dp)
@@ -145,10 +145,10 @@ fun HomeScreen(
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = Color.Transparent,
-                    focusedBorderColor = PrimaryPurple,
+                    focusedBorderColor = RouletteTheme.colors.primary,
                     unfocusedContainerColor = SurfaceDark,
                     focusedContainerColor = SurfaceDark,
-                    cursorColor = PrimaryPurple,
+                    cursorColor = RouletteTheme.colors.primary,
                     focusedTextColor = Color.White,
                     unfocusedTextColor = Color.White
                 ),
@@ -186,7 +186,7 @@ fun HomeScreen(
                 when (val state = uiState) {
                     is HomeUiState.Loading -> {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = PrimaryPurple)
+                            CircularProgressIndicator(color = RouletteTheme.colors.primary)
                         }
                     }
 
@@ -246,7 +246,7 @@ fun FilterChipItem(
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(20.dp),
-        color = if (isSelected) PrimaryPurple else SurfaceDark,
+        color = if (isSelected) RouletteTheme.colors.primary else SurfaceDark,
         modifier = Modifier.height(40.dp)
     ) {
         Box(
@@ -280,7 +280,7 @@ fun WheelCard(
             .clickable { onSelect() },
         shape = RoundedCornerShape(24.dp),
         color = SurfaceDark,
-        border = if (isActive) BorderStroke(1.dp, PrimaryPurple.copy(alpha = 0.5f)) else null
+        border = if (isActive) BorderStroke(1.dp, RouletteTheme.colors.primary.copy(alpha = 0.5f)) else null
     ) {
         Row(
             modifier = Modifier
@@ -324,12 +324,12 @@ fun WheelCard(
             if (isActive) {
                 Surface(
                     shape = RoundedCornerShape(12.dp),
-                    color = PrimaryPurple.copy(alpha = 0.2f),
+                    color = RouletteTheme.colors.primary.copy(alpha = 0.2f),
                     modifier = Modifier.padding(horizontal = 8.dp)
                 ) {
                     Text(
                         text = "Active",
-                        color = PrimaryPurple,
+                        color = RouletteTheme.colors.primary,
                         fontWeight = FontWeight.Bold,
                         fontSize = 12.sp,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)

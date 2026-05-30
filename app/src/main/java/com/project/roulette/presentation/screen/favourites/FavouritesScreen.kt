@@ -102,7 +102,7 @@ fun FavouritesScreen(
             when (val state = uiState) {
                 is HomeUiState.Loading -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = PrimaryPurple)
+                        CircularProgressIndicator(color = RouletteTheme.colors.primary)
                     }
                 }
 
@@ -168,7 +168,7 @@ fun FeaturedFavouriteCard(
             .clickable { onSelect() },
         shape = RoundedCornerShape(32.dp),
         color = SurfaceDark,
-        border = BorderStroke(1.dp, PrimaryPurple.copy(alpha = 0.3f))
+        border = BorderStroke(1.dp, RouletteTheme.colors.primary.copy(alpha = 0.3f))
     ) {
         Column(
             modifier = Modifier.padding(24.dp)
@@ -177,13 +177,13 @@ fun FeaturedFavouriteCard(
                 modifier = Modifier
                     .size(56.dp)
                     .clip(RoundedCornerShape(16.dp))
-                    .background(PrimaryPurple.copy(alpha = 0.1f)),
+                    .background(RouletteTheme.colors.primary.copy(alpha = 0.1f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     Icons.Filled.Refresh,
                     contentDescription = null,
-                    tint = PrimaryPurple,
+                    tint = RouletteTheme.colors.primary,
                     modifier = Modifier.size(28.dp)
                 )
             }
@@ -211,7 +211,7 @@ fun FeaturedFavouriteCard(
                     .fillMaxWidth()
                     .height(56.dp),
                 shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = PrimaryPurple)
+                colors = ButtonDefaults.buttonColors(containerColor = RouletteTheme.colors.primary)
             ) {
                 Text(
                     "Spin now",

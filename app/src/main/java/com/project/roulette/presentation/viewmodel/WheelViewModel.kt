@@ -70,8 +70,7 @@ class WheelViewModel @Inject constructor(
     private val _rrQueue = MutableStateFlow<List<String>>(emptyList())
     val rrQueue: StateFlow<List<String>> = _rrQueue.asStateFlow()
 
-    private val _recentSpins = MutableStateFlow<List<SpinResult>>(emptyList())
-    val recentSpins: StateFlow<List<SpinResult>> = _recentSpins.asStateFlow()
+    private var _cachedRecentSpins: List<SpinResult> = emptyList()
 
     // Holds the outcome produced by the selection algorithm and recorded by the use case
     private val _pendingSpinOutcome = MutableStateFlow<SpinWheelUseCase.SpinOutcome?>(null)
@@ -123,7 +122,11 @@ class WheelViewModel @Inject constructor(
         viewModelScope.launch {
             getRecentSpinsUseCase(wheelId, limit = 4).collect { result ->
                 if (result is Result.Success) {
-                    _recentSpins.value = result.data
+                    _cachedRecentSpins = result.data
+                    val currentState = _uiState.value
+                    if (currentState is WheelUiState.Success && !currentState.isSpinning) {
+                        _uiState.value = currentState.copy(recentSpins = result.data)
+                    }
                 }
             }
         }
@@ -256,7 +259,10 @@ class WheelViewModel @Inject constructor(
             soundManager.stopAll()
 
             // Clear result first to hide dialog
-            _uiState.value = currentState.copy(lastSpinResult = null)
+            _uiState.value = currentState.copy(
+                lastSpinResult = null,
+                recentSpins = _cachedRecentSpins
+            )
 
             // If "Remove after pick" is enabled, deactivate the segment
             if (wheel.removeAfterPick && result != null) {

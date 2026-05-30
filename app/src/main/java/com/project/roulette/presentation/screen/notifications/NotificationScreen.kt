@@ -98,7 +98,7 @@ fun NotificationContent(
                 ) {
                     Text(
                         text = "Mark all read",
-                        color = PrimaryPurple,
+                        color = RouletteTheme.colors.primary,
                         fontWeight = FontWeight.Bold,
                         fontSize = 14.sp
                     )
@@ -134,7 +134,7 @@ fun NotificationContent(
             when (val state = uiState) {
                 is NotificationUiState.Loading -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = PrimaryPurple)
+                        CircularProgressIndicator(color = RouletteTheme.colors.primary)
                     }
                 }
 
@@ -201,6 +201,7 @@ fun NotificationItem(
     val finalColor = if (notification.isRead) Color.Gray.copy(alpha = 0.5f) else color
     val backgroundColor = if (notification.isRead) SurfaceDarker else SurfaceDark
     val borderAlpha = if (notification.isRead) 0.1f else 0.5f
+    val borderColor = if (notification.isRead) finalColor else RouletteTheme.colors.primary
     val textColor = if (notification.isRead) TextSecondary else Color.White
 
     Surface(
@@ -209,7 +210,7 @@ fun NotificationItem(
             .clickable { onClick() },
         shape = RoundedCornerShape(24.dp),
         color = backgroundColor,
-        border = BorderStroke(1.dp, finalColor.copy(alpha = borderAlpha))
+        border = BorderStroke(1.dp, borderColor.copy(alpha = borderAlpha))
     ) {
         Row(
             modifier = Modifier
