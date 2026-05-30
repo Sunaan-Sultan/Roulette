@@ -278,6 +278,30 @@ fun EditorScreen(
                                 }
                             )
                         }
+
+                        item {
+                            Button(
+                                onClick = { viewModel.saveWheel() },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 24.dp)
+                                    .height(64.dp),
+                                shape = RoundedCornerShape(20.dp),
+                                colors = ButtonDefaults.buttonColors(containerColor = themeColor),
+                                enabled = !state.isSaving
+                            ) {
+                                Row(verticalAlignment = Alignment.CenterVertically) {
+                                    Icon(Icons.Filled.Save, contentDescription = null, tint = Color.White)
+                                    Spacer(Modifier.width(12.dp))
+                                    Text(
+                                        if (state.isSaving) "Saving..." else "Save Wheel",
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        color = Color.White
+                                    )
+                                }
+                            }
+                        }
                     }
 
                     if (showImportDialog) {

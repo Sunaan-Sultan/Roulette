@@ -3,6 +3,7 @@ package com.project.roulette.presentation.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.project.roulette.domain.model.Result
+import com.project.roulette.domain.model.SpinResult
 import com.project.roulette.domain.usecase.selection.SelectionAlgorithmFactory
 import com.project.roulette.domain.usecase.spin.GetRecentSpinsUseCase
 import com.project.roulette.domain.usecase.spin.SpinWheelUseCase
@@ -60,6 +61,9 @@ class WheelViewModel @Inject constructor(
     private val _rrQueue = MutableStateFlow<List<String>>(emptyList())
     val rrQueue: StateFlow<List<String>> = _rrQueue.asStateFlow()
 
+    private val _recentSpins = MutableStateFlow<List<SpinResult>>(emptyList())
+    val recentSpins: StateFlow<List<SpinResult>> = _recentSpins.asStateFlow()
+
     // Holds the outcome produced by the selection algorithm and recorded by the use case
     private val _pendingSpinOutcome = MutableStateFlow<SpinWheelUseCase.SpinOutcome?>(null)
     val pendingSpinOutcome: StateFlow<SpinWheelUseCase.SpinOutcome?> = _pendingSpinOutcome.asStateFlow()
@@ -68,8 +72,9 @@ class WheelViewModel @Inject constructor(
      * Load wheel by ID.
      */
     fun loadWheel(wheelId: String) {
+        _uiState.value = WheelUiState.Loading
+
         viewModelScope.launch {
-            _uiState.value = WheelUiState.Loading
             getWheelByIdUseCase(wheelId).collect { result ->
                 if (result is Result.Success) {
                     val currentState = _uiState.value
@@ -85,8 +90,10 @@ class WheelViewModel @Inject constructor(
                     _uiState.value = WheelUiState.Loading
                 }
             }
-            
-            // Load spins today for this wheel
+        }
+
+        // Load spins today for this wheel in a separate coroutine
+        viewModelScope.launch {
             getWheelStatisticsUseCase(wheelId).collect { result ->
                 if (result is Result.Success) {
                     _spinsToday.value = result.data.totalSpins
@@ -99,6 +106,15 @@ class WheelViewModel @Inject constructor(
                             _uiState.value = currentState.copy(rrRemaining = remaining)
                         }
                     }
+                }
+            }
+        }
+
+        // Load recent spins in a separate coroutine
+        viewModelScope.launch {
+            getRecentSpinsUseCase(wheelId, limit = 4).collect { result ->
+                if (result is Result.Success) {
+                    _recentSpins.value = result.data
                 }
             }
         }

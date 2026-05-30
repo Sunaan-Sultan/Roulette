@@ -40,6 +40,7 @@ import com.project.roulette.domain.model.SpinResult
 import com.project.roulette.domain.model.Wheel
 import com.project.roulette.domain.usecase.selection.SelectionAlgorithmFactory
 import com.project.roulette.presentation.component.WheelCanvas
+import com.project.roulette.presentation.component.HistoryItem
 import com.project.roulette.presentation.model.WheelUiState
 import com.project.roulette.presentation.viewmodel.WheelViewModel
 import kotlinx.coroutines.delay
@@ -66,6 +67,7 @@ fun WheelScreen(
     val spinsToday by viewModel.spinsToday.collectAsStateWithLifecycle()
     val seed by viewModel.seed.collectAsStateWithLifecycle()
     val pendingOutcome by viewModel.pendingSpinOutcome.collectAsStateWithLifecycle()
+    val recentSpins by viewModel.recentSpins.collectAsStateWithLifecycle()
 
     val themeColor = remember(uiState) {
         val state = uiState
@@ -268,6 +270,28 @@ fun WheelScreen(
 
                     Spacer(Modifier.height(16.dp))
 
+                    // Tap to Spin Hint
+                    val infiniteTransition = rememberInfiniteTransition(label = "tap_hint")
+                    val hintAlpha by infiniteTransition.animateFloat(
+                        initialValue = 0.3f,
+                        targetValue = 0.8f,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(1000, easing = LinearEasing),
+                            repeatMode = RepeatMode.Reverse
+                        ),
+                        label = "alpha"
+                    )
+
+                    Text(
+                        "Tap Wheel to Spin",
+                        color = Color.White.copy(alpha = hintAlpha),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.ExtraBold,
+                        letterSpacing = 1.2.sp
+                    )
+
+                    Spacer(Modifier.height(16.dp))
+
                     // Wheel
                     WheelCanvas(
                         wheel = state.wheel,
@@ -452,26 +476,49 @@ fun WheelScreen(
 
                     Spacer(Modifier.height(32.dp))
 
-                    // Spin Button
-                    Button(
-                        onClick = { if (!state.isSpinning) viewModel.spinWheel() },
+                    // Spin History Section
+                    Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(56.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = themeColor,
-                            contentColor = Color.White
-                        ),
-                        enabled = !state.isSpinning
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.Refresh, contentDescription = null)
-                            Spacer(Modifier.width(8.dp))
-                            Text(if (state.isSpinning) "Spinning..." else "Spin Wheel", fontWeight = FontWeight.Bold)
+                        Text(
+                            "SPIN HISTORY",
+                            fontSize = 12.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Gray,
+                            letterSpacing = 1.2.sp
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        
+                        if (recentSpins.isEmpty()) {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(80.dp)
+                                    .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
+                                    .background(Color(0xFF1E1E1E).copy(alpha = 0.3f), RoundedCornerShape(16.dp)),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    "No spins yet — tap wheel to start",
+                                    color = Color.Gray.copy(alpha = 0.6f),
+                                    fontSize = 14.sp
+                                )
+                            }
+                        } else {
+                            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                recentSpins.forEachIndexed { index, result ->
+                                    val segment = state.wheel.segments.find { it.id == result.selectedSegmentId }
+                                    HistoryItem(
+                                        name = result.selectedSegmentName,
+                                        color = segment?.color ?: Color.Gray,
+                                        isLatest = index == 0
+                                    )
+                                }
+                            }
                         }
                     }
-                    
+
                     Spacer(Modifier.height(32.dp))
                 }
 
