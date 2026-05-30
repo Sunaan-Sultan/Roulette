@@ -6,14 +6,14 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Typeface
 import android.graphics.pdf.PdfDocument
+import android.net.Uri
 import androidx.core.content.FileProvider
 import com.project.roulette.domain.model.SpinResult
+import com.project.roulette.presentation.model.PdfStats
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import java.io.File
 import java.io.FileOutputStream
-import android.net.Uri
-import com.project.roulette.presentation.viewmodel.PdfStats
 import java.util.Locale
 
 object PdfExporter {

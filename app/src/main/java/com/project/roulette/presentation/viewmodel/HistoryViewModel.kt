@@ -10,6 +10,7 @@ import com.project.roulette.domain.usecase.spin.GetRecentSpinsUseCase
 import com.project.roulette.domain.usecase.wheel.GetWheelByIdUseCase
 import com.project.roulette.presentation.model.DistributionItem
 import com.project.roulette.presentation.model.HistoryUiState
+import com.project.roulette.presentation.model.PdfStats
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -27,13 +28,6 @@ sealed class HistoryEffect {
         val stats: PdfStats
     ) : HistoryEffect()
 }
-
-data class PdfStats(
-    val totalSpins: Int,
-    val avgDuration: Float,
-    val mostPicked: String?,
-    val distribution: List<DistributionItem>
-)
 
 /**
  * ViewModel for the Spin History screen.

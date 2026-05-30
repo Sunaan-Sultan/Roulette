@@ -69,14 +69,42 @@ data class DistributionItem(
     val color: androidx.compose.ui.graphics.Color
 )
 
+data class PdfStats(
+    val totalSpins: Int,
+    val avgDuration: Float,
+    val mostPicked: String?,
+    val distribution: List<DistributionItem>
+)
+
 // Statistics screen state
 sealed class StatisticsUiState {
     object Loading : StatisticsUiState()
     data class Success(
-        val wheelName: String,
-        val statistics: WheelStatistics
+        val wheel: Wheel,
+        val statistics: WheelStatistics,
+        val spinResults: List<SpinResult>,
+        val fairnessScore: Int,
+        val fairnessMessage: String,
+        val streaks: List<StreakInfo>,
+        val timelineData: List<TimelineItem>,
+        val chartType: ChartType = ChartType.BAR
     ) : StatisticsUiState()
     data class Error(val message: String) : StatisticsUiState()
+}
+
+data class StreakInfo(
+    val name: String,
+    val count: Int,
+    val color: androidx.compose.ui.graphics.Color
+)
+
+data class TimelineItem(
+    val color: androidx.compose.ui.graphics.Color,
+    val index: Int
+)
+
+enum class ChartType {
+    BAR, RING
 }
 
 // Editor (create/edit wheel) screen state
