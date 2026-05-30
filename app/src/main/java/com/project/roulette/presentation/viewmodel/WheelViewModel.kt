@@ -4,11 +4,15 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.project.roulette.domain.model.Result
 import com.project.roulette.domain.model.SpinResult
+import com.project.roulette.domain.model.Wheel
 import com.project.roulette.domain.usecase.selection.SelectionAlgorithmFactory
 import com.project.roulette.domain.usecase.spin.GetRecentSpinsUseCase
 import com.project.roulette.domain.usecase.spin.SpinWheelUseCase
 import com.project.roulette.domain.usecase.statistics.GetWheelStatisticsUseCase
+import com.project.roulette.domain.usecase.wheel.CreateWheelUseCase
+import com.project.roulette.domain.usecase.wheel.DeleteWheelUseCase
 import com.project.roulette.domain.usecase.wheel.GetWheelByIdUseCase
+import com.project.roulette.domain.usecase.wheel.ToggleFavoriteUseCase
 import com.project.roulette.domain.usecase.wheel.UpdateWheelUseCase
 import com.project.roulette.presentation.model.WheelUiState
 import com.project.roulette.util.audio.HapticFeedback
@@ -18,6 +22,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.datetime.Clock
+import java.util.UUID
 import javax.inject.Inject
 
 /**
@@ -31,6 +37,9 @@ class WheelViewModel @Inject constructor(
     private val spinWheelUseCase: SpinWheelUseCase,
     private val getRecentSpinsUseCase: GetRecentSpinsUseCase,
     private val getWheelStatisticsUseCase: GetWheelStatisticsUseCase,
+    private val deleteWheelUseCase: DeleteWheelUseCase,
+    private val toggleFavoriteUseCase: ToggleFavoriteUseCase,
+    private val createWheelUseCase: CreateWheelUseCase,
     private val soundManager: SoundManager,
     private val hapticFeedback: HapticFeedback
 ) : ViewModel() {
@@ -368,6 +377,48 @@ class WheelViewModel @Inject constructor(
      */
     fun playTickSound() {
         soundManager.playTick()
+    }
+
+    fun deleteWheel(onDeleted: () -> Unit) {
+        val currentState = _uiState.value
+        if (currentState is WheelUiState.Success) {
+            viewModelScope.launch {
+                val result = deleteWheelUseCase(currentState.wheel.id)
+                if (result is Result.Success) {
+                    onDeleted()
+                }
+            }
+        }
+    }
+
+    fun toggleFavorite() {
+        val currentState = _uiState.value
+        if (currentState is WheelUiState.Success) {
+            val newFav = !currentState.wheel.isFavorite
+            viewModelScope.launch {
+                toggleFavoriteUseCase(currentState.wheel.id, newFav)
+            }
+        }
+    }
+
+    fun duplicateWheel(onDuplicated: (String) -> Unit) {
+        val currentState = _uiState.value
+        if (currentState is WheelUiState.Success) {
+            val original = currentState.wheel
+            val newWheel = original.copy(
+                id = UUID.randomUUID().toString(),
+                name = "${original.name} (Copy)",
+                createdAt = Clock.System.now(),
+                updatedAt = Clock.System.now(),
+                isFavorite = false
+            )
+            viewModelScope.launch {
+                val result = createWheelUseCase(newWheel)
+                if (result is Result.Success) {
+                    onDuplicated(result.data)
+                }
+            }
+        }
     }
 
     override fun onCleared() {

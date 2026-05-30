@@ -2,12 +2,12 @@ package com.project.roulette.presentation.screen.wheel
 
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -25,7 +25,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -33,24 +32,22 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.project.roulette.domain.model.SpinResult
 import com.project.roulette.domain.model.Wheel
 import com.project.roulette.domain.usecase.selection.SelectionAlgorithmFactory
 import com.project.roulette.presentation.component.WheelCanvas
 import com.project.roulette.presentation.component.HistoryItem
 import com.project.roulette.presentation.component.WinnerDialog
+import com.project.roulette.presentation.component.WheelOptionsSheet
 import com.project.roulette.presentation.model.WheelUiState
 import com.project.roulette.presentation.viewmodel.WheelViewModel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.project.roulette.util.loadInterstitial
 import com.project.roulette.util.showInterstitial
 import com.project.roulette.ui.theme.ThemePalette
+import com.project.roulette.ui.theme.DeepNavyBlack
+import com.project.roulette.ui.theme.SurfaceDark
 import androidx.activity.compose.BackHandler
-import kotlin.random.Random
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -87,9 +84,10 @@ fun WheelScreen(
         Color(android.graphics.Color.HSVToColor(hsv))
     }
 
-    var menuExpanded by remember { mutableStateOf(false) }
+    var showOptions by remember { mutableStateOf(false) }
     var showAlgoInfo by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val optionsSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
@@ -150,8 +148,6 @@ fun WheelScreen(
             val segmentCount = state.wheel.getActiveSegments().size
             if (segmentCount > 0) {
                 val sweep = 360f / segmentCount
-                // Adding a small offset (sweep/2) makes the tick sound 
-                // happen when the pointer is in the middle of a divider line
                 val currentBoundaryIndex = ((rotationAnim.value + (sweep / 2f)) / sweep).toInt()
                 
                 if (lastBoundaryIndex != -1 && currentBoundaryIndex != lastBoundaryIndex) {
@@ -191,22 +187,42 @@ fun WheelScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { onNavigateToEdit(wheelId) }) {
-                        Icon(Icons.Filled.Edit, contentDescription = "Edit")
-                    }
-                    IconButton(onClick = { menuExpanded = true }) {
-                        Icon(Icons.Filled.MoreVert, contentDescription = "Menu")
-                    }
-                    DropdownMenu(expanded = menuExpanded, onDismissRequest = { menuExpanded = false }) {
-                        DropdownMenuItem(text = { Text("Reset Wheel") }, onClick = { viewModel.resetWheel(); menuExpanded = false })
-                        DropdownMenuItem(text = { Text("History") }, onClick = { onNavigateToHistory(wheelId); menuExpanded = false })
-                        DropdownMenuItem(text = { Text("Statistics") }, onClick = { onNavigateToStatistics(wheelId); menuExpanded = false })
+                    IconButton(onClick = { showOptions = true }) {
+                        Icon(Icons.Filled.MoreVert, contentDescription = "Options")
                     }
                 }
             )
         }
     ) { padding ->
-        when (val state = uiState) {
+        val state = uiState
+
+        if (state is WheelUiState.Success && showOptions) {
+            ModalBottomSheet(
+                onDismissRequest = { showOptions = false },
+                sheetState = optionsSheetState,
+                containerColor = DeepNavyBlack,
+                dragHandle = null,
+                modifier = Modifier.fillMaxSize()
+            ) {
+                WheelOptionsSheet(
+                    wheel = state.wheel,
+                    onClose = { showOptions = false },
+                    onEdit = { onNavigateToEdit(wheelId); showOptions = false },
+                    onDuplicate = { viewModel.duplicateWheel(onDuplicated = { newId -> onNavigateToEdit(newId) }); showOptions = false },
+                    onToggleFavorite = { viewModel.toggleFavorite() },
+                    onHistory = { onNavigateToHistory(wheelId); showOptions = false },
+                    onStatistics = { onNavigateToStatistics(wheelId); showOptions = false },
+                    onExport = { 
+                        // Shared logic for export
+                        showOptions = false 
+                    },
+                    onReset = { viewModel.resetWheel(); showOptions = false },
+                    onDelete = { viewModel.deleteWheel { onNavigateBack() }; showOptions = false }
+                )
+            }
+        }
+
+        when (state) {
             is WheelUiState.Loading -> {
                 Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator()
