@@ -60,11 +60,15 @@ fun WheelCanvas(
             if (segments.isEmpty()) return@Canvas
             val centerX = size.width / 2f
             val centerY = size.height / 2f
-            val sweep = 360f / segments.size
+            val totalWeight = wheel.getTotalWeight()
 
             rotate(rotation, Offset(centerX, centerY)) {
-                var startAngle = -90f - (sweep / 2f)
+                var startAngle = -90f - (360f / segments.size / 2f) // Approximation for start
+                // Actually, let's just use -90 for consistency
+                startAngle = -90f - (360f / segments.size / 2f) 
+                
                 segments.forEach { segment ->
+                    val sweep = (segment.weight / totalWeight) * 360f
                     drawArc(
                         color = segment.color.copy(alpha = 0.2f),
                         startAngle = startAngle,
@@ -83,12 +87,14 @@ fun WheelCanvas(
             val centerX = size.width / 2f
             val centerY = size.height / 2f
             val radius = wheelSize.toPx() / 2f
-            val sweep = 360f / segments.size
+            val totalWeight = wheel.getTotalWeight()
+            val initialOffset = -90f - (360f / segments.size / 2f)
 
             // Pass 1: Draw Arcs
             rotate(rotation, Offset(centerX, centerY)) {
-                var startAngle = -90f - (sweep / 2f)
-                segments.forEachIndexed { index, segment ->
+                var startAngle = initialOffset
+                segments.forEach { segment ->
+                    val sweep = (segment.weight / totalWeight) * 360f
                     drawArc(
                         color = segment.color,
                         startAngle = startAngle,
@@ -103,8 +109,8 @@ fun WheelCanvas(
 
             // Pass 2: Draw Dividers on top of arcs
             rotate(rotation, Offset(centerX, centerY)) {
-                var startAngle = -90f - (sweep / 2f)
-                segments.forEach { _ ->
+                var startAngle = initialOffset
+                segments.forEach { segment ->
                     val lineAngleRad = startAngle * PI.toFloat() / 180f
                     drawLine(
                         color = Color.Black.copy(alpha = 0.8f),
@@ -115,16 +121,18 @@ fun WheelCanvas(
                         ),
                         strokeWidth = 6f
                     )
+                    val sweep = (segment.weight / totalWeight) * 360f
                     startAngle += sweep
                 }
             }
 
             // Pass 3: Draw Text
             rotate(rotation, Offset(centerX, centerY)) {
-                var startAngle = -90f - (sweep / 2f)
+                var startAngle = initialOffset
                 segments.forEachIndexed { index, segment ->
+                    val sweep = (segment.weight / totalWeight) * 360f
                     val midAngle = startAngle + sweep / 2f
-                    drawSectorLabel(midAngle, centerX, centerY, radius, segment.name, textColors[index])
+                    drawSectorLabel(midAngle, centerX, centerY, radius, segment.name, segment.weight, textColors[index])
                     startAngle += sweep
                 }
             }
@@ -187,6 +195,7 @@ private fun DrawScope.drawSectorLabel(
     centerY: Float,
     radius: Float,
     text: String,
+    weight: Float,
     color: Color
 ) {
     val angleRad = (angleDegrees) * PI.toFloat() / 180f
@@ -202,13 +211,26 @@ private fun DrawScope.drawSectorLabel(
             typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.BOLD)
             isAntiAlias = true
         }
+
+        val weightPaint = android.graphics.Paint().apply {
+            this.color = color.copy(alpha = 0.6f).toArgb()
+            textSize = 24f
+            textAlign = android.graphics.Paint.Align.LEFT
+            typeface = android.graphics.Typeface.create(android.graphics.Typeface.DEFAULT, android.graphics.Typeface.NORMAL)
+            isAntiAlias = true
+        }
         
         save()
         translate(textX, textY)
         rotate(angleDegrees)
         val maxChars = 10
         val displayName = if (text.length > maxChars) text.take(maxChars - 1) + "…" else text
-        drawText(displayName, 0f, 10f, paint)
+        drawText(displayName, 0f, 0f, paint)
+        
+        if (weight > 1f) {
+            val weightText = "${String.format(java.util.Locale.US, "%.1f", weight)}x"
+            drawText(weightText, 0f, 30f, weightPaint)
+        }
         restore()
     }
 }

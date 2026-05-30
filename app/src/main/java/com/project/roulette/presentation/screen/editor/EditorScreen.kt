@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.graphics.toArgb
 import com.project.roulette.domain.model.Segment
+import com.project.roulette.domain.model.Wheel
 import com.project.roulette.presentation.component.AlertDialogBox
 import com.project.roulette.presentation.model.EditorUiState
 import com.project.roulette.presentation.viewmodel.EditorViewModel
@@ -40,7 +41,7 @@ fun EditorScreen(
     wheelId: String? = null,
     isNew: Boolean = true,
     onNavigateBack: () -> Unit,
-    onPreview: (String) -> Unit,
+    onPreview: (Wheel) -> Unit,
     onSaved: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -97,9 +98,7 @@ fun EditorScreen(
                     if (state is EditorUiState.Success && state.wheel != null) {
                         Button(
                             onClick = { 
-                                // Preview navigation might need wheel to be saved first or passed as state.
-                                // For now, we use the ID.
-                                onPreview(state.wheel.id)
+                                onPreview(state.wheel)
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = themeColor.copy(alpha = 0.2f)),
                             modifier = Modifier.padding(end = 8.dp),
@@ -278,30 +277,6 @@ fun EditorScreen(
                                     viewModel.updateSegment(segment.id, name, weight)
                                 }
                             )
-                        }
-
-                        item {
-                            Button(
-                                onClick = { viewModel.saveWheel() },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 24.dp)
-                                    .height(64.dp),
-                                shape = RoundedCornerShape(20.dp),
-                                colors = ButtonDefaults.buttonColors(containerColor = themeColor),
-                                enabled = !state.isSaving
-                            ) {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Filled.Save, contentDescription = null, tint = Color.White)
-                                    Spacer(Modifier.width(12.dp))
-                                    Text(
-                                        if (state.isSaving) "Saving..." else "Save Wheel",
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 18.sp,
-                                        color = Color.White
-                                    )
-                                }
-                            }
                         }
                     }
 

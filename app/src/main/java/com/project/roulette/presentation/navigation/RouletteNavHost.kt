@@ -20,16 +20,28 @@ import com.project.roulette.presentation.viewmodel.HomeViewModel
 import com.project.roulette.presentation.viewmodel.WheelViewModel
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.Text
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.navigation.navigation
+import androidx.compose.runtime.remember
 import com.project.roulette.presentation.viewmodel.EditorViewModel
 import com.project.roulette.presentation.viewmodel.HistoryViewModel
 import com.project.roulette.presentation.viewmodel.StatisticsViewModel
 import com.project.roulette.presentation.viewmodel.NotificationViewModel
+import com.project.roulette.presentation.screen.editor.WheelPreviewScreen
+import com.project.roulette.presentation.viewmodel.PreviewViewModel
+import androidx.navigation.navArgument
+import androidx.navigation.NavType
+import com.project.roulette.domain.model.Wheel
+import com.project.roulette.domain.model.Segment
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.project.roulette.presentation.model.EditorUiState
+import com.project.roulette.util.PreviewData
 
 @Composable
 fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValues = PaddingValues()) {
@@ -134,8 +146,12 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
                 wheelId = null,
                 isNew = true,
                 onNavigateBack = { navController.popBackStack() },
-                onPreview = { id ->
-                    navController.navigate(RouletteScreen.Wheel.forId(id))
+                onPreview = { wheel ->
+                    PreviewData.previewWheel = wheel
+                    PreviewData.onSave = { 
+                        viewModel.saveWheel()
+                    }
+                    navController.navigate(RouletteScreen.Preview.route)
                 },
                 onSaved = { _ ->
                     navController.popBackStack()
@@ -152,13 +168,36 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
                 wheelId = wheelId,
                 isNew = false,
                 onNavigateBack = { navController.popBackStack() },
-                onPreview = { id ->
-                    navController.navigate(RouletteScreen.Wheel.forId(id))
+                onPreview = { wheel ->
+                    PreviewData.previewWheel = wheel
+                    PreviewData.onSave = { 
+                        viewModel.saveWheel()
+                    }
+                    navController.navigate(RouletteScreen.Preview.route)
                 },
                 onSaved = { _ ->
                     navController.popBackStack()
                 }
             )
+        }
+
+        composable(RouletteScreen.Preview.route) {
+            val previewViewModel: PreviewViewModel = hiltViewModel()
+            val wheel = PreviewData.previewWheel
+            
+            if (wheel != null) {
+                WheelPreviewScreen(
+                    wheel = wheel,
+                    viewModel = previewViewModel,
+                    onNavigateBack = { navController.popBackStack() },
+                    onSave = {
+                        PreviewData.onSave?.invoke()
+                        navController.popBackStack() // Go back to editor (which will then go back if saved)
+                    }
+                )
+            } else {
+                navController.popBackStack()
+            }
         }
 
         composable(RouletteScreen.History.route) { backStackEntry ->

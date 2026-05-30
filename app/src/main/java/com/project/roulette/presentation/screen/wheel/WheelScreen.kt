@@ -748,11 +748,20 @@ fun WinnerDialog(
                             onClick = onDismiss,
                             modifier = Modifier.weight(1f).height(48.dp),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.White)
+                            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
                         ) {
-                            Icon(Icons.Filled.Check, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(
+                                Icons.Filled.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp),
+                                tint = Color.Black
+                            )
                             Spacer(Modifier.width(8.dp))
-                            Text("Got It!", fontSize = 14.sp, fontWeight = FontWeight.Bold)
+                            Text(
+                                "Got It!",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black)
                         }
                     }
 
