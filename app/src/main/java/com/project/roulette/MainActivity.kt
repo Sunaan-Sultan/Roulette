@@ -24,13 +24,17 @@ import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
 import com.project.roulette.util.BannerAd
 import com.project.roulette.presentation.component.BottomBar
+import com.project.roulette.presentation.component.WhatsNewDialog
 import com.project.roulette.presentation.navigation.RouletteNavHost
 import com.project.roulette.presentation.navigation.RouletteScreen
 import com.project.roulette.ui.theme.DeepNavyBlack
 import com.project.roulette.ui.theme.RouletteTheme
+import com.project.roulette.util.AppChangelog
+import com.project.roulette.util.getCurrentVersionCode
 import dagger.hilt.android.AndroidEntryPoint
 
 import com.project.roulette.presentation.viewmodel.SettingsViewModel
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 
@@ -106,6 +110,32 @@ fun RouletteApp() {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
+
+    val context = LocalContext.current
+    val settingsViewModel: SettingsViewModel = hiltViewModel()
+    val lastSeenChangelogVersion by settingsViewModel.lastSeenChangelogVersion.collectAsStateWithLifecycle()
+    val latestChangelogEntry = AppChangelog.latest
+    var showWhatsNew by remember { mutableStateOf(false) }
+
+    LaunchedEffect(lastSeenChangelogVersion, latestChangelogEntry) {
+        val latest = latestChangelogEntry ?: return@LaunchedEffect
+        when {
+            // Fresh install: nothing to announce, just record the current version as seen.
+            lastSeenChangelogVersion == 0 -> settingsViewModel.updateLastSeenChangelogVersion(getCurrentVersionCode(context))
+            lastSeenChangelogVersion < latest.versionCode -> showWhatsNew = true
+        }
+    }
+
+    if (showWhatsNew && latestChangelogEntry != null) {
+        WhatsNewDialog(
+            entry = latestChangelogEntry,
+            themeColor = RouletteTheme.colors.primary,
+            onDismiss = {
+                showWhatsNew = false
+                settingsViewModel.updateLastSeenChangelogVersion(latestChangelogEntry.versionCode)
+            }
+        )
+    }
 
     val showBottomBar by remember(currentDestination) {
         mutableStateOf(

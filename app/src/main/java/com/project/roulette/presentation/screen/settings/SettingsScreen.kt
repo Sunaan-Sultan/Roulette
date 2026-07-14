@@ -26,9 +26,11 @@ import android.net.Uri
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import com.project.roulette.domain.usecase.selection.SelectionAlgorithmFactory
+import com.project.roulette.presentation.component.WhatsNewDialog
 import com.project.roulette.presentation.viewmodel.SettingsViewModel
 import com.project.roulette.presentation.viewmodel.WheelViewModel
 import com.project.roulette.ui.theme.*
+import com.project.roulette.util.AppChangelog
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -44,6 +46,7 @@ fun SettingsScreen(
     val removeAfterPick by viewModel.removeAfterPickEnabled.collectAsStateWithLifecycle()
 
     var showClearDataDialog by remember { mutableStateOf(false) }
+    var showWhatsNewDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val colors = RouletteTheme.colors
@@ -267,6 +270,14 @@ fun SettingsScreen(
                             }
                         )
                         Divider()
+                        SettingsClickableRow(
+                            icon = Icons.Filled.NewReleases,
+                            title = "What's new",
+                            description = "See the latest changes",
+                            color = Color(0xFF00B894),
+                            onClick = { showWhatsNewDialog = true }
+                        )
+                        Divider()
                         SettingsOptionRow(
                             icon = Icons.Filled.Info,
                             title = "App version",
@@ -335,6 +346,16 @@ fun SettingsScreen(
                     }
                 }
             )
+        }
+
+        if (showWhatsNewDialog) {
+            AppChangelog.latest?.let { entry ->
+                WhatsNewDialog(
+                    entry = entry,
+                    themeColor = colors.primary,
+                    onDismiss = { showWhatsNewDialog = false }
+                )
+            }
         }
     }
 }

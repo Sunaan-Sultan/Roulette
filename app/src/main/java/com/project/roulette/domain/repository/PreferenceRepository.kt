@@ -11,6 +11,7 @@ interface PreferenceRepository {
     val spinSoundEnabled: Flow<Boolean>
     val confettiEnabled: Flow<Boolean>
     val removeAfterPickEnabled: Flow<Boolean>
+    val lastSeenChangelogVersion: Flow<Int>
 
     suspend fun updatePaletteIndex(index: Int)
     suspend fun updateDefaultAlgorithm(algorithm: SelectionAlgorithmFactory.AlgorithmType)
@@ -18,5 +19,6 @@ interface PreferenceRepository {
     suspend fun updateSpinSoundEnabled(enabled: Boolean)
     suspend fun updateConfettiEnabled(enabled: Boolean)
     suspend fun updateRemoveAfterPickEnabled(enabled: Boolean)
+    suspend fun updateLastSeenChangelogVersion(versionCode: Int)
     suspend fun clearAllData()
 }

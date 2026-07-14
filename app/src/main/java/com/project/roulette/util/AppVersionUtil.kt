@@ -2,14 +2,12 @@
 package com.project.roulette.util
 
 import android.content.Context
-import android.os.Build
-import androidx.annotation.RequiresApi
+import androidx.core.content.pm.PackageInfoCompat
 
-@RequiresApi(Build.VERSION_CODES.P)
 fun getCurrentVersionCode(context: Context): Int {
     return try {
         val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-        packageInfo.longVersionCode.toInt()
+        PackageInfoCompat.getLongVersionCode(packageInfo).toInt()
     } catch (e: Exception) {
         1
     }

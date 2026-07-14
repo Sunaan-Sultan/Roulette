@@ -44,6 +44,7 @@ class PreferenceRepositoryImpl @Inject constructor(
     override val spinSoundEnabled: Flow<Boolean> = preferenceFlow("spin_sound", true) { p, k, d -> p.getBoolean(k, d) }
     override val confettiEnabled: Flow<Boolean> = preferenceFlow("confetti", true) { p, k, d -> p.getBoolean(k, d) }
     override val removeAfterPickEnabled: Flow<Boolean> = preferenceFlow("remove_after", false) { p, k, d -> p.getBoolean(k, d) }
+    override val lastSeenChangelogVersion: Flow<Int> = preferenceFlow("last_seen_changelog_version", 0) { p, k, d -> p.getInt(k, d) }
 
     override suspend fun updatePaletteIndex(index: Int) {
         prefs.edit().putInt("palette_index", index).apply()
@@ -67,6 +68,10 @@ class PreferenceRepositoryImpl @Inject constructor(
 
     override suspend fun updateRemoveAfterPickEnabled(enabled: Boolean) {
         prefs.edit().putBoolean("remove_after", enabled).apply()
+    }
+
+    override suspend fun updateLastSeenChangelogVersion(versionCode: Int) {
+        prefs.edit().putInt("last_seen_changelog_version", versionCode).apply()
     }
 
     override suspend fun clearAllData() {

@@ -34,6 +34,9 @@ class SettingsViewModel @Inject constructor(
     val removeAfterPickEnabled: StateFlow<Boolean> = preferenceRepository.removeAfterPickEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), false)
 
+    val lastSeenChangelogVersion: StateFlow<Int> = preferenceRepository.lastSeenChangelogVersion
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
+
     fun updatePaletteIndex(index: Int) {
         viewModelScope.launch { preferenceRepository.updatePaletteIndex(index) }
     }
@@ -56,6 +59,10 @@ class SettingsViewModel @Inject constructor(
 
     fun updateRemoveAfterPickEnabled(enabled: Boolean) {
         viewModelScope.launch { preferenceRepository.updateRemoveAfterPickEnabled(enabled) }
+    }
+
+    fun updateLastSeenChangelogVersion(versionCode: Int) {
+        viewModelScope.launch { preferenceRepository.updateLastSeenChangelogVersion(versionCode) }
     }
 
     fun clearAllData() {
