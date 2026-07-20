@@ -31,6 +31,7 @@ import com.project.roulette.ui.theme.DeepNavyBlack
 import com.project.roulette.ui.theme.RouletteTheme
 import com.project.roulette.util.AppChangelog
 import com.project.roulette.util.getCurrentVersionCode
+import com.project.roulette.util.isFreshInstall
 import dagger.hilt.android.AndroidEntryPoint
 
 import com.project.roulette.presentation.viewmodel.SettingsViewModel
@@ -120,9 +121,13 @@ fun RouletteApp() {
     LaunchedEffect(lastSeenChangelogVersion, latestChangelogEntry) {
         val latest = latestChangelogEntry ?: return@LaunchedEffect
         when {
-            // Fresh install: nothing to announce, just record the current version as seen.
-            lastSeenChangelogVersion == 0 -> settingsViewModel.updateLastSeenChangelogVersion(getCurrentVersionCode(context))
-            lastSeenChangelogVersion < latest.versionCode -> showWhatsNew = true
+            // Already caught up to the latest announcement.
+            lastSeenChangelogVersion >= latest.versionCode -> Unit
+            // Genuine fresh install: nothing to announce, just record the current version as seen.
+            lastSeenChangelogVersion == 0 && isFreshInstall(context) ->
+                settingsViewModel.updateLastSeenChangelogVersion(getCurrentVersionCode(context))
+            // Existing user who hasn't seen this release's changelog yet.
+            else -> showWhatsNew = true
         }
     }
 

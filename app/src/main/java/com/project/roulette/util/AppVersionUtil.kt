@@ -12,3 +12,25 @@ fun getCurrentVersionCode(context: Context): Int {
         1
     }
 }
+
+fun getCurrentVersionName(context: Context): String {
+    return try {
+        val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+        packageInfo.versionName ?: ""
+    } catch (e: Exception) {
+        ""
+    }
+}
+
+/**
+ * True only for a genuine first install. When the app has been updated over an
+ * existing install, firstInstallTime and lastUpdateTime differ.
+ */
+fun isFreshInstall(context: Context): Boolean {
+    return try {
+        val packageInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+        packageInfo.firstInstallTime == packageInfo.lastUpdateTime
+    } catch (e: Exception) {
+        false
+    }
+}

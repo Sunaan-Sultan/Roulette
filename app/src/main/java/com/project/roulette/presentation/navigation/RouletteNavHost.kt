@@ -14,6 +14,7 @@ import com.project.roulette.presentation.screen.favourites.FavouritesScreen
 import com.project.roulette.presentation.screen.notifications.NotificationScreen
 import com.project.roulette.presentation.screen.wheel.WheelScreen
 import com.project.roulette.presentation.screen.editor.EditorScreen
+import com.project.roulette.presentation.screen.templates.TemplatesScreen
 import com.project.roulette.presentation.screen.history.HistoryScreen
 import com.project.roulette.presentation.screen.statistics.StatisticsScreen
 import com.project.roulette.presentation.viewmodel.HomeViewModel
@@ -48,6 +49,14 @@ import com.project.roulette.util.PreviewData
 @Composable
 fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValues = PaddingValues()) {
     val layoutDirection = LocalLayoutDirection.current
+
+    // After a wheel is saved, always land on Home with a clean back stack.
+    val onWheelSaved: () -> Unit = {
+        navController.navigate(RouletteScreen.Home.route) {
+            popUpTo(RouletteScreen.Home.route) { inclusive = true }
+            launchSingleTop = true
+        }
+    }
     NavHost(
         navController = navController,
         startDestination = RouletteScreen.Splash.route,
@@ -85,7 +94,7 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
                     navController.navigate(RouletteScreen.Wheel.forId(wheelId))
                 },
                 onNavigateToCreate = {
-                    navController.navigate(RouletteScreen.CreateWheel.route)
+                    navController.navigate(RouletteScreen.Templates.route)
                 },
                 onNavigateToNotifications = {
                     navController.navigate(RouletteScreen.Notifications.route)
@@ -101,7 +110,7 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
                     navController.navigate(RouletteScreen.Wheel.forId(wheelId))
                 },
                 onNavigateToCreate = {
-                    navController.navigate(RouletteScreen.CreateWheel.route)
+                    navController.navigate(RouletteScreen.Templates.route)
                 },
                 onNavigateToNotifications = {
                     navController.navigate(RouletteScreen.Notifications.route)
@@ -141,12 +150,33 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
             )
         }
 
-        composable(RouletteScreen.CreateWheel.route) {
+        composable(RouletteScreen.Templates.route) {
+            TemplatesScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onSelectTemplate = { templateId ->
+                    navController.navigate(RouletteScreen.CreateWheel.forTemplate(templateId))
+                },
+                onStartFromScratch = {
+                    navController.navigate(RouletteScreen.CreateWheel.blank())
+                }
+            )
+        }
+
+        composable(
+            route = RouletteScreen.CreateWheel.route,
+            arguments = listOf(navArgument("templateId") {
+                type = NavType.StringType
+                nullable = true
+                defaultValue = null
+            })
+        ) { backStackEntry ->
+            val templateId = backStackEntry.arguments?.getString("templateId")
             val viewModel: EditorViewModel = hiltViewModel()
             EditorScreen(
                 viewModel = viewModel,
                 wheelId = null,
                 isNew = true,
+                templateId = templateId,
                 onNavigateBack = { navController.popBackStack() },
                 onPreview = { wheel ->
                     PreviewData.previewWheel = wheel
@@ -156,7 +186,7 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
                     navController.navigate(RouletteScreen.Preview.route)
                 },
                 onSaved = { _ ->
-                    navController.popBackStack()
+                    onWheelSaved()
                 }
             )
         }
@@ -178,7 +208,7 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
                     navController.navigate(RouletteScreen.Preview.route)
                 },
                 onSaved = { _ ->
-                    navController.popBackStack()
+                    onWheelSaved()
                 }
             )
         }

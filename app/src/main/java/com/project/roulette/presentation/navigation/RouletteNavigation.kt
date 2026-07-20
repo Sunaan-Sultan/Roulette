@@ -10,7 +10,12 @@ sealed class RouletteScreen(val route: String) {
     object Home : RouletteScreen("home")
     object Wheels : RouletteScreen("wheels")
 
-    object CreateWheel : RouletteScreen("create_wheel")
+    object Templates : RouletteScreen("templates")
+
+    object CreateWheel : RouletteScreen("create_wheel?templateId={templateId}") {
+        fun blank() = "create_wheel"
+        fun forTemplate(templateId: String) = "create_wheel?templateId=$templateId"
+    }
 
     object Preview : RouletteScreen("preview")
 

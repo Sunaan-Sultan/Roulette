@@ -40,6 +40,7 @@ fun EditorScreen(
     viewModel: EditorViewModel,
     wheelId: String? = null,
     isNew: Boolean = true,
+    templateId: String? = null,
     onNavigateBack: () -> Unit,
     onPreview: (Wheel) -> Unit,
     onSaved: (String) -> Unit
@@ -68,7 +69,11 @@ fun EditorScreen(
 
     LaunchedEffect(Unit) {
         if (isNew) {
-            viewModel.initializeNew()
+            if (templateId != null) {
+                viewModel.initializeFromTemplate(templateId)
+            } else {
+                viewModel.initializeNew()
+            }
         } else if (wheelId != null) {
             viewModel.loadWheel(wheelId)
         }

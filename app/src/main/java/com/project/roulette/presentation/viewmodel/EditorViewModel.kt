@@ -69,6 +69,43 @@ class EditorViewModel @Inject constructor(
     }
 
     /**
+     * Initialize editor from a bundled template. Prefills the wheel with the
+     * template's name, segments and palette so the user can tweak before saving.
+     */
+    fun initializeFromTemplate(templateId: String) {
+        viewModelScope.launch {
+            val template = com.project.roulette.util.WheelTemplates.byId(templateId)
+            if (template == null) {
+                initializeNew()
+                return@launch
+            }
+
+            val removeAfter = preferenceRepository.removeAfterPickEnabled.first()
+            val sound = preferenceRepository.spinSoundEnabled.first()
+            val now = Clock.System.now()
+
+            val segments = template.segmentNames.map { name ->
+                Segment(id = UUID.randomUUID().toString(), name = name, color = Color.Gray, weight = 1f, isActive = true)
+            }
+
+            val newWheel = Wheel(
+                id = UUID.randomUUID().toString(),
+                name = template.name,
+                segments = segments,
+                createdAt = now,
+                updatedAt = now,
+                themePaletteIndex = template.paletteIndex,
+                removeAfterPick = removeAfter,
+                spinSound = sound
+            )
+            _uiState.value = EditorUiState.Success(wheel = newWheel, isNew = true)
+
+            // Apply template's palette colors to the segments
+            updateSegmentColors()
+        }
+    }
+
+    /**
      * Load wheel for editing.
      */
     fun loadWheel(wheelId: String) {

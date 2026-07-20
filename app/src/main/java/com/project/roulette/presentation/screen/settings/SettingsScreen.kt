@@ -31,6 +31,7 @@ import com.project.roulette.presentation.viewmodel.SettingsViewModel
 import com.project.roulette.presentation.viewmodel.WheelViewModel
 import com.project.roulette.ui.theme.*
 import com.project.roulette.util.AppChangelog
+import com.project.roulette.util.getCurrentVersionName
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -284,7 +285,7 @@ fun SettingsScreen(
                             description = "Up to date",
                             color = Color.Gray,
                             trailing = {
-                                Text("v2.0.0", color = Color(0xFF00B894), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                                Text("v${getCurrentVersionName(context)}", color = Color(0xFF00B894), fontWeight = FontWeight.Bold, fontSize = 14.sp)
                             }
                         )
                     }
