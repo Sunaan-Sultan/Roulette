@@ -1,3 +1,3 @@
 package com.project.roulette
 
-const val ADS_ENABLED = false
+const val ADS_ENABLED = true
