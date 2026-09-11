@@ -1,75 +1,89 @@
 package com.project.roulette.presentation.screen.templates
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
+import com.project.roulette.presentation.component.AppIcons
+import com.project.roulette.presentation.component.design.AppScaffold
+import com.project.roulette.presentation.component.design.AppTopBar
+import com.project.roulette.ui.theme.RouletteTheme
 import com.project.roulette.ui.theme.ThemePalette
 import com.project.roulette.util.WheelTemplate
 import com.project.roulette.util.WheelTemplates
-import com.project.roulette.presentation.component.AppIcons
-import com.project.roulette.ui.theme.RouletteTheme
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun TemplatesScreen(
     onNavigateBack: () -> Unit,
     onSelectTemplate: (String) -> Unit,
     onStartFromScratch: () -> Unit
 ) {
-    Scaffold(
+    val colors = RouletteTheme.colors
+    val dimens = RouletteTheme.dimens
+
+    AppScaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Templates", fontWeight = FontWeight.Bold, color = RouletteTheme.colors.textPrimary) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(AppIcons.ArrowBack, contentDescription = "Back", tint = RouletteTheme.colors.textPrimary)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = RouletteTheme.colors.background)
+            AppTopBar(
+                title = "Templates",
+                eyebrow = "New wheel",
+                onNavigateBack = onNavigateBack
             )
-        },
-        containerColor = RouletteTheme.colors.background
+        }
     ) { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 16.dp)
         ) {
             Text(
                 text = "Start with a ready-made wheel — you can customize everything before saving.",
-                color = RouletteTheme.colors.textSecondary,
                 style = MaterialTheme.typography.bodySmall,
-                modifier = Modifier.padding(vertical = 12.dp)
+                color = colors.textSecondary,
+                modifier = Modifier.padding(
+                    horizontal = dimens.screenPadding,
+                    vertical = dimens.space12
+                )
             )
 
             LazyVerticalGrid(
                 columns = GridCells.Fixed(2),
-                horizontalArrangement = Arrangement.spacedBy(12.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-                contentPadding = PaddingValues(bottom = 24.dp)
+                horizontalArrangement = Arrangement.spacedBy(dimens.space12),
+                verticalArrangement = Arrangement.spacedBy(dimens.space12),
+                contentPadding = PaddingValues(
+                    start = dimens.screenPadding,
+                    end = dimens.screenPadding,
+                    bottom = dimens.listBottomPadding
+                )
             ) {
                 item(span = { GridItemSpan(maxLineSpan) }) {
                     StartFromScratchCard(onClick = onStartFromScratch)
                 }
 
-                itemsIndexed(WheelTemplates.all) { _, template ->
+                items(WheelTemplates.all, key = { it.id }) { template ->
                     TemplateCard(
                         template = template,
                         onClick = { onSelectTemplate(template.id) }
@@ -82,28 +96,46 @@ fun TemplatesScreen(
 
 @Composable
 private fun StartFromScratchCard(onClick: () -> Unit) {
-    Row(
+    val colors = RouletteTheme.colors
+    val dimens = RouletteTheme.dimens
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RouletteTheme.shapes.card)
-            .background(RouletteTheme.colors.surface)
-            .border(1.dp, RouletteTheme.colors.divider, RouletteTheme.shapes.card)
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+            .clickable(onClick = onClick),
+        shape = RouletteTheme.shapes.card,
+        color = colors.surface,
+        border = BorderStroke(dimens.borderWidth, colors.divider)
     ) {
-        Box(
-            modifier = Modifier
-                .size(44.dp)
-                .background(RouletteTheme.colors.surfacePressed, CircleShape),
-            contentAlignment = Alignment.Center
+        Row(
+            modifier = Modifier.padding(dimens.space16),
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Icon(AppIcons.Add, contentDescription = null, tint = RouletteTheme.colors.textPrimary, modifier = Modifier.size(24.dp))
-        }
-        Spacer(Modifier.width(16.dp))
-        Column {
-            Text("Start from scratch", color = RouletteTheme.colors.textPrimary, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
-            Text("Build your own wheel", color = RouletteTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
+            Box(
+                modifier = Modifier
+                    .size(44.dp)
+                    .background(colors.primarySubtle, RouletteTheme.shapes.avatar),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    painter = AppIcons.Add,
+                    contentDescription = null,
+                    tint = colors.primary,
+                    modifier = Modifier.size(dimens.iconSize)
+                )
+            }
+            Spacer(Modifier.width(dimens.rowIconGap))
+            Column {
+                Text(
+                    text = "Start from scratch",
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.textPrimary
+                )
+                Text(
+                    text = "Build your own wheel",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textSecondary
+                )
+            }
         }
     }
 }
@@ -113,37 +145,55 @@ private fun TemplateCard(
     template: WheelTemplate,
     onClick: () -> Unit
 ) {
+    val colors = RouletteTheme.colors
+    val dimens = RouletteTheme.dimens
     val accent = ThemePalette.getOrElse(template.paletteIndex) { ThemePalette[0] }
-    Column(
+
+    Surface(
         modifier = Modifier
             .fillMaxWidth()
             .heightIn(min = 160.dp)
-            .clip(RouletteTheme.shapes.card)
-            .background(RouletteTheme.colors.surface)
-            .border(1.dp, accent.copy(alpha = 0.25f), RouletteTheme.shapes.card)
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalArrangement = Arrangement.SpaceBetween
+            .clickable(onClick = onClick),
+        shape = RouletteTheme.shapes.card,
+        color = colors.surface,
+        border = BorderStroke(dimens.borderWidth, accent.copy(alpha = 0.25f))
     ) {
-        Box(
-            modifier = Modifier
-                .size(48.dp)
-                .background(accent.copy(alpha = 0.15f), CircleShape),
-            contentAlignment = Alignment.Center
+        Column(
+            modifier = Modifier.padding(dimens.space16),
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(template.emoji, style = MaterialTheme.typography.headlineMedium)
-        }
-        Column {
-            Text(template.name, color = RouletteTheme.colors.textPrimary, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium, maxLines = 1)
-            Spacer(Modifier.height(2.dp))
-            Text(template.description, color = RouletteTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall, maxLines = 2)
-            Spacer(Modifier.height(6.dp))
-            Text(
-                "${template.segmentNames.size} options",
-                color = accent,
-                style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.SemiBold
-            )
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(accent.copy(alpha = 0.15f), RouletteTheme.shapes.avatar),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(template.emoji, style = MaterialTheme.typography.headlineMedium)
+            }
+            Spacer(Modifier.size(dimens.space16))
+            Column {
+                Text(
+                    text = template.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = colors.textPrimary,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.size(dimens.space2))
+                Text(
+                    text = template.description,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textSecondary,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                Spacer(Modifier.size(dimens.space8))
+                Text(
+                    text = "${template.segmentNames.size} options",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = accent
+                )
+            }
         }
     }
 }

@@ -3,36 +3,57 @@ package com.project.roulette.presentation.screen.notifications
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.project.roulette.domain.model.Notification
 import com.project.roulette.domain.model.NotificationType
+import com.project.roulette.presentation.component.AppIcons
+import com.project.roulette.presentation.component.design.AppFilterChip
+import com.project.roulette.presentation.component.design.AppLargeHeader
+import com.project.roulette.presentation.component.design.AppScaffold
+import com.project.roulette.presentation.component.design.EmptyState
+import com.project.roulette.presentation.component.design.SectionHeader
 import com.project.roulette.presentation.model.NotificationFilter
 import com.project.roulette.presentation.model.NotificationUiState
 import com.project.roulette.presentation.viewmodel.NotificationViewModel
-import com.project.roulette.ui.theme.*
+import com.project.roulette.ui.theme.RouletteTheme
+import com.project.roulette.ui.theme.TileBlue
+import com.project.roulette.ui.theme.TileCoral
+import com.project.roulette.ui.theme.TilePink
+import com.project.roulette.ui.theme.TilePurple
+import com.project.roulette.ui.theme.TileTeal
+import com.project.roulette.ui.theme.rememberAccentOnSurface
 import com.project.roulette.util.TimeUtils
-import com.project.roulette.presentation.screen.wheels.WheelsFilterChipItem
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import com.project.roulette.presentation.component.AppIcons
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationScreen(
     viewModel: NotificationViewModel,
@@ -51,7 +72,6 @@ fun NotificationScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NotificationContent(
     uiState: NotificationUiState,
@@ -61,119 +81,113 @@ fun NotificationContent(
     onNotificationClick: (String) -> Unit,
     onNavigateBack: () -> Unit
 ) {
-    Scaffold(
-        containerColor = RouletteTheme.colors.background
-    ) { padding ->
+    val colors = RouletteTheme.colors
+    val dimens = RouletteTheme.dimens
+
+    AppScaffold { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 20.dp)
         ) {
-            Spacer(Modifier.height(16.dp))
-
-            Text(
-                text = "UPDATES",
-                style = MaterialTheme.typography.labelLarge,
-                color = RouletteTheme.colors.textSecondary,
-                letterSpacing = 1.sp
+            AppLargeHeader(
+                eyebrow = "Updates",
+                title = "Notifications",
+                trailing = {
+                    TextButton(onClick = onMarkAllRead) {
+                        Text(
+                            text = "Mark all read",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = colors.primary
+                        )
+                    }
+                }
             )
 
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dimens.screenPadding),
+                horizontalArrangement = Arrangement.spacedBy(dimens.space8)
             ) {
-                Text(
-                    text = "Notifications",
-                    style = MaterialTheme.typography.displayMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = RouletteTheme.colors.textPrimary
-                )
-
-                TextButton(
-                    onClick = onMarkAllRead,
-                    contentPadding = PaddingValues(start = 6.dp, top = 8.dp)
-                ) {
-                    Text(
-                        text = "Mark all read",
-                        color = RouletteTheme.colors.primary,
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.bodySmall
-                    )
-                }
-            }
-
-            Spacer(Modifier.height(20.dp))
-
-            // Filter Chips
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                WheelsFilterChipItem(
+                AppFilterChip(
                     label = "All",
-                    isSelected = currentFilter == NotificationFilter.ALL,
+                    selected = currentFilter == NotificationFilter.ALL,
                     onClick = { onFilterSelected(NotificationFilter.ALL) }
                 )
-                WheelsFilterChipItem(
+                AppFilterChip(
                     label = "Unread",
-                    isSelected = currentFilter == NotificationFilter.UNREAD,
+                    selected = currentFilter == NotificationFilter.UNREAD,
                     onClick = { onFilterSelected(NotificationFilter.UNREAD) }
                 )
-                WheelsFilterChipItem(
+                AppFilterChip(
                     label = "Activity",
-                    isSelected = currentFilter == NotificationFilter.ACTIVITY,
+                    selected = currentFilter == NotificationFilter.ACTIVITY,
                     onClick = { onFilterSelected(NotificationFilter.ACTIVITY) }
                 )
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.size(dimens.space16))
 
-            when (val state = uiState) {
-                is NotificationUiState.Loading -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = RouletteTheme.colors.primary)
-                    }
-                }
-
-                is NotificationUiState.Success -> {
-                    if (state.notifications.isEmpty()) {
-                        EmptyNotificationsState()
-                    } else {
-                        val today = Clock.System.now().toLocalDateTime(TimeZone.currentSystemDefault()).date
-                        val groups = state.notifications.groupBy { 
-                            if (it.timestamp.toLocalDateTime(TimeZone.currentSystemDefault()).date == today) "TODAY" else "EARLIER"
+            Box(modifier = Modifier.weight(1f)) {
+                when (uiState) {
+                    is NotificationUiState.Loading -> {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = colors.primary)
                         }
+                    }
 
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                            contentPadding = PaddingValues(bottom = 80.dp)
-                        ) {
-                            groups.forEach { (header, notifications) ->
-                                item {
-                                    Text(
-                                        text = header,
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = RouletteTheme.colors.textSecondary,
-                                        modifier = Modifier.padding(vertical = 8.dp)
-                                    )
-                                }
-                                items(notifications) { notification ->
-                                    NotificationItem(
-                                        notification = notification,
-                                        onClick = { onNotificationClick(notification.id) }
-                                    )
+                    is NotificationUiState.Success -> {
+                        if (uiState.notifications.isEmpty()) {
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                EmptyState(
+                                    icon = AppIcons.Notifications,
+                                    title = "Nothing here yet",
+                                    message = "Spin results, milestones and tips will land here."
+                                )
+                            }
+                        } else {
+                            val today = Clock.System.now()
+                                .toLocalDateTime(TimeZone.currentSystemDefault()).date
+                            val groups = uiState.notifications.groupBy {
+                                val date = it.timestamp
+                                    .toLocalDateTime(TimeZone.currentSystemDefault()).date
+                                if (date == today) "Today" else "Earlier"
+                            }
+
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.spacedBy(dimens.space8),
+                                contentPadding = PaddingValues(
+                                    start = dimens.screenPadding,
+                                    end = dimens.screenPadding,
+                                    bottom = dimens.listBottomPadding
+                                )
+                            ) {
+                                groups.forEach { (header, notifications) ->
+                                    item(key = "header-$header") {
+                                        Spacer(Modifier.size(dimens.space8))
+                                        SectionHeader(header)
+                                    }
+                                    items(notifications, key = { it.id }) { notification ->
+                                        NotificationItem(
+                                            notification = notification,
+                                            onClick = { onNotificationClick(notification.id) }
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                is NotificationUiState.Error -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Error: ${state.message}", color = RouletteTheme.colors.danger)
+                    is NotificationUiState.Error -> {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = uiState.message,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colors.danger
+                            )
+                        }
                     }
                 }
             }
@@ -182,81 +196,87 @@ fun NotificationContent(
 }
 
 @Composable
-fun NotificationItem(
+private fun NotificationItem(
     notification: Notification,
     onClick: () -> Unit
 ) {
-    val (icon, color) = when (notification.type) {
+    val colors = RouletteTheme.colors
+    val dimens = RouletteTheme.dimens
+
+    val (icon, baseColor) = when (notification.type) {
         NotificationType.SPIN_RESULT -> AppIcons.RadioButtonChecked to TilePurple
-        NotificationType.MILESTONE -> AppIcons.Trophy to RouletteTheme.colors.warning // Amber
+        NotificationType.MILESTONE -> AppIcons.Trophy to colors.warning
         NotificationType.STREAK -> AppIcons.Whatshot to TileCoral
-        NotificationType.REMINDER -> AppIcons.Notifications to RouletteTheme.colors.textSecondary
-        NotificationType.TIP -> AppIcons.Lightbulb to RouletteTheme.colors.warning
+        NotificationType.REMINDER -> AppIcons.Notifications to colors.textSecondary
+        NotificationType.TIP -> AppIcons.Lightbulb to colors.warning
         NotificationType.UPDATE -> AppIcons.Campaign to TileBlue
         NotificationType.ANNOUNCEMENT -> AppIcons.Info to TileTeal
         NotificationType.FAVOURITE -> AppIcons.Star to TilePink
     }
 
-    val finalColor = if (notification.isRead) RouletteTheme.colors.textSecondary.copy(alpha = 0.5f) else color
-    val backgroundColor = if (notification.isRead) RouletteTheme.colors.surfaceElevated else RouletteTheme.colors.surface
-    val borderAlpha = if (notification.isRead) 0.1f else 0.5f
-    val borderColor = if (notification.isRead) finalColor else RouletteTheme.colors.primary
-    val textColor = if (notification.isRead) RouletteTheme.colors.textSecondary else RouletteTheme.colors.textPrimary
+    val accent = rememberAccentOnSurface(baseColor)
+    val iconTint = if (notification.isRead) colors.textSecondary else accent
+    val titleColor = if (notification.isRead) colors.textSecondary else colors.textPrimary
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onClick() },
+            .clickable(onClick = onClick),
         shape = RouletteTheme.shapes.card,
-        color = backgroundColor,
-        border = BorderStroke(1.dp, borderColor.copy(alpha = borderAlpha))
+        color = colors.surface,
+        border = BorderStroke(
+            dimens.borderWidth,
+            if (notification.isRead) colors.divider else colors.primaryBorder
+        )
     ) {
         Row(
             modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+                .fillMaxWidth()
+                .padding(dimens.space16),
+            verticalAlignment = Alignment.Top
         ) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(finalColor.copy(alpha = 0.1f)),
+                    .size(40.dp)
+                    .clip(RouletteTheme.shapes.iconTile)
+                    .background(iconTint.copy(alpha = if (colors.isLight) 0.10f else 0.16f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    icon,
+                    painter = icon,
                     contentDescription = null,
-                    tint = finalColor,
-                    modifier = Modifier.size(24.dp)
+                    tint = iconTint,
+                    modifier = Modifier.size(dimens.iconSizeSmall)
                 )
             }
 
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(dimens.rowIconGap))
 
             Column(modifier = Modifier.weight(1f)) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = notification.title,
-                        color = textColor,
-                        fontWeight = FontWeight.Bold,
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.titleSmall,
+                        color = titleColor,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
+                    Spacer(Modifier.width(dimens.space8))
                     Text(
                         text = TimeUtils.getRelativeTime(notification.timestamp),
-                        color = RouletteTheme.colors.textSecondary,
-                        style = MaterialTheme.typography.bodySmall
+                        style = MaterialTheme.typography.labelSmall,
+                        color = colors.textTertiary
                     )
                 }
-                Spacer(Modifier.height(4.dp))
+                Spacer(Modifier.size(dimens.space2))
                 Text(
                     text = notification.message,
-                    color = if (notification.isRead) RouletteTheme.colors.textSecondary.copy(alpha = 0.7f) else RouletteTheme.colors.textSecondary,
                     style = MaterialTheme.typography.bodySmall,
+                    color = colors.textSecondary,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -265,25 +285,9 @@ fun NotificationItem(
     }
 }
 
+@Preview(showBackground = true)
 @Composable
-fun EmptyNotificationsState() {
-    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                AppIcons.Notifications,
-                contentDescription = null,
-                tint = RouletteTheme.colors.textSecondary.copy(alpha = 0.5f),
-                modifier = Modifier.size(64.dp)
-            )
-            Spacer(Modifier.height(16.dp))
-            Text("No notifications yet", color = RouletteTheme.colors.textSecondary)
-        }
-    }
-}
-
-@Preview(showBackground = true, backgroundColor = 0xFF050B18)
-@Composable
-fun NotificationScreenPreview() {
+private fun NotificationScreenPreview() {
     RouletteTheme {
         NotificationContent(
             uiState = NotificationUiState.Success(
@@ -291,14 +295,14 @@ fun NotificationScreenPreview() {
                     Notification(
                         id = "1",
                         title = "Spin Result",
-                        message = "Your wheel Luck landed on Red! 🎯",
+                        message = "Your wheel Luck landed on Red!",
                         type = NotificationType.SPIN_RESULT,
                         timestamp = Clock.System.now(),
                         isRead = false
                     ),
                     Notification(
                         id = "2",
-                        title = "Milestone 🎉",
+                        title = "Milestone",
                         message = "You've made 50 spins total! Keep the momentum going!",
                         type = NotificationType.MILESTONE,
                         timestamp = Clock.System.now(),

@@ -2,37 +2,51 @@ package com.project.roulette.presentation.screen.favourites
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.project.roulette.domain.model.Wheel
+import com.project.roulette.presentation.component.AppIcons
+import com.project.roulette.presentation.component.wheelAccentFor
+import com.project.roulette.presentation.component.design.AppFilterChip
+import com.project.roulette.presentation.component.design.AppLargeHeader
+import com.project.roulette.presentation.component.design.AppScaffold
+import com.project.roulette.presentation.component.design.EmptyState
+import com.project.roulette.presentation.component.design.PrimaryButton
 import com.project.roulette.presentation.model.HomeFilter
 import com.project.roulette.presentation.model.HomeUiState
 import com.project.roulette.presentation.viewmodel.HomeViewModel
-import com.project.roulette.ui.theme.*
-import com.project.roulette.presentation.screen.wheels.WheelsFilterChipItem
+import com.project.roulette.ui.theme.RouletteTheme
+import com.project.roulette.ui.theme.rememberAccentOnSurface
 import com.project.roulette.util.loadSwitchInterstitial
 import com.project.roulette.util.showSwitchInterstitial
-import com.project.roulette.presentation.component.AppIcons
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FavouritesScreen(
     viewModel: HomeViewModel,
@@ -41,113 +55,106 @@ fun FavouritesScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val currentFilter by viewModel.filter.collectAsStateWithLifecycle()
     val context = LocalContext.current
+    val colors = RouletteTheme.colors
+    val dimens = RouletteTheme.dimens
 
     LaunchedEffect(Unit) {
         viewModel.setFilter(HomeFilter.FAVOURITES)
         loadSwitchInterstitial(context)
     }
 
-    Scaffold(
-        containerColor = RouletteTheme.colors.background
-    ) { padding ->
+    AppScaffold { padding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(horizontal = 20.dp)
         ) {
-            Spacer(Modifier.height(16.dp))
-            
-            Text(
-                text = "SAVED",
-                style = MaterialTheme.typography.labelLarge,
-                color = RouletteTheme.colors.textSecondary,
-                letterSpacing = 1.sp
-            )
-            
-            Text(
-                text = "Favourites",
-                style = MaterialTheme.typography.displayMedium,
-                fontWeight = FontWeight.Bold,
-                color = RouletteTheme.colors.textPrimary
-            )
+            AppLargeHeader(eyebrow = "Saved", title = "Favourites")
 
-            Spacer(Modifier.height(20.dp))
-
-            // Filter Chips
             Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = dimens.screenPadding),
+                horizontalArrangement = Arrangement.spacedBy(dimens.space8)
             ) {
-                WheelsFilterChipItem(
+                AppFilterChip(
                     label = "All",
-                    isSelected = currentFilter == HomeFilter.FAVOURITES,
+                    selected = currentFilter == HomeFilter.FAVOURITES,
                     onClick = { viewModel.setFilter(HomeFilter.FAVOURITES) }
                 )
-                WheelsFilterChipItem(
+                AppFilterChip(
                     label = "Recent",
-                    isSelected = currentFilter == HomeFilter.FAVOURITES_RECENT,
+                    selected = currentFilter == HomeFilter.FAVOURITES_RECENT,
                     onClick = { viewModel.setFilter(HomeFilter.FAVOURITES_RECENT) }
                 )
-                WheelsFilterChipItem(
+                AppFilterChip(
                     label = "Most used",
-                    isSelected = currentFilter == HomeFilter.FAVOURITES_MOST_USED,
+                    selected = currentFilter == HomeFilter.FAVOURITES_MOST_USED,
                     onClick = { viewModel.setFilter(HomeFilter.FAVOURITES_MOST_USED) }
                 )
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.size(dimens.space16))
 
-            when (val state = uiState) {
-                is HomeUiState.Loading -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator(color = RouletteTheme.colors.primary)
+            Box(modifier = Modifier.weight(1f)) {
+                when (val state = uiState) {
+                    is HomeUiState.Loading -> {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = colors.primary)
+                        }
                     }
-                }
 
-                is HomeUiState.Success -> {
-                    // Filter to only favorites if not already done by VM (VM does it, but let's be safe)
-                    val favoriteWheels = state.wheels.filter { it.isFavorite }
-
-                    if (favoriteWheels.isEmpty()) {
-                        EmptyFavouritesState()
-                    } else {
-                        LazyColumn(
-                            modifier = Modifier.fillMaxSize(),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                            contentPadding = PaddingValues(bottom = 80.dp)
-                        ) {
-                            itemsIndexed(favoriteWheels) { index, wheel ->
-                                val spinCount = state.wheelSpinCounts[wheel.id] ?: 0
-                                if (index == 0) {
-                                    FeaturedFavouriteCard(
-                                        wheel = wheel,
-                                        spinCount = spinCount,
-                                        onSelect = {
-                                            showSwitchInterstitial(context) {
-                                                onNavigateToWheel(wheel.id)
-                                            }
-                                        }
-                                    )
-                                } else {
-                                    SmallFavouriteCard(
-                                        wheel = wheel,
-                                        spinCount = spinCount,
-                                        onSelect = {
-                                            showSwitchInterstitial(context) {
-                                                onNavigateToWheel(wheel.id)
-                                            }
-                                        }
-                                    )
+                    is HomeUiState.Success -> {
+                        val favouriteWheels = state.wheels.filter { it.isFavorite }
+                        if (favouriteWheels.isEmpty()) {
+                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                EmptyState(
+                                    icon = AppIcons.Favorite,
+                                    title = "No favourites yet",
+                                    message = "Mark a wheel as favourite and it will show up here."
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                verticalArrangement = Arrangement.spacedBy(dimens.space12),
+                                contentPadding = PaddingValues(
+                                    start = dimens.screenPadding,
+                                    end = dimens.screenPadding,
+                                    bottom = dimens.listBottomPadding
+                                )
+                            ) {
+                                itemsIndexed(favouriteWheels, key = { _, it -> it.id }) { index, wheel ->
+                                    val spinCount = state.wheelSpinCounts[wheel.id] ?: 0
+                                    val onSelect = {
+                                        showSwitchInterstitial(context) { onNavigateToWheel(wheel.id) }
+                                    }
+                                    if (index == 0) {
+                                        FeaturedFavouriteCard(
+                                            wheel = wheel,
+                                            spinCount = spinCount,
+                                            onSelect = onSelect
+                                        )
+                                    } else {
+                                        SmallFavouriteCard(
+                                            wheel = wheel,
+                                            spinCount = spinCount,
+                                            onSelect = onSelect
+                                        )
+                                    }
                                 }
                             }
                         }
                     }
-                }
 
-                is HomeUiState.Error -> {
-                    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Error: ${state.message}", color = RouletteTheme.colors.danger)
+                    is HomeUiState.Error -> {
+                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Text(
+                                text = state.message,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = colors.danger
+                            )
+                        }
                     }
                 }
             }
@@ -156,154 +163,121 @@ fun FavouritesScreen(
 }
 
 @Composable
-fun FeaturedFavouriteCard(
+private fun FeaturedFavouriteCard(
     wheel: Wheel,
     spinCount: Int,
     onSelect: () -> Unit
 ) {
+    val colors = RouletteTheme.colors
+    val dimens = RouletteTheme.dimens
+
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onSelect() },
-        shape = RoundedCornerShape(32.dp),
-        color = RouletteTheme.colors.surface,
-        border = BorderStroke(1.dp, RouletteTheme.colors.primary.copy(alpha = 0.3f))
+            .clickable(onClick = onSelect),
+        shape = RouletteTheme.shapes.card,
+        color = colors.surface,
+        border = BorderStroke(dimens.borderWidth, colors.primaryBorder)
     ) {
-        Column(
-            modifier = Modifier.padding(24.dp)
-        ) {
+        Column(modifier = Modifier.padding(dimens.space20)) {
             Box(
                 modifier = Modifier
                     .size(56.dp)
-                    .clip(RoundedCornerShape(16.dp))
-                    .background(RouletteTheme.colors.primary.copy(alpha = 0.1f)),
+                    .clip(RouletteTheme.shapes.thumbnail)
+                    .background(colors.primarySubtle),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    AppIcons.Wheel,
+                    painter = AppIcons.Wheel,
                     contentDescription = null,
-                    tint = RouletteTheme.colors.primary,
+                    tint = colors.primary,
                     modifier = Modifier.size(28.dp)
                 )
             }
 
-            Spacer(Modifier.height(20.dp))
+            Spacer(Modifier.size(dimens.space16))
 
             Text(
                 text = wheel.name,
-                color = RouletteTheme.colors.textPrimary,
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
+                style = MaterialTheme.typography.headlineSmall,
+                color = colors.textPrimary,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
             )
-
+            Spacer(Modifier.size(dimens.space2))
             Text(
-                text = "${wheel.segments.size} segments • Used $spinCount times",
-                color = RouletteTheme.colors.textSecondary,
-                style = MaterialTheme.typography.bodyMedium
+                text = "${wheel.segments.size} segments · used $spinCount times",
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.textSecondary
             )
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.size(dimens.space20))
 
-            Button(
+            PrimaryButton(
+                text = "Spin now",
+                icon = AppIcons.Casino,
                 onClick = onSelect,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(16.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = RouletteTheme.colors.primary)
-            ) {
-                Text(
-                    "Spin now",
-                    color = RouletteTheme.colors.onPrimary,
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+                modifier = Modifier.fillMaxWidth()
+            )
         }
     }
 }
 
 @Composable
-fun SmallFavouriteCard(
+private fun SmallFavouriteCard(
     wheel: Wheel,
     spinCount: Int,
     onSelect: () -> Unit
 ) {
-    val accentColors = listOf(TilePurple, TileTeal, TileCoral, TileBlue, TilePink, TileOrange)
-    val accentColor = accentColors[wheel.id.hashCode().let { if (it < 0) -it else it } % accentColors.size]
+    val colors = RouletteTheme.colors
+    val dimens = RouletteTheme.dimens
+    val accent = rememberAccentOnSurface(wheelAccentFor(wheel.id))
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onSelect() },
+            .clickable(onClick = onSelect),
         shape = RouletteTheme.shapes.card,
-        color = RouletteTheme.colors.surface
+        color = colors.surface,
+        border = BorderStroke(dimens.borderWidth, colors.divider)
     ) {
         Row(
             modifier = Modifier
-                .padding(16.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(dimens.space16),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
                 modifier = Modifier
-                    .size(48.dp)
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(accentColor.copy(alpha = 0.15f)),
+                    .size(44.dp)
+                    .clip(RouletteTheme.shapes.thumbnail)
+                    .background(accent.copy(alpha = if (colors.isLight) 0.12f else 0.18f)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    AppIcons.Wheel,
+                    painter = AppIcons.Wheel,
                     contentDescription = null,
-                    tint = accentColor,
-                    modifier = Modifier.size(24.dp)
+                    tint = accent,
+                    modifier = Modifier.size(dimens.iconSize)
                 )
             }
 
-            Spacer(Modifier.width(16.dp))
+            Spacer(Modifier.width(dimens.rowIconGap))
 
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = wheel.name,
-                    color = RouletteTheme.colors.textPrimary,
-                    fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium,
+                    color = colors.textPrimary,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
-                    text = "${wheel.segments.size} segments • $spinCount spins",
-                    color = RouletteTheme.colors.textSecondary,
-                    style = MaterialTheme.typography.bodySmall
+                    text = "${wheel.segments.size} segments · $spinCount spins",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.textSecondary
                 )
             }
-        }
-    }
-}
-
-@Composable
-fun EmptyFavouritesState() {
-    Box(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 40.dp)
-            .height(140.dp)
-            .border(1.dp, RouletteTheme.colors.textSecondary.copy(alpha = 0.2f), RouletteTheme.shapes.card),
-        contentAlignment = Alignment.Center
-    ) {
-        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-            Icon(
-                AppIcons.Favorite,
-                contentDescription = null,
-                tint = RouletteTheme.colors.textSecondary.copy(alpha = 0.5f),
-                modifier = Modifier.size(40.dp)
-            )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                "Star a wheel to save it here",
-                color = RouletteTheme.colors.textSecondary,
-                style = MaterialTheme.typography.bodySmall
-            )
         }
     }
 }

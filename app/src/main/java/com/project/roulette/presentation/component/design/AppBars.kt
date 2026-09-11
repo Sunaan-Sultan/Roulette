@@ -1,22 +1,27 @@
 package com.project.roulette.presentation.component.design
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import com.project.roulette.presentation.component.AppIcons
 import com.project.roulette.ui.theme.RouletteTheme
 import java.util.Locale
@@ -106,6 +111,7 @@ fun AppScaffold(
     modifier: Modifier = Modifier,
     topBar: @Composable () -> Unit = {},
     bottomBar: @Composable () -> Unit = {},
+    snackbarHost: @Composable () -> Unit = {},
     floatingActionButton: @Composable () -> Unit = {},
     content: @Composable (PaddingValues) -> Unit
 ) {
@@ -113,9 +119,46 @@ fun AppScaffold(
         modifier = modifier,
         topBar = topBar,
         bottomBar = bottomBar,
+        snackbarHost = snackbarHost,
         floatingActionButton = floatingActionButton,
         containerColor = RouletteTheme.colors.background,
         contentColor = RouletteTheme.colors.textPrimary,
         content = content
     )
+}
+
+@Composable
+fun NotificationBellButton(
+    unreadCount: Int,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = RouletteTheme.colors
+    Surface(
+        modifier = modifier,
+        shape = RouletteTheme.shapes.avatar,
+        color = colors.surface,
+        border = BorderStroke(RouletteTheme.dimens.borderWidth, colors.divider)
+    ) {
+        IconButton(onClick = onClick) {
+            BadgedBox(
+                badge = {
+                    if (unreadCount > 0) {
+                        Badge(
+                            containerColor = colors.danger,
+                            contentColor = Color.White
+                        ) {
+                            Text(if (unreadCount > 99) "99+" else unreadCount.toString())
+                        }
+                    }
+                }
+            ) {
+                Icon(
+                    painter = AppIcons.Notifications,
+                    contentDescription = "Notifications",
+                    tint = colors.textPrimary
+                )
+            }
+        }
+    }
 }

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -26,6 +27,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.project.roulette.ui.theme.RouletteTheme
@@ -80,7 +82,9 @@ fun StatCard(
             Text(
                 text = value,
                 style = MaterialTheme.typography.headlineSmall,
-                color = if (style == StatCardStyle.Tinted) accent else colors.textPrimary
+                color = if (style == StatCardStyle.Tinted) accent else colors.textPrimary,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
             )
             Spacer(Modifier.size(dimens.space2))
             Text(
@@ -190,5 +194,90 @@ fun EmptyState(
                 Text(actionLabel, style = MaterialTheme.typography.labelLarge)
             }
         }
+    }
+}
+
+@Composable
+fun Pill(
+    text: String,
+    modifier: Modifier = Modifier,
+    accent: Color = RouletteTheme.colors.primary,
+    tinted: Boolean = true,
+    showDot: Boolean = false
+) {
+    val colors = RouletteTheme.colors
+    val dimens = RouletteTheme.dimens
+    val tintAlpha = if (colors.isLight) 0.10f else 0.16f
+    Surface(
+        modifier = modifier,
+        shape = RouletteTheme.shapes.chip,
+        color = if (tinted) accent.copy(alpha = tintAlpha) else colors.surface,
+        border = BorderStroke(
+            dimens.borderWidth,
+            if (tinted) accent.copy(alpha = 0.28f) else colors.divider
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = dimens.space12, vertical = dimens.space4),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            if (showDot) {
+                Box(
+                    modifier = Modifier
+                        .size(dimens.space8)
+                        .background(accent, RouletteTheme.shapes.avatar)
+                )
+                Spacer(Modifier.width(dimens.space8))
+            }
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelSmall,
+                color = if (tinted) accent else colors.textSecondary
+            )
+        }
+    }
+}
+
+@Composable
+fun MetricBar(
+    name: String,
+    value: String,
+    progress: Float,
+    accent: Color,
+    modifier: Modifier = Modifier,
+    leading: @Composable (() -> Unit)? = null
+) {
+    val colors = RouletteTheme.colors
+    val dimens = RouletteTheme.dimens
+    Column(modifier = modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (leading != null) {
+                leading()
+                Spacer(Modifier.width(dimens.space8))
+            }
+            Text(
+                text = name,
+                style = MaterialTheme.typography.bodyMedium,
+                color = colors.textPrimary,
+                modifier = Modifier.weight(1f)
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.labelLarge,
+                color = accent
+            )
+        }
+        Spacer(Modifier.size(dimens.space8))
+        LinearProgressIndicator(
+            progress = { progress.coerceIn(0f, 1f) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(dimens.space8),
+            color = accent,
+            trackColor = colors.divider,
+            strokeCap = androidx.compose.ui.graphics.StrokeCap.Round,
+            gapSize = 0.dp,
+            drawStopIndicator = {}
+        )
     }
 }

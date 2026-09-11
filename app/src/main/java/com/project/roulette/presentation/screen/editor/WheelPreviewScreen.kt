@@ -1,38 +1,65 @@
 package com.project.roulette.presentation.screen.editor
 
-import androidx.compose.animation.core.*
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.CubicBezierEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.project.roulette.domain.model.Wheel
+import com.project.roulette.presentation.component.AppIcons
+import com.project.roulette.presentation.component.HistoryItem
 import com.project.roulette.presentation.component.WheelCanvas
 import com.project.roulette.presentation.component.WinnerDialog
-import com.project.roulette.presentation.component.HistoryItem
+import com.project.roulette.presentation.component.design.AppScaffold
+import com.project.roulette.presentation.component.design.AppTopBar
+import com.project.roulette.presentation.component.design.EmptyState
+import com.project.roulette.presentation.component.design.Pill
+import com.project.roulette.presentation.component.design.PrimaryButton
+import com.project.roulette.presentation.component.design.SectionHeader
+import com.project.roulette.presentation.component.design.StatCard
 import com.project.roulette.presentation.model.WheelUiState
 import com.project.roulette.presentation.viewmodel.PreviewViewModel
-import com.project.roulette.ui.theme.ThemePalette
-import java.util.Locale
-import com.project.roulette.presentation.component.AppIcons
 import com.project.roulette.ui.theme.RouletteTheme
+import com.project.roulette.ui.theme.ThemePalette
 import com.project.roulette.ui.theme.rememberAccentOnSurface
-import com.project.roulette.ui.theme.contentColorOn
+import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WheelPreviewScreen(
     wheel: Wheel,
@@ -46,10 +73,12 @@ fun WheelPreviewScreen(
     val history by viewModel.spinHistory.collectAsStateWithLifecycle()
     val pendingOutcome by viewModel.pendingSpinOutcome.collectAsStateWithLifecycle()
 
+    val colors = RouletteTheme.colors
+    val dimens = RouletteTheme.dimens
+
     val themeColor = remember(wheel) {
         ThemePalette.getOrNull(wheel.themePaletteIndex) ?: ThemePalette[0]
     }
-
     val lighterThemeColor = rememberAccentOnSurface(themeColor)
 
     LaunchedEffect(wheel) {
@@ -63,15 +92,8 @@ fun WheelPreviewScreen(
         if (outcome != null) {
             val current = rotationAnim.value
             val finalAngle = outcome.spinResult.finalAngle
-            
-            // For preview, we use Weighted algorithm but if weights are equal, 
-            // the segments on canvas are equal size. 
-            // In WheelCanvas, it seems it divides 360 by segment count equally?
-            // Let's check WheelCanvas.
-            
-            val rotations = 7
-            val target = current + rotations * 360f + (360f - finalAngle)
-            
+            val target = current + 7 * 360f + (360f - finalAngle)
+
             rotationAnim.animateTo(
                 targetValue = target,
                 animationSpec = tween(
@@ -83,7 +105,6 @@ fun WheelPreviewScreen(
         }
     }
 
-    // Tick sound logic
     var lastBoundaryIndex by remember { mutableIntStateOf(-1) }
     LaunchedEffect(rotationAnim.value) {
         val state = uiState
@@ -102,43 +123,24 @@ fun WheelPreviewScreen(
         }
     }
 
-    Scaffold(
+    AppScaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("PREVIEW", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = RouletteTheme.colors.textSecondary)
-                        Text(wheel.name, fontWeight = FontWeight.Bold, color = RouletteTheme.colors.textPrimary)
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(AppIcons.ArrowBack, contentDescription = "Back", tint = RouletteTheme.colors.textPrimary)
-                    }
-                },
+            AppTopBar(
+                title = wheel.name,
+                eyebrow = "Preview",
+                onNavigateBack = onNavigateBack,
                 actions = {
-                    Button(
+                    PrimaryButton(
+                        text = "Save",
+                        icon = AppIcons.Save,
                         onClick = onSave,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = themeColor,
-                            contentColor = contentColorOn(themeColor)
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        modifier = Modifier.padding(end = 8.dp)
-                    ) {
-                        Icon(
-                            AppIcons.Save,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text("Save", fontWeight = FontWeight.Bold)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = RouletteTheme.colors.background)
+                        containerColor = themeColor,
+                        height = dimens.buttonHeightSmall,
+                        modifier = Modifier.padding(end = dimens.space8)
+                    )
+                }
             )
-        },
-        containerColor = RouletteTheme.colors.background
+        }
     ) { padding ->
         Column(
             modifier = Modifier
@@ -147,40 +149,29 @@ fun WheelPreviewScreen(
                 .verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Segment pills row
             LazyRow(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                contentPadding = PaddingValues(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(
+                    horizontal = dimens.screenPadding,
+                    vertical = dimens.space12
+                ),
+                horizontalArrangement = Arrangement.spacedBy(dimens.space8)
             ) {
-                items(wheel.segments) { segment ->
-                    Surface(
-                        color = segment.color.copy(alpha = 0.2f),
-                        shape = CircleShape,
-                        border = BorderStroke(1.dp, segment.color.copy(alpha = 0.5f))
-                    ) {
-                        Row(
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Box(modifier = Modifier.size(8.dp).background(segment.color, CircleShape))
-                            Spacer(Modifier.width(8.dp))
-                            Text(segment.name, color = RouletteTheme.colors.textPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
-                            Spacer(Modifier.width(4.dp))
-                            Text("${String.format(Locale.US, "%.1f", segment.weight)}x", color = RouletteTheme.colors.textSecondary, style = MaterialTheme.typography.labelSmall)
-                        }
-                    }
+                items(wheel.segments, key = { it.id }) { segment ->
+                    SegmentPill(
+                        name = segment.name,
+                        weight = segment.weight,
+                        color = segment.color
+                    )
                 }
             }
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.size(dimens.space8))
 
             val infiniteTransition = rememberInfiniteTransition(label = "tap_hint")
-            val alpha by infiniteTransition.animateFloat(
-                initialValue = 0.3f,
-                targetValue = 0.8f,
+            val hintAlpha by infiniteTransition.animateFloat(
+                initialValue = 0.35f,
+                targetValue = 0.9f,
                 animationSpec = infiniteRepeatable(
                     animation = tween(1000, easing = LinearEasing),
                     repeatMode = RepeatMode.Reverse
@@ -189,29 +180,25 @@ fun WheelPreviewScreen(
             )
 
             Text(
-                "Tap Wheel to Spin",
-                color = RouletteTheme.colors.textPrimary.copy(alpha = alpha),
+                text = "Tap the wheel to spin",
                 style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.ExtraBold,
-                letterSpacing = 1.2.sp
+                color = colors.textSecondary.copy(alpha = hintAlpha)
             )
 
-            Spacer(Modifier.height(16.dp))
+            Spacer(Modifier.size(dimens.space16))
 
-            // Wheel
             val isSpinning = (uiState as? WheelUiState.Success)?.isSpinning == true
             Box(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .clip(CircleShape)
+                    .clip(RouletteTheme.shapes.avatar)
                     .clickable(enabled = !isSpinning) { viewModel.spinWheel() }
             ) {
-                // Glow effect
                 Surface(
-                    modifier = Modifier.size(290.dp),
-                    shape = CircleShape,
+                    modifier = Modifier.size(296.dp),
+                    shape = RouletteTheme.shapes.avatar,
                     color = themeColor.copy(alpha = 0.05f),
-                    border = BorderStroke(2.dp, themeColor.copy(alpha = 0.2f))
+                    border = BorderStroke(dimens.borderWidth, themeColor.copy(alpha = 0.22f))
                 ) {}
 
                 WheelCanvas(
@@ -220,84 +207,66 @@ fun WheelPreviewScreen(
                     themeColor = themeColor,
                     modifier = Modifier.size(280.dp)
                 )
-                
-                // Pointer arrow (Top)
+
                 Icon(
                     painter = AppIcons.ArrowDropDown,
                     contentDescription = null,
-                    tint = RouletteTheme.colors.textPrimary,
+                    tint = colors.textPrimary,
                     modifier = Modifier
                         .size(40.dp)
                         .align(Alignment.TopCenter)
-                        .offset(y = (-15).dp)
+                        .offset(y = (-12).dp)
                 )
             }
 
-            Spacer(Modifier.height(32.dp))
+            Spacer(Modifier.size(dimens.space32))
 
-            // Stats Row
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp),
-                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    .padding(horizontal = dimens.screenPadding),
+                horizontalArrangement = Arrangement.spacedBy(dimens.space12)
             ) {
                 StatCard(
-                    label = "Segments",
                     value = wheel.segments.size.toString(),
+                    label = "Segments",
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
-                    label = "Test spins",
                     value = testSpins.toString(),
+                    label = "Test spins",
                     modifier = Modifier.weight(1f)
                 )
                 StatCard(
-                    label = "Last pick",
                     value = lastPick ?: "—",
+                    label = "Last pick",
+                    accent = lighterThemeColor,
                     modifier = Modifier.weight(1f)
                 )
             }
 
-            Spacer(Modifier.height(24.dp))
+            Spacer(Modifier.size(dimens.space24))
 
-            // Spin History Section
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 24.dp)
+                    .padding(horizontal = dimens.screenPadding)
             ) {
-                Text(
-                    "SPIN HISTORY",
-                    style = MaterialTheme.typography.bodySmall,
-                    fontWeight = FontWeight.Bold,
-                    color = RouletteTheme.colors.textSecondary,
-                    letterSpacing = 1.2.sp
-                )
-                Spacer(Modifier.height(12.dp))
-                
+                SectionHeader("Spin history")
+
                 if (history.isEmpty()) {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(80.dp)
-                            .border(1.dp, RouletteTheme.colors.divider, RoundedCornerShape(16.dp))
-                            .background(RouletteTheme.colors.surface.copy(alpha = 0.3f), RoundedCornerShape(16.dp)),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            "No spins yet — tap wheel to test",
-                            color = RouletteTheme.colors.textSecondary.copy(alpha = 0.6f),
-                            style = MaterialTheme.typography.bodySmall
-                        )
-                    }
+                    EmptyState(
+                        icon = AppIcons.History,
+                        title = "No test spins yet",
+                        message = "Tap the wheel above to try it out."
+                    )
                 } else {
-                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Column(verticalArrangement = Arrangement.spacedBy(dimens.space8)) {
                         history.forEachIndexed { index, result ->
                             val segment = wheel.segments.find { it.id == result.selectedSegmentId }
                             HistoryItem(
                                 name = result.selectedSegmentName,
-                                color = segment?.color ?: RouletteTheme.colors.textSecondary,
+                                color = segment?.color ?: colors.textSecondary,
                                 isLatest = index == 0
                             )
                         }
@@ -305,10 +274,9 @@ fun WheelPreviewScreen(
                 }
             }
 
-            Spacer(Modifier.height(40.dp))
+            Spacer(Modifier.height(dimens.listBottomPadding))
         }
 
-        // Result Dialog
         (uiState as? WheelUiState.Success)?.lastSpinResult?.let { result ->
             WinnerDialog(
                 result = result,
@@ -321,41 +289,22 @@ fun WheelPreviewScreen(
                     viewModel.clearResult()
                     viewModel.spinWheel()
                 },
-                onRemoveFromWheel = {
-                    // Removal not supported in preview for now as it's a test environment
-                }
+                onRemoveFromWheel = {}
             )
         }
     }
 }
 
 @Composable
-fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
-    Surface(
-        modifier = modifier,
-        color = RouletteTheme.colors.surface,
-        shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, RouletteTheme.colors.divider)
-    ) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Text(
-                value,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = RouletteTheme.colors.textPrimary,
-                maxLines = 1,
-                textAlign = TextAlign.Center
-            )
-            Spacer(Modifier.height(4.dp))
-            Text(
-                label,
-                style = MaterialTheme.typography.labelSmall,
-                color = RouletteTheme.colors.textSecondary,
-                textAlign = TextAlign.Center
-            )
-        }
-    }
+private fun SegmentPill(
+    name: String,
+    weight: Float,
+    color: androidx.compose.ui.graphics.Color
+) {
+    val accent = rememberAccentOnSurface(color)
+    Pill(
+        text = "$name · ${String.format(Locale.US, "%.1f", weight)}x",
+        accent = accent,
+        showDot = true
+    )
 }

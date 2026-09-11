@@ -30,6 +30,7 @@ data class RouletteShapes(
     val sheet: Shape = RoundedCornerShape(topStart = 24.dp, topEnd = 24.dp),
     val chip: Shape = CircleShape,
     val iconTile: Shape = RoundedCornerShape(8.dp),
+    val barTop: Shape = RoundedCornerShape(topStart = 4.dp, topEnd = 4.dp),
     val avatar: Shape = CircleShape,
     val thumbnail: Shape = RoundedCornerShape(12.dp)
 )
