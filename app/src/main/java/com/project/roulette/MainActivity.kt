@@ -1,9 +1,13 @@
 package com.project.roulette
 
+import android.content.Context
+import android.content.res.Configuration
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.tween
@@ -12,7 +16,6 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -27,7 +30,8 @@ import com.project.roulette.presentation.component.BottomBar
 import com.project.roulette.presentation.component.WhatsNewDialog
 import com.project.roulette.presentation.navigation.RouletteNavHost
 import com.project.roulette.presentation.navigation.RouletteScreen
-import com.project.roulette.ui.theme.DeepNavyBlack
+import com.project.roulette.data.repository.PreferenceRepositoryImpl
+import com.project.roulette.domain.model.ThemeMode
 import com.project.roulette.ui.theme.RouletteTheme
 import com.project.roulette.util.AppChangelog
 import com.project.roulette.util.getCurrentVersionCode
@@ -58,13 +62,30 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    override fun attachBaseContext(newBase: Context) {
+        val mode = ThemeMode.fromName(
+            newBase.getSharedPreferences(
+                PreferenceRepositoryImpl.PREFS_NAME,
+                Context.MODE_PRIVATE
+            ).getString(PreferenceRepositoryImpl.KEY_THEME_MODE, null)
+        )
+        val context = if (mode == ThemeMode.SYSTEM) {
+            newBase
+        } else {
+            val config = Configuration(newBase.resources.configuration)
+            config.uiMode = (config.uiMode and Configuration.UI_MODE_NIGHT_MASK.inv()) or
+                if (mode == ThemeMode.DARK) Configuration.UI_MODE_NIGHT_YES
+                else Configuration.UI_MODE_NIGHT_NO
+            newBase.createConfigurationContext(config)
+        }
+        super.attachBaseContext(context)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
         appUpdateManager = AppUpdateManagerFactory.create(this)
         checkForUpdates()
-
-        enableEdgeToEdge()
 
         if (ADS_ENABLED) {
             MobileAds.initialize(this) {}
@@ -73,9 +94,30 @@ class MainActivity : ComponentActivity() {
         setContent {
             val settingsViewModel: SettingsViewModel = hiltViewModel()
             val paletteIndex by settingsViewModel.paletteIndex.collectAsStateWithLifecycle()
+            val themeMode by settingsViewModel.themeMode.collectAsStateWithLifecycle()
 
-            RouletteTheme(darkTheme = true, paletteIndex = paletteIndex) {
-                RouletteApp()
+            val systemDark = isSystemInDarkTheme()
+            val darkTheme = when (themeMode) {
+                ThemeMode.SYSTEM -> systemDark
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+            }
+
+            LaunchedEffect(darkTheme) {
+                enableEdgeToEdge(
+                    statusBarStyle = SystemBarStyle.auto(
+                        android.graphics.Color.TRANSPARENT,
+                        android.graphics.Color.TRANSPARENT
+                    ) { darkTheme },
+                    navigationBarStyle = SystemBarStyle.auto(
+                        LIGHT_SCRIM,
+                        DARK_SCRIM
+                    ) { darkTheme }
+                )
+            }
+
+            RouletteTheme(darkTheme = darkTheme, paletteIndex = paletteIndex) {
+                RouletteApp(settingsViewModel = settingsViewModel)
             }
         }
     }
@@ -108,14 +150,16 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+private val LIGHT_SCRIM = android.graphics.Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
+private val DARK_SCRIM = android.graphics.Color.argb(0x80, 0x1b, 0x1b, 0x1b)
+
 @Composable
-fun RouletteApp() {
+fun RouletteApp(settingsViewModel: SettingsViewModel = hiltViewModel()) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = navBackStackEntry?.destination
 
     val context = LocalContext.current
-    val settingsViewModel: SettingsViewModel = hiltViewModel()
     val lastSeenChangelogVersion by settingsViewModel.lastSeenChangelogVersion.collectAsStateWithLifecycle()
     val latestChangelogEntry = AppChangelog.latest
     var showWhatsNew by remember { mutableStateOf(false) }
@@ -170,7 +214,7 @@ fun RouletteApp() {
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        containerColor = DeepNavyBlack,
+        containerColor = RouletteTheme.colors.background,
         bottomBar = {
             // Bottom UI Layer (Ad + Nav Bar)
             Column(
@@ -209,13 +253,5 @@ fun RouletteApp() {
             navController = navController,
             paddingValues = adjustedPadding
         )
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun RouletteAppPreview() {
-    RouletteTheme {
-        RouletteApp()
     }
 }

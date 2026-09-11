@@ -1,5 +1,6 @@
 package com.project.roulette.domain.repository
 
+import com.project.roulette.domain.model.ThemeMode
 import com.project.roulette.domain.usecase.selection.SelectionAlgorithmFactory
 import com.project.roulette.presentation.viewmodel.WheelViewModel
 import kotlinx.coroutines.flow.Flow
@@ -12,6 +13,8 @@ interface PreferenceRepository {
     val confettiEnabled: Flow<Boolean>
     val removeAfterPickEnabled: Flow<Boolean>
     val lastSeenChangelogVersion: Flow<Int>
+    val themeMode: Flow<ThemeMode>
+    val themeModeBlocking: ThemeMode
 
     suspend fun updatePaletteIndex(index: Int)
     suspend fun updateDefaultAlgorithm(algorithm: SelectionAlgorithmFactory.AlgorithmType)
@@ -20,5 +23,6 @@ interface PreferenceRepository {
     suspend fun updateConfettiEnabled(enabled: Boolean)
     suspend fun updateRemoveAfterPickEnabled(enabled: Boolean)
     suspend fun updateLastSeenChangelogVersion(versionCode: Int)
+    suspend fun updateThemeMode(mode: ThemeMode)
     suspend fun clearAllData()
 }

@@ -2,6 +2,7 @@ package com.project.roulette.presentation.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.project.roulette.domain.model.ThemeMode
 import com.project.roulette.domain.repository.PreferenceRepository
 import com.project.roulette.domain.usecase.selection.SelectionAlgorithmFactory
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,6 +38,9 @@ class SettingsViewModel @Inject constructor(
     val lastSeenChangelogVersion: StateFlow<Int> = preferenceRepository.lastSeenChangelogVersion
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), 0)
 
+    val themeMode: StateFlow<ThemeMode> = preferenceRepository.themeMode
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), preferenceRepository.themeModeBlocking)
+
     fun updatePaletteIndex(index: Int) {
         viewModelScope.launch { preferenceRepository.updatePaletteIndex(index) }
     }
@@ -63,6 +67,10 @@ class SettingsViewModel @Inject constructor(
 
     fun updateLastSeenChangelogVersion(versionCode: Int) {
         viewModelScope.launch { preferenceRepository.updateLastSeenChangelogVersion(versionCode) }
+    }
+
+    fun updateThemeMode(mode: ThemeMode) {
+        viewModelScope.launch { preferenceRepository.updateThemeMode(mode) }
     }
 
     fun clearAllData() {

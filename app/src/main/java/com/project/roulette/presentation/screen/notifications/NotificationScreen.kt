@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,6 +30,7 @@ import com.project.roulette.presentation.screen.wheels.WheelsFilterChipItem
 import kotlinx.datetime.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import com.project.roulette.presentation.component.AppIcons
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +62,7 @@ fun NotificationContent(
     onNavigateBack: () -> Unit
 ) {
     Scaffold(
-        containerColor = DeepNavyBlack
+        containerColor = RouletteTheme.colors.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -76,7 +75,7 @@ fun NotificationContent(
             Text(
                 text = "UPDATES",
                 style = MaterialTheme.typography.labelLarge,
-                color = TextSecondary,
+                color = RouletteTheme.colors.textSecondary,
                 letterSpacing = 1.sp
             )
 
@@ -89,7 +88,7 @@ fun NotificationContent(
                     text = "Notifications",
                     style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = RouletteTheme.colors.textPrimary
                 )
 
                 TextButton(
@@ -100,7 +99,7 @@ fun NotificationContent(
                         text = "Mark all read",
                         color = RouletteTheme.colors.primary,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 14.sp
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
@@ -157,7 +156,7 @@ fun NotificationContent(
                                     Text(
                                         text = header,
                                         style = MaterialTheme.typography.labelLarge,
-                                        color = TextSecondary,
+                                        color = RouletteTheme.colors.textSecondary,
                                         modifier = Modifier.padding(vertical = 8.dp)
                                     )
                                 }
@@ -174,7 +173,7 @@ fun NotificationContent(
 
                 is NotificationUiState.Error -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Error: ${state.message}", color = Color.Red)
+                        Text("Error: ${state.message}", color = RouletteTheme.colors.danger)
                     }
                 }
             }
@@ -188,27 +187,27 @@ fun NotificationItem(
     onClick: () -> Unit
 ) {
     val (icon, color) = when (notification.type) {
-        NotificationType.SPIN_RESULT -> Icons.Filled.RadioButtonChecked to TilePurple
-        NotificationType.MILESTONE -> Icons.Filled.EmojiEvents to Color(0xFFFFA000) // Amber
-        NotificationType.STREAK -> Icons.Filled.Whatshot to TileCoral
-        NotificationType.REMINDER -> Icons.Filled.Notifications to Color.Gray
-        NotificationType.TIP -> Icons.Filled.Lightbulb to Color.Yellow
-        NotificationType.UPDATE -> Icons.Filled.Campaign to TileBlue
-        NotificationType.ANNOUNCEMENT -> Icons.Filled.Info to TileTeal
-        NotificationType.FAVOURITE -> Icons.Filled.Star to TilePink
+        NotificationType.SPIN_RESULT -> AppIcons.RadioButtonChecked to TilePurple
+        NotificationType.MILESTONE -> AppIcons.Trophy to RouletteTheme.colors.warning // Amber
+        NotificationType.STREAK -> AppIcons.Whatshot to TileCoral
+        NotificationType.REMINDER -> AppIcons.Notifications to RouletteTheme.colors.textSecondary
+        NotificationType.TIP -> AppIcons.Lightbulb to RouletteTheme.colors.warning
+        NotificationType.UPDATE -> AppIcons.Campaign to TileBlue
+        NotificationType.ANNOUNCEMENT -> AppIcons.Info to TileTeal
+        NotificationType.FAVOURITE -> AppIcons.Star to TilePink
     }
 
-    val finalColor = if (notification.isRead) Color.Gray.copy(alpha = 0.5f) else color
-    val backgroundColor = if (notification.isRead) SurfaceDarker else SurfaceDark
+    val finalColor = if (notification.isRead) RouletteTheme.colors.textSecondary.copy(alpha = 0.5f) else color
+    val backgroundColor = if (notification.isRead) RouletteTheme.colors.surfaceElevated else RouletteTheme.colors.surface
     val borderAlpha = if (notification.isRead) 0.1f else 0.5f
     val borderColor = if (notification.isRead) finalColor else RouletteTheme.colors.primary
-    val textColor = if (notification.isRead) TextSecondary else Color.White
+    val textColor = if (notification.isRead) RouletteTheme.colors.textSecondary else RouletteTheme.colors.textPrimary
 
     Surface(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onClick() },
-        shape = RoundedCornerShape(24.dp),
+        shape = RouletteTheme.shapes.card,
         color = backgroundColor,
         border = BorderStroke(1.dp, borderColor.copy(alpha = borderAlpha))
     ) {
@@ -245,19 +244,19 @@ fun NotificationItem(
                         text = notification.title,
                         color = textColor,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp
+                        style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
                         text = TimeUtils.getRelativeTime(notification.timestamp),
-                        color = TextSecondary,
-                        fontSize = 12.sp
+                        color = RouletteTheme.colors.textSecondary,
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
                 Spacer(Modifier.height(4.dp))
                 Text(
                     text = notification.message,
-                    color = if (notification.isRead) TextSecondary.copy(alpha = 0.7f) else TextSecondary,
-                    fontSize = 14.sp,
+                    color = if (notification.isRead) RouletteTheme.colors.textSecondary.copy(alpha = 0.7f) else RouletteTheme.colors.textSecondary,
+                    style = MaterialTheme.typography.bodySmall,
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -271,13 +270,13 @@ fun EmptyNotificationsState() {
     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
-                Icons.Filled.NotificationsNone,
+                AppIcons.Notifications,
                 contentDescription = null,
-                tint = TextSecondary.copy(alpha = 0.5f),
+                tint = RouletteTheme.colors.textSecondary.copy(alpha = 0.5f),
                 modifier = Modifier.size(64.dp)
             )
             Spacer(Modifier.height(16.dp))
-            Text("No notifications yet", color = TextSecondary)
+            Text("No notifications yet", color = RouletteTheme.colors.textSecondary)
         }
     }
 }

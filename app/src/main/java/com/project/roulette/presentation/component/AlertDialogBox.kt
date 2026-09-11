@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -18,6 +16,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import com.project.roulette.ui.theme.RouletteTheme
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -64,7 +63,7 @@ fun AlertDialogBox(
                     modifier = Modifier
                         .size(40.dp)
                         .clip(MaterialTheme.shapes.small),
-                    color = Color(0xFFFFF3E0) // light orange background
+                    color = RouletteTheme.colors.warningSubtle
                 ) {
                     Row(
                         modifier = Modifier.padding(8.dp),
@@ -72,9 +71,9 @@ fun AlertDialogBox(
                         horizontalArrangement = Arrangement.Center
                     ) {
                         Icon(
-                            imageVector = Icons.Filled.Warning,
+                            painter = AppIcons.Warning,
                             contentDescription = "Alert",
-                            tint = Color(0xFFF57C00),
+                            tint = RouletteTheme.colors.warning,
                             modifier = Modifier.size(20.dp)
                         )
                     }

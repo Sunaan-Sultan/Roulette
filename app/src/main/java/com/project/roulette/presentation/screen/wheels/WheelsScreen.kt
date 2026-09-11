@@ -6,8 +6,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,6 +26,7 @@ import com.project.roulette.util.showInterstitial
 import com.project.roulette.util.loadSwitchInterstitial
 import com.project.roulette.util.showSwitchInterstitial
 import com.project.roulette.presentation.screen.home.WheelCard
+import com.project.roulette.presentation.component.AppIcons
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,13 +62,13 @@ fun WheelsScreen(
                     .padding(end = 8.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp)) {
-                    Icon(Icons.Filled.Add, contentDescription = null, tint = Color.White)
+                    Icon(AppIcons.Add, contentDescription = null, tint = RouletteTheme.colors.onPrimary)
                     Spacer(Modifier.width(8.dp))
-                    Text("Create Wheel", fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("Create Wheel", fontWeight = FontWeight.Bold, color = RouletteTheme.colors.onPrimary)
                 }
             }
         },
-        containerColor = DeepNavyBlack
+        containerColor = RouletteTheme.colors.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -82,7 +81,7 @@ fun WheelsScreen(
             Text(
                 text = "EXPLORE",
                 style = MaterialTheme.typography.labelLarge,
-                color = TextSecondary,
+                color = RouletteTheme.colors.textSecondary,
                 letterSpacing = 1.sp
             )
             
@@ -95,21 +94,21 @@ fun WheelsScreen(
                     text = "Wheels",
                     style = MaterialTheme.typography.displayMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = RouletteTheme.colors.textPrimary
                 )
 
                 IconButton(
                     onClick = onNavigateToNotifications,
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(SurfaceDark)
+                        .background(RouletteTheme.colors.surface)
                 ) {
                     BadgedBox(
                         badge = {
                             if (uiState is HomeUiState.Success && (uiState as HomeUiState.Success).unreadNotificationCount > 0) {
                                 Badge(
-                                    containerColor = Color.Red,
-                                    contentColor = Color.White
+                                    containerColor = RouletteTheme.colors.danger,
+                                    contentColor = RouletteTheme.colors.textPrimary
                                 ) {
                                     Text((uiState as HomeUiState.Success).unreadNotificationCount.toString())
                                 }
@@ -117,9 +116,9 @@ fun WheelsScreen(
                         }
                     ) {
                         Icon(
-                            Icons.Filled.Notifications,
+                            AppIcons.Notifications,
                             contentDescription = "Notifications",
-                            tint = Color.White
+                            tint = RouletteTheme.colors.textPrimary
                         )
                     }
                 }
@@ -134,17 +133,17 @@ fun WheelsScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                placeholder = { Text("Search wheels...", color = TextSecondary) },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = TextSecondary) },
+                placeholder = { Text("Search wheels...", color = RouletteTheme.colors.textSecondary) },
+                leadingIcon = { Icon(AppIcons.Search, contentDescription = null, tint = RouletteTheme.colors.textSecondary) },
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = Color.Transparent,
                     focusedBorderColor = RouletteTheme.colors.primary,
-                    unfocusedContainerColor = SurfaceDark,
-                    focusedContainerColor = SurfaceDark,
+                    unfocusedContainerColor = RouletteTheme.colors.surface,
+                    focusedContainerColor = RouletteTheme.colors.surface,
                     cursorColor = RouletteTheme.colors.primary,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
+                    focusedTextColor = RouletteTheme.colors.textPrimary,
+                    unfocusedTextColor = RouletteTheme.colors.textPrimary
                 ),
                 singleLine = true
             )
@@ -174,7 +173,7 @@ fun WheelsScreen(
                         value = state.spinsToday.toString(),
                         label = "Today",
                         modifier = Modifier.weight(1f),
-                        accentColor = TextSecondary
+                        accentColor = RouletteTheme.colors.textSecondary
                     )
                 }
             }
@@ -217,7 +216,7 @@ fun WheelsScreen(
                     is HomeUiState.Success -> {
                         if (state.wheels.isEmpty()) {
                             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text(if (searchQuery.isNotEmpty()) "No results found" else "No wheels yet. Create one!", color = TextSecondary)
+                                Text(if (searchQuery.isNotEmpty()) "No results found" else "No wheels yet. Create one!", color = RouletteTheme.colors.textSecondary)
                             }
                         } else {
                             LazyColumn(
@@ -248,7 +247,7 @@ fun WheelsScreen(
                     is HomeUiState.Error -> {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Error: ${state.message}", color = Color.Red)
+                                Text("Error: ${state.message}", color = RouletteTheme.colors.danger)
                                 Button(onClick = { viewModel.loadAllWheels() }) {
                                     Text("Retry")
                                 }
@@ -270,8 +269,8 @@ fun StatCard(
 ) {
     Surface(
         modifier = modifier.height(100.dp),
-        shape = RoundedCornerShape(20.dp),
-        color = SurfaceDark
+        shape = RouletteTheme.shapes.card,
+        color = RouletteTheme.colors.surface
     ) {
         Column(
             modifier = Modifier.fillMaxSize(),
@@ -280,14 +279,14 @@ fun StatCard(
         ) {
             Text(
                 text = value,
-                color = if (accentColor == TextSecondary) Color.White else accentColor,
-                fontSize = 28.sp,
+                color = if (accentColor == RouletteTheme.colors.textSecondary) RouletteTheme.colors.textPrimary else accentColor,
+                style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.Bold
             )
             Text(
                 text = label,
-                color = TextSecondary,
-                fontSize = 14.sp
+                color = RouletteTheme.colors.textSecondary,
+                style = MaterialTheme.typography.bodySmall
             )
         }
     }
@@ -301,8 +300,8 @@ fun WheelsFilterChipItem(
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
-        color = if (isSelected) RouletteTheme.colors.primary else SurfaceDark,
+        shape = RouletteTheme.shapes.chip,
+        color = if (isSelected) RouletteTheme.colors.primary else RouletteTheme.colors.surface,
         modifier = Modifier.height(40.dp)
     ) {
         Box(
@@ -311,9 +310,9 @@ fun WheelsFilterChipItem(
         ) {
             Text(
                 text = label,
-                color = if (isSelected) Color.White else TextSecondary,
+                color = if (isSelected) RouletteTheme.colors.textPrimary else RouletteTheme.colors.textSecondary,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                fontSize = 14.sp
+                style = MaterialTheme.typography.bodySmall
             )
         }
     }

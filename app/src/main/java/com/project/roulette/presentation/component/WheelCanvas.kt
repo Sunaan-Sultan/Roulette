@@ -15,7 +15,11 @@ import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.runtime.Immutable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.luminance
 import com.project.roulette.domain.model.Wheel
+import com.project.roulette.ui.theme.RouletteTheme
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -24,13 +28,47 @@ import kotlin.math.sin
  * Composable for drawing the spinning wheel.
  * High-fidelity design matching reference images.
  */
+@Immutable
+data class WheelCanvasColors(
+    val halo: Color,
+    val divider: Color,
+    val rim: Color,
+    val innerRing: Color,
+    val hubStroke: Color
+)
+
+@Composable
+fun rememberWheelCanvasColors(): WheelCanvasColors {
+    val isLight = RouletteTheme.colors.isLight
+    return remember(isLight) {
+        if (isLight) {
+            WheelCanvasColors(
+                halo = Color(0xFFE9EAEE),
+                divider = Color.White.copy(alpha = 0.85f),
+                rim = Color(0xFFD5D7DD),
+                innerRing = Color.White.copy(alpha = 0.6f),
+                hubStroke = Color.White
+            )
+        } else {
+            WheelCanvasColors(
+                halo = Color(0xFF141424),
+                divider = Color.Black.copy(alpha = 0.8f),
+                rim = Color(0xFF050505),
+                innerRing = Color(0xFF1E1E2C),
+                hubStroke = Color(0xFF121212)
+            )
+        }
+    }
+}
+
 @Composable
 fun WheelCanvas(
     wheel: Wheel,
     modifier: Modifier = Modifier,
     rotation: Float = 0f,
     wheelSize: Dp = 260.dp,
-    themeColor: Color = Color(0xFF6C5CE7)
+    themeColor: Color = Color(0xFF6C5CE7),
+    canvasColors: WheelCanvasColors = rememberWheelCanvasColors()
 ) {
     val segments = wheel.getActiveSegments()
     
@@ -38,8 +76,8 @@ fun WheelCanvas(
     val textColors = segments.map { segment ->
         val hsv = FloatArray(3)
         android.graphics.Color.colorToHSV(segment.color.toArgb(), hsv)
-        hsv[1] *= 0.3f // Desaturate
-        hsv[2] = (hsv[2] + 1f) / 2f // Brighten
+        hsv[1] *= 0.3f
+        hsv[2] = if (segment.color.luminance() < 0.45f) (hsv[2] + 1f) / 2f else hsv[2] * 0.35f
         Color(android.graphics.Color.HSVToColor(hsv))
     }
 
@@ -50,7 +88,7 @@ fun WheelCanvas(
         // 1. Outer Halo / Ambient Pop (The dark background glow seen in reference)
         Canvas(modifier = Modifier.size(wheelSize + 48.dp)) {
             drawCircle(
-                color = Color(0xFF141424), // Dark Navy/Purple Pop
+                color = canvasColors.halo,
                 radius = size.width / 2f
             )
         }
@@ -113,7 +151,7 @@ fun WheelCanvas(
                 segments.forEach { segment ->
                     val lineAngleRad = startAngle * PI.toFloat() / 180f
                     drawLine(
-                        color = Color.Black.copy(alpha = 0.8f),
+                        color = canvasColors.divider,
                         start = Offset(centerX, centerY),
                         end = Offset(
                             centerX + radius * cos(lineAngleRad),
@@ -139,14 +177,14 @@ fun WheelCanvas(
 
             // Pass 4: Draw Border Flush to Edge
             drawCircle(
-                color = Color(0xFF050505),
+                color = canvasColors.rim,
                 radius = radius,
                 center = Offset(centerX, centerY),
                 style = Stroke(width = 10f)
             )
             // Inner highlight ring
             drawCircle(
-                color = Color(0xFF1E1E2C),
+                color = canvasColors.innerRing,
                 radius = radius - 4f,
                 center = Offset(centerX, centerY),
                 style = Stroke(width = 2f)
@@ -159,7 +197,7 @@ fun WheelCanvas(
                 center = Offset(centerX, centerY)
             )
             drawCircle(
-                color = Color(0xFF121212),
+                color = canvasColors.hubStroke,
                 radius = radius * 0.1f,
                 center = Offset(centerX, centerY),
                 style = Stroke(width = 4f)

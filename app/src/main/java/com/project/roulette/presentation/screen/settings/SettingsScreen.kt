@@ -1,35 +1,60 @@
 package com.project.roulette.presentation.screen.settings
 
-import androidx.compose.foundation.*
-import androidx.compose.foundation.layout.*
+import android.content.Intent
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import android.content.Intent
-import android.net.Uri
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.project.roulette.domain.model.ThemeMode
 import com.project.roulette.domain.usecase.selection.SelectionAlgorithmFactory
+import com.project.roulette.presentation.component.AppIcons
 import com.project.roulette.presentation.component.WhatsNewDialog
+import com.project.roulette.presentation.component.design.AppScaffold
+import com.project.roulette.presentation.component.design.AppTopBar
+import com.project.roulette.presentation.component.design.InsetDivider
+import com.project.roulette.presentation.component.design.SettingsGroup
+import com.project.roulette.presentation.component.design.SettingsRow
 import com.project.roulette.presentation.viewmodel.SettingsViewModel
 import com.project.roulette.presentation.viewmodel.WheelViewModel
-import com.project.roulette.ui.theme.*
+import com.project.roulette.ui.theme.Palettes
+import com.project.roulette.ui.theme.RoulettePalette
+import com.project.roulette.ui.theme.RouletteTheme
 import com.project.roulette.util.AppChangelog
 import com.project.roulette.util.getCurrentVersionName
 
@@ -40,6 +65,7 @@ fun SettingsScreen(
     onNavigateBack: () -> Unit
 ) {
     val paletteIndex by viewModel.paletteIndex.collectAsStateWithLifecycle()
+    val themeMode by viewModel.themeMode.collectAsStateWithLifecycle()
     val defaultAlgo by viewModel.defaultAlgorithm.collectAsStateWithLifecycle()
     val defaultSpeed by viewModel.defaultSpinSpeed.collectAsStateWithLifecycle()
     val spinSound by viewModel.spinSoundEnabled.collectAsStateWithLifecycle()
@@ -51,58 +77,92 @@ fun SettingsScreen(
 
     val context = LocalContext.current
     val colors = RouletteTheme.colors
+    val dimens = RouletteTheme.dimens
 
-    Scaffold(
+    AppScaffold(
         topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text("APP", fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray, letterSpacing = 1.sp)
-                        Text("Settings", fontWeight = FontWeight.Bold, color = Color.White)
-                    }
-                },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.White)
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = DeepNavyBlack)
+            AppTopBar(
+                title = "Settings",
+                eyebrow = "App",
+                onNavigateBack = onNavigateBack
             )
-        },
-        containerColor = DeepNavyBlack
+        }
     ) { padding ->
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
-            contentPadding = PaddingValues(16.dp),
-            verticalArrangement = Arrangement.spacedBy(24.dp)
+            contentPadding = PaddingValues(
+                start = dimens.screenPadding,
+                end = dimens.screenPadding,
+                top = dimens.listTopPadding,
+                bottom = dimens.listBottomPadding
+            ),
+            verticalArrangement = Arrangement.spacedBy(dimens.space24)
         ) {
-            // 1. App Color Section
             item {
-                SectionHeader("APP COLOR")
-                Spacer(Modifier.height(12.dp))
-                Surface(
-                    color = SurfaceDark,
-                    shape = RoundedCornerShape(24.dp),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
+                SettingsGroup(
+                    title = "Appearance",
+                    footnote = "System follows your device's light or dark setting."
                 ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
+                    ThemeMode.entries.forEachIndexed { index, mode ->
+                        if (index > 0) InsetDivider(RouletteTheme.dimens.dividerInsetWithIcon)
+                        SettingsRow(
+                            title = mode.label,
+                            leadingIcon = when (mode) {
+                                ThemeMode.SYSTEM -> AppIcons.Contrast
+                                ThemeMode.LIGHT -> AppIcons.LightMode
+                                ThemeMode.DARK -> AppIcons.DarkMode
+                            },
+                            leadingIconTint = if (themeMode == mode) colors.primary else colors.textSecondary,
+                            onClick = { viewModel.updateThemeMode(mode) },
+                            showChevron = false,
+                            trailing = if (themeMode == mode) {
+                                {
+                                    Icon(
+                                        painter = AppIcons.Check,
+                                        contentDescription = "Selected",
+                                        tint = colors.primary,
+                                        modifier = Modifier.size(dimens.iconSize)
+                                    )
+                                }
+                            } else null
+                        )
+                    }
+                }
+            }
+
+            item {
+                SettingsGroup(title = "App color") {
+                    Column(modifier = Modifier.padding(dimens.space16)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.AutoAwesome, null, tint = colors.primary, modifier = Modifier.size(20.dp))
-                            Spacer(Modifier.width(12.dp))
+                            Icon(
+                                painter = AppIcons.AutoAwesome,
+                                contentDescription = null,
+                                tint = colors.primary,
+                                modifier = Modifier.size(dimens.iconSizeSmall)
+                            )
+                            Spacer(Modifier.width(dimens.space12))
                             Column {
-                                Text("Color palette", fontWeight = FontWeight.Bold, color = Color.White, fontSize = 16.sp)
-                                Text("Changes the app's accent color everywhere", color = Color.Gray, fontSize = 12.sp)
+                                Text(
+                                    "Color palette",
+                                    style = MaterialTheme.typography.titleMedium,
+                                    color = colors.textPrimary
+                                )
+                                Text(
+                                    "Changes the app's accent color everywhere",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = colors.textSecondary
+                                )
                             }
                         }
-                        
-                        Spacer(Modifier.height(24.dp))
-                        
+
+                        Spacer(Modifier.height(dimens.space24))
+
                         FlowRow(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(dimens.space12),
+                            verticalArrangement = Arrangement.spacedBy(dimens.space16),
                             maxItemsInEachRow = 4
                         ) {
                             Palettes.forEachIndexed { index, palette ->
@@ -114,236 +174,194 @@ fun SettingsScreen(
                             }
                         }
 
-                        Spacer(Modifier.height(24.dp))
-                        
-                        // Palette preview bar
+                        Spacer(Modifier.height(dimens.space24))
+
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .height(8.dp)
+                                .height(dimens.space8)
                                 .clip(CircleShape)
-                                .background(colors.primary.copy(alpha = 0.1f))
+                                .background(colors.primarySubtle)
                         ) {
-                            Box(modifier = Modifier.weight(1f).fillMaxHeight().background(colors.primary.copy(alpha = 0.4f)))
-                            Box(modifier = Modifier.weight(1f).fillMaxHeight().background(colors.primary.copy(alpha = 0.7f)))
-                            Box(modifier = Modifier.weight(1f).fillMaxHeight().background(colors.primary))
-                            Box(modifier = Modifier.weight(1f).fillMaxHeight().background(colors.primary.copy(alpha = 0.4f)))
+                            Box(Modifier.weight(1f).fillMaxHeight().background(colors.primary.copy(alpha = 0.4f)))
+                            Box(Modifier.weight(1f).fillMaxHeight().background(colors.primary.copy(alpha = 0.7f)))
+                            Box(Modifier.weight(1f).fillMaxHeight().background(colors.primary))
+                            Box(Modifier.weight(1f).fillMaxHeight().background(colors.primary.copy(alpha = 0.4f)))
                         }
-                        
-                        Spacer(Modifier.height(12.dp))
+
+                        Spacer(Modifier.height(dimens.space12))
                         Text(
                             text = Palettes[paletteIndex].name,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,
-                            color = colors.primary,
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 14.sp
+                            style = MaterialTheme.typography.titleSmall,
+                            color = colors.primary
                         )
                     }
                 }
             }
 
-            // 2. Spin Defaults
             item {
-                SectionHeader("SPIN DEFAULTS")
-                Spacer(Modifier.height(12.dp))
-                Surface(
-                    color = SurfaceDark,
-                    shape = RoundedCornerShape(24.dp),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
-                ) {
-                    Column {
-                        SettingsOptionRow(
-                            icon = Icons.Filled.Memory,
-                            title = "Default algorithm",
-                            description = "Applied to all new wheels",
-                            color = colors.primary,
-                            trailing = {
-                                Badge(
-                                    containerColor = colors.primary.copy(alpha = 0.15f),
-                                    contentColor = colors.primary
-                                ) {
-                                    Text(defaultAlgo.name.lowercase().replaceFirstChar { it.uppercase() }, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
-                                }
-                            },
-                            onClick = {
-                                // Toggle logic or show dialog
-                                val next = SelectionAlgorithmFactory.AlgorithmType.entries[(defaultAlgo.ordinal + 1) % SelectionAlgorithmFactory.AlgorithmType.entries.size]
-                                viewModel.updateDefaultAlgorithm(next)
-                            }
-                        )
-                        Divider()
-                        SettingsOptionRow(
-                            icon = Icons.Filled.Speed,
-                            title = "Default spin speed",
-                            description = "Starting speed for new wheels",
-                            color = Color(0xFF00B894),
-                            trailing = {
-                                Badge(
-                                    containerColor = Color(0xFF00B894).copy(alpha = 0.15f),
-                                    contentColor = Color(0xFF00B894)
-                                ) {
-                                    Text(defaultSpeed.label, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp))
-                                }
-                            },
-                            onClick = {
-                                val next = WheelViewModel.SpinSpeed.entries[(defaultSpeed.ordinal + 1) % WheelViewModel.SpinSpeed.entries.size]
-                                viewModel.updateDefaultSpinSpeed(next)
-                            }
-                        )
-                        Divider()
-                        SettingsToggleRow(
-                            icon = Icons.AutoMirrored.Filled.VolumeUp,
-                            title = "Spin sound",
-                            description = "Tick sound while spinning",
-                            checked = spinSound,
-                            onCheckedChange = { viewModel.updateSpinSoundEnabled(it) },
-                            color = Color(0xFFFFA000)
-                        )
-                        Divider()
-                        SettingsToggleRow(
-                            icon = Icons.Filled.Celebration,
-                            title = "Confetti on win",
-                            description = "Celebrate every result",
-                            checked = confetti,
-                            onCheckedChange = { viewModel.updateConfettiEnabled(it) },
-                            color = Color(0xFFE84393)
-                        )
-                        Divider()
-                        SettingsToggleRow(
-                            icon = Icons.Filled.PersonRemove,
-                            title = "Remove after pick",
-                            description = "Default for all new wheels",
-                            checked = removeAfterPick,
-                            onCheckedChange = { viewModel.updateRemoveAfterPickEnabled(it) },
-                            color = Color.Gray
-                        )
-                    }
+                SettingsGroup(title = "Spin defaults") {
+                    SettingsRow(
+                        leadingIcon = AppIcons.Memory,
+                        title = "Default algorithm",
+                        subtitle = "Applied to all new wheels",
+                        value = defaultAlgo.name.lowercase().replaceFirstChar { it.uppercase() },
+                        valueColor = colors.primary,
+                        onClick = {
+                            val entries = SelectionAlgorithmFactory.AlgorithmType.entries
+                            viewModel.updateDefaultAlgorithm(entries[(defaultAlgo.ordinal + 1) % entries.size])
+                        }
+                    )
+                    InsetDivider(RouletteTheme.dimens.dividerInsetWithIcon)
+                    SettingsRow(
+                        leadingIcon = AppIcons.Speed,
+                        title = "Default spin speed",
+                        subtitle = "Starting speed for new wheels",
+                        value = defaultSpeed.label,
+                        valueColor = colors.primary,
+                        onClick = {
+                            val entries = WheelViewModel.SpinSpeed.entries
+                            viewModel.updateDefaultSpinSpeed(entries[(defaultSpeed.ordinal + 1) % entries.size])
+                        }
+                    )
+                    InsetDivider(RouletteTheme.dimens.dividerInsetWithIcon)
+                    SettingsRow(
+                        leadingIcon = AppIcons.VolumeUp,
+                        title = "Spin sound",
+                        subtitle = "Tick sound while spinning",
+                        checked = spinSound,
+                        onCheckedChange = { viewModel.updateSpinSoundEnabled(it) }
+                    )
+                    InsetDivider(RouletteTheme.dimens.dividerInsetWithIcon)
+                    SettingsRow(
+                        leadingIcon = AppIcons.Celebration,
+                        title = "Confetti on win",
+                        subtitle = "Celebrate every result",
+                        checked = confetti,
+                        onCheckedChange = { viewModel.updateConfettiEnabled(it) }
+                    )
+                    InsetDivider(RouletteTheme.dimens.dividerInsetWithIcon)
+                    SettingsRow(
+                        leadingIcon = AppIcons.PersonRemove,
+                        title = "Remove after pick",
+                        subtitle = "Default for all new wheels",
+                        checked = removeAfterPick,
+                        onCheckedChange = { viewModel.updateRemoveAfterPickEnabled(it) }
+                    )
                 }
             }
 
-            // 3. About Section
             item {
-                SectionHeader("ABOUT")
-                Spacer(Modifier.height(12.dp))
-                Surface(
-                    color = SurfaceDark,
-                    shape = RoundedCornerShape(24.dp),
-                    border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
-                ) {
-                    Column {
-                        SettingsClickableRow(
-                            icon = Icons.Filled.StarOutline,
-                            title = "Rate the app",
-                            description = "Leave a review on Play Store",
-                            color = colors.primary,
-                            onClick = { 
-                                val packageName = context.packageName
-                                val intent = Intent(Intent.ACTION_VIEW).apply {
-                                    data = "market://details?id=$packageName".toUri()
-                                }
-                                try {
-                                    context.startActivity(intent)
-                                } catch (_: Exception) {
-                                    val webIntent = Intent(Intent.ACTION_VIEW).apply {
-                                        data = "https://play.google.com/store/apps/details?id=$packageName".toUri()
+                SettingsGroup(title = "About") {
+                    SettingsRow(
+                        leadingIcon = AppIcons.Star,
+                        title = "Rate the app",
+                        subtitle = "Leave a review on Play Store",
+                        onClick = {
+                            val packageName = context.packageName
+                            val intent = Intent(Intent.ACTION_VIEW).apply {
+                                data = "market://details?id=$packageName".toUri()
+                            }
+                            try {
+                                context.startActivity(intent)
+                            } catch (_: Exception) {
+                                context.startActivity(
+                                    Intent(Intent.ACTION_VIEW).apply {
+                                        data =
+                                            "https://play.google.com/store/apps/details?id=$packageName".toUri()
                                     }
-                                    context.startActivity(webIntent)
-                                }
+                                )
                             }
-                        )
-                        Divider()
-                        SettingsClickableRow(
-                            icon = Icons.Filled.ChatBubbleOutline,
-                            title = "Send feedback",
-                            description = "Report bugs or suggest features",
-                            color = Color(0xFF0984E3),
-                            onClick = { 
-                                val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                    data = "mailto:support@roulette.com".toUri()
-                                    putExtra(Intent.EXTRA_SUBJECT, "Roulette App Feedback")
-                                }
-                                try {
-                                    context.startActivity(Intent.createChooser(intent, "Send Feedback"))
-                                } catch (_: Exception) {
-                                    // Handle cases where no email app is installed
-                                }
+                        }
+                    )
+                    InsetDivider(RouletteTheme.dimens.dividerInsetWithIcon)
+                    SettingsRow(
+                        leadingIcon = AppIcons.ChatBubble,
+                        title = "Send feedback",
+                        subtitle = "Report bugs or suggest features",
+                        onClick = {
+                            val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                data = "mailto:support@roulette.com".toUri()
+                                putExtra(Intent.EXTRA_SUBJECT, "Roulette App Feedback")
                             }
-                        )
-                        Divider()
-                        SettingsClickableRow(
-                            icon = Icons.Filled.NewReleases,
-                            title = "What's new",
-                            description = "See the latest changes",
-                            color = Color(0xFF00B894),
-                            onClick = { showWhatsNewDialog = true }
-                        )
-                        Divider()
-                        SettingsOptionRow(
-                            icon = Icons.Filled.Info,
-                            title = "App version",
-                            description = "Up to date",
-                            color = Color.Gray,
-                            trailing = {
-                                Text("v${getCurrentVersionName(context)}", color = Color(0xFF00B894), fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            try {
+                                context.startActivity(Intent.createChooser(intent, "Send Feedback"))
+                            } catch (_: Exception) {
                             }
-                        )
-                    }
+                        }
+                    )
+                    InsetDivider(RouletteTheme.dimens.dividerInsetWithIcon)
+                    SettingsRow(
+                        leadingIcon = AppIcons.NewReleases,
+                        title = "What's new",
+                        subtitle = "See the latest changes",
+                        onClick = { showWhatsNewDialog = true }
+                    )
+                    InsetDivider(RouletteTheme.dimens.dividerInsetWithIcon)
+                    SettingsRow(
+                        leadingIcon = AppIcons.Info,
+                        title = "App version",
+                        subtitle = "Up to date",
+                        value = "v${getCurrentVersionName(context)}",
+                        showChevron = false
+                    )
                 }
             }
 
-            // 4. Danger Zone
             item {
-                SectionHeader("DANGER ZONE")
-                Spacer(Modifier.height(12.dp))
-                Surface(
-                    modifier = Modifier.clickable { showClearDataDialog = true },
-                    color = Color(0xFFEF5350).copy(alpha = 0.1f),
-                    shape = RoundedCornerShape(24.dp),
-                    border = BorderStroke(1.dp, Color(0xFFEF5350).copy(alpha = 0.2f))
-                ) {
-                    Row(
-                        modifier = Modifier.padding(20.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Box(
-                            modifier = Modifier.size(40.dp).background(Color(0xFFEF5350).copy(alpha = 0.2f), CircleShape),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(Icons.Filled.DeleteOutline, null, tint = Color(0xFFEF5350), modifier = Modifier.size(20.dp))
-                        }
-                        Spacer(Modifier.width(16.dp))
-                        Column(modifier = Modifier.weight(1f)) {
-                            Text("Clear all data", fontWeight = FontWeight.Bold, color = Color(0xFFEF5350), fontSize = 16.sp)
-                            Text("Deletes all wheels & history", color = Color(0xFFEF5350).copy(alpha = 0.6f), fontSize = 12.sp)
-                        }
-                        Icon(Icons.Filled.ChevronRight, null, tint = Color(0xFFEF5350).copy(alpha = 0.3f))
-                    }
+                SettingsGroup(title = "Danger zone") {
+                    SettingsRow(
+                        leadingIcon = AppIcons.Delete,
+                        leadingIconTint = colors.danger,
+                        title = "Clear all data",
+                        subtitle = "Deletes all wheels & history",
+                        titleColor = colors.danger,
+                        onClick = { showClearDataDialog = true }
+                    )
                 }
             }
-            
-            item { Spacer(Modifier.height(40.dp)) }
         }
 
         if (showClearDataDialog) {
             AlertDialog(
                 onDismissRequest = { showClearDataDialog = false },
-                containerColor = SurfaceDarker,
-                title = { Text("Clear All Data?", color = Color.White, fontWeight = FontWeight.Bold) },
-                text = { Text("This will permanently delete all your wheels and spin history. This action cannot be undone.", color = Color.Gray) },
+                containerColor = colors.surfaceElevated,
+                shape = RouletteTheme.shapes.dialog,
+                title = {
+                    Text(
+                        "Clear All Data?",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = colors.textPrimary
+                    )
+                },
+                text = {
+                    Text(
+                        "This will permanently delete all your wheels and spin history. This action cannot be undone.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.textSecondary
+                    )
+                },
                 confirmButton = {
-                    TextButton(
-                        onClick = {
-                            viewModel.clearAllData()
-                            showClearDataDialog = false
-                        }
-                    ) {
-                        Text("CLEAR", color = Color(0xFFEF5350), fontWeight = FontWeight.Bold)
+                    TextButton(onClick = {
+                        viewModel.clearAllData()
+                        showClearDataDialog = false
+                    }) {
+                        Text(
+                            "CLEAR",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = colors.danger
+                        )
                     }
                 },
                 dismissButton = {
                     TextButton(onClick = { showClearDataDialog = false }) {
-                        Text("CANCEL", color = Color.White)
+                        Text(
+                            "CANCEL",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = colors.textSecondary
+                        )
                     }
                 }
             )
@@ -362,124 +380,32 @@ fun SettingsScreen(
 }
 
 @Composable
-private fun SectionHeader(title: String) {
-    Text(title, color = Color.Gray, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp, modifier = Modifier.padding(start = 8.dp))
-}
-
-@Composable
 private fun PaletteItem(
     palette: RoulettePalette,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
+    val colors = RouletteTheme.colors
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .width(64.dp)
-            .clip(RoundedCornerShape(16.dp))
-            .clickable { onClick() }
-            .then(
-                if (isSelected) Modifier.border(2.dp, Color.White, RoundedCornerShape(16.dp))
-                else Modifier
-            )
-            .padding(vertical = 12.dp)
+        modifier = Modifier.clickable(onClick = onClick)
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
+                .size(48.dp)
                 .clip(CircleShape)
                 .background(palette.primary)
-        )
-        Spacer(Modifier.height(8.dp))
-        Text(palette.name, color = if (isSelected) Color.White else Color.Gray, fontSize = 11.sp, fontWeight = FontWeight.Medium)
-    }
-}
-
-@Composable
-private fun SettingsOptionRow(
-    icon: ImageVector,
-    title: String,
-    description: String,
-    color: Color,
-    trailing: @Composable () -> Unit,
-    onClick: (() -> Unit)? = null
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .then(if (onClick != null) Modifier.clickable { onClick() } else Modifier)
-            .padding(20.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Surface(
-            color = color.copy(alpha = 0.12f),
-            shape = RoundedCornerShape(12.dp),
-            modifier = Modifier.size(40.dp)
-        ) {
-            Box(contentAlignment = Alignment.Center) {
-                Icon(icon, null, tint = color, modifier = Modifier.size(20.dp))
-            }
-        }
-        Spacer(Modifier.width(16.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text(description, color = Color.Gray, fontSize = 12.sp)
-        }
-        trailing()
-    }
-}
-
-@Composable
-private fun SettingsToggleRow(
-    icon: ImageVector,
-    title: String,
-    description: String,
-    checked: Boolean,
-    onCheckedChange: (Boolean) -> Unit,
-    color: Color
-) {
-    SettingsOptionRow(
-        icon = icon,
-        title = title,
-        description = description,
-        color = color,
-        trailing = {
-            Switch(
-                checked = checked,
-                onCheckedChange = onCheckedChange,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
-                    checkedTrackColor = RouletteTheme.colors.primary,
-                    uncheckedThumbColor = Color.Gray,
-                    uncheckedTrackColor = SurfaceDarker,
-                    uncheckedBorderColor = Color.Transparent
+                .border(
+                    width = if (isSelected) 2.dp else 0.dp,
+                    color = if (isSelected) colors.textPrimary else Color.Transparent,
+                    shape = CircleShape
                 )
-            )
-        }
-    )
-}
-
-@Composable
-private fun SettingsClickableRow(
-    icon: ImageVector,
-    title: String,
-    description: String,
-    color: Color,
-    onClick: () -> Unit
-) {
-    SettingsOptionRow(
-        icon = icon,
-        title = title,
-        description = description,
-        color = color,
-        onClick = onClick,
-        trailing = {
-            Icon(Icons.Filled.ChevronRight, null, tint = Color.DarkGray)
-        }
-    )
-}
-
-@Composable
-private fun Divider() {
-    HorizontalDivider(color = Color.White.copy(alpha = 0.05f), modifier = Modifier.padding(horizontal = 20.dp))
+        )
+        Spacer(Modifier.height(RouletteTheme.dimens.space8))
+        Text(
+            palette.name,
+            style = MaterialTheme.typography.labelSmall,
+            color = if (isSelected) colors.textPrimary else colors.textSecondary
+        )
+    }
 }

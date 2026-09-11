@@ -8,13 +8,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Percent
-import androidx.compose.material.icons.filled.PersonRemove
-import androidx.compose.material.icons.filled.Refresh
-import androidx.compose.material.icons.filled.Timer
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -24,7 +17,6 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -35,6 +27,8 @@ import com.project.roulette.domain.model.SpinResult
 import com.project.roulette.domain.model.Wheel
 import java.util.*
 import kotlin.random.Random
+import androidx.compose.ui.graphics.painter.Painter
+import com.project.roulette.ui.theme.RouletteTheme
 
 @Composable
 fun WinnerDialog(
@@ -54,7 +48,7 @@ fun WinnerDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.6f)),
+                .background(RouletteTheme.colors.scrim),
             contentAlignment = Alignment.Center
         ) {
             ConfettiEffect(themeColor = themeColor)
@@ -63,7 +57,7 @@ fun WinnerDialog(
                 modifier = Modifier
                     .fillMaxWidth(0.85f)
                     .clip(RoundedCornerShape(32.dp)),
-                color = Color(0xFF1E1E2C)
+                color = RouletteTheme.colors.surfaceElevated
             ) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
                     // Rainbow accent bar
@@ -76,8 +70,8 @@ fun WinnerDialog(
                                     listOf(
                                         themeColor,
                                         Color(0xFF00BCD4),
-                                        Color(0xFFFFC107),
-                                        Color(0xFFFF5252)
+                                        RouletteTheme.colors.warning,
+                                        RouletteTheme.colors.danger
                                     )
                                 )
                             )
@@ -117,11 +111,11 @@ fun WinnerDialog(
                         Box(
                             modifier = Modifier
                                 .size(80.dp)
-                                .background(Color(0xFF121212), CircleShape)
+                                .background(RouletteTheme.colors.surfaceElevated, CircleShape)
                                 .border(2.dp, themeColor.copy(alpha = 0.5f), CircleShape),
                             contentAlignment = Alignment.Center
                         ) {
-                            Text("🎉", fontSize = 40.sp)
+                            Text("🎉", style = MaterialTheme.typography.displayLarge)
                             
                             // Checkmark badge
                             Box(
@@ -129,11 +123,11 @@ fun WinnerDialog(
                                     .align(Alignment.BottomEnd)
                                     .offset(x = 4.dp, y = 4.dp)
                                     .size(24.dp)
-                                    .background(Color(0xFF4CAF50), CircleShape)
-                                    .border(2.dp, Color(0xFF1E1E2C), CircleShape),
+                                    .background(RouletteTheme.colors.success, CircleShape)
+                                    .border(2.dp, RouletteTheme.colors.surfaceElevated, CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Filled.Check, contentDescription = null, tint = Color.White, modifier = Modifier.size(16.dp))
+                                Icon(AppIcons.Check, contentDescription = null, tint = RouletteTheme.colors.textPrimary, modifier = Modifier.size(16.dp))
                             }
                         }
                     }
@@ -143,7 +137,7 @@ fun WinnerDialog(
                     Text(
                         text = "WE HAVE A WINNER!",
                         style = MaterialTheme.typography.labelMedium,
-                        color = Color.Gray,
+                        color = RouletteTheme.colors.textSecondary,
                         letterSpacing = 2.sp
                     )
 
@@ -152,7 +146,7 @@ fun WinnerDialog(
                     Text(
                         text = result.selectedSegmentName,
                         style = MaterialTheme.typography.headlineLarge,
-                        color = Color.White,
+                        color = RouletteTheme.colors.textPrimary,
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                         modifier = Modifier.padding(horizontal = 24.dp)
@@ -166,16 +160,16 @@ fun WinnerDialog(
                         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally)
                     ) {
                         MetaChip(
-                            icon = Icons.Filled.History,
+                            icon = AppIcons.History,
                             text = "Spin #$spinsToday",
                             containerColor = themeColor.copy(alpha = 0.2f),
                             contentColor = lighterThemeColor
                         )
                         MetaChip(
-                            icon = Icons.Filled.Timer,
+                            icon = AppIcons.Timer,
                             text = String.format(Locale.US, "%.1fs", result.spinDuration / 1000f),
-                            containerColor = Color(0xFF00796B).copy(alpha = 0.2f),
-                            contentColor = Color(0xFF4DB6AC)
+                            containerColor = RouletteTheme.colors.successSubtle,
+                            contentColor = RouletteTheme.colors.success
                         )
                         
                         val selectedSegment = wheel.segments.find { it.id == result.selectedSegmentId }
@@ -185,15 +179,15 @@ fun WinnerDialog(
                         } else 0
 
                         MetaChip(
-                            icon = Icons.Filled.Percent,
+                            icon = AppIcons.Percent,
                             text = "$probability%",
-                            containerColor = Color(0xFFD84315).copy(alpha = 0.2f),
-                            contentColor = Color(0xFFFF8A65)
+                            containerColor = RouletteTheme.colors.warningSubtle,
+                            contentColor = RouletteTheme.colors.warning
                         )
                     }
 
                     Spacer(Modifier.height(32.dp))
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.05f), modifier = Modifier.padding(horizontal = 24.dp))
+                    HorizontalDivider(color = RouletteTheme.colors.divider, modifier = Modifier.padding(horizontal = 24.dp))
                     Spacer(Modifier.height(24.dp))
 
                     Row(
@@ -204,32 +198,32 @@ fun WinnerDialog(
                             onClick = onSpinAgain,
                             modifier = Modifier.weight(1f).height(48.dp),
                             shape = RoundedCornerShape(12.dp),
-                            border = BorderStroke(1.dp, Color.Gray.copy(alpha = 0.3f)),
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.White)
+                            border = BorderStroke(1.dp, RouletteTheme.colors.textSecondary.copy(alpha = 0.3f)),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = RouletteTheme.colors.textPrimary)
                         ) {
-                            Icon(Icons.Filled.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Icon(AppIcons.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text("Spin again", fontSize = 14.sp)
+                            Text("Spin again", style = MaterialTheme.typography.bodySmall)
                         }
 
                         Button(
                             onClick = onDismiss,
                             modifier = Modifier.weight(1f).height(48.dp),
                             shape = RoundedCornerShape(12.dp),
-                            colors = ButtonDefaults.buttonColors(containerColor = Color.White, contentColor = Color.Black)
+                            colors = ButtonDefaults.buttonColors(containerColor = RouletteTheme.colors.textPrimary, contentColor = RouletteTheme.colors.surface)
                         ) {
                             Icon(
-                                Icons.Filled.Check,
+                                AppIcons.Check,
                                 contentDescription = null,
                                 modifier = Modifier.size(18.dp),
-                                tint = Color.Black
+                                tint = RouletteTheme.colors.surface
                             )
                             Spacer(Modifier.width(8.dp))
                             Text(
                                 "Got It!",
-                                fontSize = 14.sp,
+                                style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.Black)
+                                color = RouletteTheme.colors.surface)
                         }
                     }
 
@@ -239,13 +233,13 @@ fun WinnerDialog(
                         TextButton(onClick = onRemoveFromWheel) {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Icon(
-                                    Icons.Filled.PersonRemove,
+                                    AppIcons.PersonRemove,
                                     contentDescription = null,
-                                    tint = Color(0xFFEF5350),
+                                    tint = RouletteTheme.colors.danger,
                                     modifier = Modifier.size(16.dp)
                                 )
                                 Spacer(Modifier.width(8.dp))
-                                Text("Remove from wheel", color = Color(0xFFEF5350), fontSize = 13.sp)
+                                Text("Remove from wheel", color = RouletteTheme.colors.danger, style = MaterialTheme.typography.bodySmall)
                             }
                         }
                     }
@@ -258,7 +252,7 @@ fun WinnerDialog(
 }
 
 @Composable
-fun MetaChip(icon: ImageVector, text: String, containerColor: Color, contentColor: Color) {
+fun MetaChip(icon: Painter, text: String, containerColor: Color, contentColor: Color) {
     Surface(
         color = containerColor,
         shape = RoundedCornerShape(12.dp)
@@ -269,7 +263,7 @@ fun MetaChip(icon: ImageVector, text: String, containerColor: Color, contentColo
         ) {
             Icon(icon, contentDescription = null, tint = contentColor, modifier = Modifier.size(14.dp))
             Spacer(Modifier.width(6.dp))
-            Text(text, color = contentColor, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(text, color = contentColor, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
         }
     }
 }
@@ -277,7 +271,7 @@ fun MetaChip(icon: ImageVector, text: String, containerColor: Color, contentColo
 @Composable
 fun ConfettiEffect(themeColor: Color) {
     val confettiCount = 20
-    val colors = listOf(themeColor, Color(0xFF00BCD4), Color(0xFFFFC107), Color(0xFFFF5252))
+    val colors = listOf(themeColor, Color(0xFF00BCD4), RouletteTheme.colors.warning, RouletteTheme.colors.danger)
     
     repeat(confettiCount) {
         val xProgress = remember { Random.nextFloat() }

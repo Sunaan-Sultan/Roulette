@@ -9,8 +9,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,6 +30,7 @@ import com.project.roulette.ui.theme.*
 import com.project.roulette.presentation.screen.wheels.WheelsFilterChipItem
 import com.project.roulette.util.loadSwitchInterstitial
 import com.project.roulette.util.showSwitchInterstitial
+import com.project.roulette.presentation.component.AppIcons
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -49,7 +48,7 @@ fun FavouritesScreen(
     }
 
     Scaffold(
-        containerColor = DeepNavyBlack
+        containerColor = RouletteTheme.colors.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -62,7 +61,7 @@ fun FavouritesScreen(
             Text(
                 text = "SAVED",
                 style = MaterialTheme.typography.labelLarge,
-                color = TextSecondary,
+                color = RouletteTheme.colors.textSecondary,
                 letterSpacing = 1.sp
             )
             
@@ -70,7 +69,7 @@ fun FavouritesScreen(
                 text = "Favourites",
                 style = MaterialTheme.typography.displayMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color.White
+                color = RouletteTheme.colors.textPrimary
             )
 
             Spacer(Modifier.height(20.dp))
@@ -148,7 +147,7 @@ fun FavouritesScreen(
 
                 is HomeUiState.Error -> {
                     Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Error: ${state.message}", color = Color.Red)
+                        Text("Error: ${state.message}", color = RouletteTheme.colors.danger)
                     }
                 }
             }
@@ -167,7 +166,7 @@ fun FeaturedFavouriteCard(
             .fillMaxWidth()
             .clickable { onSelect() },
         shape = RoundedCornerShape(32.dp),
-        color = SurfaceDark,
+        color = RouletteTheme.colors.surface,
         border = BorderStroke(1.dp, RouletteTheme.colors.primary.copy(alpha = 0.3f))
     ) {
         Column(
@@ -181,7 +180,7 @@ fun FeaturedFavouriteCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    Icons.Filled.Refresh,
+                    AppIcons.Wheel,
                     contentDescription = null,
                     tint = RouletteTheme.colors.primary,
                     modifier = Modifier.size(28.dp)
@@ -192,15 +191,15 @@ fun FeaturedFavouriteCard(
 
             Text(
                 text = wheel.name,
-                color = Color.White,
-                fontSize = 24.sp,
+                color = RouletteTheme.colors.textPrimary,
+                style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold
             )
 
             Text(
                 text = "${wheel.segments.size} segments • Used $spinCount times",
-                color = TextSecondary,
-                fontSize = 16.sp
+                color = RouletteTheme.colors.textSecondary,
+                style = MaterialTheme.typography.bodyMedium
             )
 
             Spacer(Modifier.height(24.dp))
@@ -215,9 +214,9 @@ fun FeaturedFavouriteCard(
             ) {
                 Text(
                     "Spin now",
-                    color = Color.White,
+                    color = RouletteTheme.colors.onPrimary,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
+                    style = MaterialTheme.typography.bodyMedium
                 )
             }
         }
@@ -237,8 +236,8 @@ fun SmallFavouriteCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onSelect() },
-        shape = RoundedCornerShape(24.dp),
-        color = SurfaceDark
+        shape = RouletteTheme.shapes.card,
+        color = RouletteTheme.colors.surface
     ) {
         Row(
             modifier = Modifier
@@ -254,7 +253,7 @@ fun SmallFavouriteCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    Icons.Filled.Refresh,
+                    AppIcons.Wheel,
                     contentDescription = null,
                     tint = accentColor,
                     modifier = Modifier.size(24.dp)
@@ -266,16 +265,16 @@ fun SmallFavouriteCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = wheel.name,
-                    color = Color.White,
+                    color = RouletteTheme.colors.textPrimary,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = "${wheel.segments.size} segments • $spinCount spins",
-                    color = TextSecondary,
-                    fontSize = 14.sp
+                    color = RouletteTheme.colors.textSecondary,
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
         }
@@ -289,21 +288,21 @@ fun EmptyFavouritesState() {
             .fillMaxWidth()
             .padding(vertical = 40.dp)
             .height(140.dp)
-            .border(1.dp, TextSecondary.copy(alpha = 0.2f), RoundedCornerShape(24.dp)),
+            .border(1.dp, RouletteTheme.colors.textSecondary.copy(alpha = 0.2f), RouletteTheme.shapes.card),
         contentAlignment = Alignment.Center
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Icon(
-                Icons.Filled.FavoriteBorder,
+                AppIcons.Favorite,
                 contentDescription = null,
-                tint = TextSecondary.copy(alpha = 0.5f),
+                tint = RouletteTheme.colors.textSecondary.copy(alpha = 0.5f),
                 modifier = Modifier.size(40.dp)
             )
             Spacer(Modifier.height(8.dp))
             Text(
                 "Star a wheel to save it here",
-                color = TextSecondary,
-                fontSize = 14.sp
+                color = RouletteTheme.colors.textSecondary,
+                style = MaterialTheme.typography.bodySmall
             )
         }
     }

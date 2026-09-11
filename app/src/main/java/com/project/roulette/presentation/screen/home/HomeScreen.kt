@@ -8,8 +8,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -32,6 +30,7 @@ import com.project.roulette.util.loadInterstitial
 import com.project.roulette.util.showInterstitial
 import com.project.roulette.util.loadSwitchInterstitial
 import com.project.roulette.util.showSwitchInterstitial
+import com.project.roulette.presentation.component.AppIcons
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -69,13 +68,13 @@ fun HomeScreen(
                     .padding(end = 8.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.padding(horizontal = 8.dp)) {
-                    Icon(Icons.Filled.Add, contentDescription = null, tint = Color.White)
+                    Icon(AppIcons.Add, contentDescription = null, tint = RouletteTheme.colors.onPrimary)
                     Spacer(Modifier.width(8.dp))
-                    Text("Create Wheel", fontWeight = FontWeight.Bold, color = Color.White)
+                    Text("Create Wheel", fontWeight = FontWeight.Bold, color = RouletteTheme.colors.onPrimary)
                 }
             }
         },
-        containerColor = DeepNavyBlack
+        containerColor = RouletteTheme.colors.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -88,7 +87,7 @@ fun HomeScreen(
             Text(
                 text = "MY COLLECTION",
                 style = MaterialTheme.typography.labelLarge,
-                color = TextSecondary,
+                color = RouletteTheme.colors.textSecondary,
                 letterSpacing = 1.sp
             )
             
@@ -101,21 +100,21 @@ fun HomeScreen(
                     text = "Wheel of Names",
                     style = MaterialTheme.typography.headlineLarge,
                     fontWeight = FontWeight.Bold,
-                    color = Color.White
+                    color = RouletteTheme.colors.textPrimary
                 )
                 
                 IconButton(
                     onClick = onNavigateToNotifications,
                     modifier = Modifier
                         .clip(CircleShape)
-                        .background(SurfaceDark)
+                        .background(RouletteTheme.colors.surface)
                 ) {
                     BadgedBox(
                         badge = {
                             if (uiState is HomeUiState.Success && (uiState as HomeUiState.Success).unreadNotificationCount > 0) {
                                 Badge(
-                                    containerColor = Color.Red,
-                                    contentColor = Color.White
+                                    containerColor = RouletteTheme.colors.danger,
+                                    contentColor = RouletteTheme.colors.textPrimary
                                 ) {
                                     Text((uiState as HomeUiState.Success).unreadNotificationCount.toString())
                                 }
@@ -123,9 +122,9 @@ fun HomeScreen(
                         }
                     ) {
                         Icon(
-                            Icons.Filled.Notifications,
+                            AppIcons.Notifications,
                             contentDescription = "Notifications",
-                            tint = Color.White
+                            tint = RouletteTheme.colors.textPrimary
                         )
                     }
                 }
@@ -140,17 +139,17 @@ fun HomeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
-                placeholder = { Text("Search wheels...", color = TextSecondary) },
-                leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null, tint = TextSecondary) },
+                placeholder = { Text("Search wheels...", color = RouletteTheme.colors.textSecondary) },
+                leadingIcon = { Icon(AppIcons.Search, contentDescription = null, tint = RouletteTheme.colors.textSecondary) },
                 shape = RoundedCornerShape(16.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     unfocusedBorderColor = Color.Transparent,
                     focusedBorderColor = RouletteTheme.colors.primary,
-                    unfocusedContainerColor = SurfaceDark,
-                    focusedContainerColor = SurfaceDark,
+                    unfocusedContainerColor = RouletteTheme.colors.surface,
+                    focusedContainerColor = RouletteTheme.colors.surface,
                     cursorColor = RouletteTheme.colors.primary,
-                    focusedTextColor = Color.White,
-                    unfocusedTextColor = Color.White
+                    focusedTextColor = RouletteTheme.colors.textPrimary,
+                    unfocusedTextColor = RouletteTheme.colors.textPrimary
                 ),
                 singleLine = true
             )
@@ -193,7 +192,7 @@ fun HomeScreen(
                     is HomeUiState.Success -> {
                         if (state.wheels.isEmpty()) {
                             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text(if (searchQuery.isNotEmpty()) "No results found" else "No wheels yet. Create one!", color = TextSecondary)
+                                Text(if (searchQuery.isNotEmpty()) "No results found" else "No wheels yet. Create one!", color = RouletteTheme.colors.textSecondary)
                             }
                         } else {
                             LazyColumn(
@@ -224,7 +223,7 @@ fun HomeScreen(
                     is HomeUiState.Error -> {
                         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text("Error: ${state.message}", color = Color.Red)
+                                Text("Error: ${state.message}", color = RouletteTheme.colors.danger)
                                 Button(onClick = { viewModel.loadAllWheels() }) {
                                     Text("Retry")
                                 }
@@ -245,8 +244,8 @@ fun FilterChipItem(
 ) {
     Surface(
         onClick = onClick,
-        shape = RoundedCornerShape(20.dp),
-        color = if (isSelected) RouletteTheme.colors.primary else SurfaceDark,
+        shape = RouletteTheme.shapes.chip,
+        color = if (isSelected) RouletteTheme.colors.primary else RouletteTheme.colors.surface,
         modifier = Modifier.height(40.dp)
     ) {
         Box(
@@ -255,9 +254,9 @@ fun FilterChipItem(
         ) {
             Text(
                 text = label,
-                color = if (isSelected) Color.White else TextSecondary,
+                color = if (isSelected) RouletteTheme.colors.textPrimary else RouletteTheme.colors.textSecondary,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                fontSize = 14.sp
+                style = MaterialTheme.typography.bodySmall
             )
         }
     }
@@ -278,8 +277,8 @@ fun WheelCard(
         modifier = Modifier
             .fillMaxWidth()
             .clickable { onSelect() },
-        shape = RoundedCornerShape(24.dp),
-        color = SurfaceDark,
+        shape = RouletteTheme.shapes.card,
+        color = RouletteTheme.colors.surface,
         border = if (isActive) BorderStroke(1.dp, RouletteTheme.colors.primary.copy(alpha = 0.5f)) else null
     ) {
         Row(
@@ -296,7 +295,7 @@ fun WheelCard(
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
-                    Icons.Filled.Refresh,
+                    AppIcons.Wheel,
                     contentDescription = null,
                     tint = accentColor,
                     modifier = Modifier.size(24.dp)
@@ -308,16 +307,16 @@ fun WheelCard(
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = wheel.name,
-                    color = Color.White,
+                    color = RouletteTheme.colors.textPrimary,
                     fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
+                    style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
                 Text(
                     text = "${wheel.segments.size} segments • ${TimeUtils.getRelativeTime(wheel.updatedAt)}",
-                    color = TextSecondary,
-                    fontSize = 14.sp
+                    color = RouletteTheme.colors.textSecondary,
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
 
@@ -331,7 +330,7 @@ fun WheelCard(
                         text = "Active",
                         color = RouletteTheme.colors.primary,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp,
+                        style = MaterialTheme.typography.bodySmall,
                         modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
                     )
                 }
@@ -347,7 +346,7 @@ fun WheelCard(
                         text = wheel.segments.size.toString(),
                         color = accentColor,
                         fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
+                        style = MaterialTheme.typography.bodySmall
                     )
                 }
             }
@@ -355,34 +354,34 @@ fun WheelCard(
             var expanded by remember { mutableStateOf(false) }
             Box {
                 IconButton(onClick = { expanded = true }) {
-                    Icon(Icons.Filled.MoreVert, contentDescription = "Menu", tint = TextSecondary)
+                    Icon(AppIcons.MoreVert, contentDescription = "Menu", tint = RouletteTheme.colors.textSecondary)
                 }
                 DropdownMenu(
                     expanded = expanded,
                     onDismissRequest = { expanded = false },
-                    modifier = Modifier.background(SurfaceDarker)
+                    modifier = Modifier.background(RouletteTheme.colors.surfaceElevated)
                 ) {
                     DropdownMenuItem(
-                        text = { Text(if (wheel.isFavorite) "Unfavourite" else "Favourite", color = Color.White) },
+                        text = { Text(if (wheel.isFavorite) "Unfavourite" else "Favourite", color = RouletteTheme.colors.textPrimary) },
                         onClick = {
                             onToggleFavorite()
                             expanded = false
                         },
                         leadingIcon = {
                             Icon(
-                                if (wheel.isFavorite) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                                if (wheel.isFavorite) AppIcons.FavoriteFilled else AppIcons.Favorite,
                                 contentDescription = null,
-                                tint = if (wheel.isFavorite) Color.Red else Color.White
+                                tint = if (wheel.isFavorite) RouletteTheme.colors.danger else RouletteTheme.colors.textPrimary
                             )
                         }
                     )
                     DropdownMenuItem(
-                        text = { Text("Delete", color = Color.Red) },
+                        text = { Text("Delete", color = RouletteTheme.colors.danger) },
                         onClick = {
                             onDelete()
                             expanded = false
                         },
-                        leadingIcon = { Icon(Icons.Filled.Delete, contentDescription = null, tint = Color.Red) }
+                        leadingIcon = { Icon(AppIcons.Delete, contentDescription = null, tint = RouletteTheme.colors.danger) }
                     )
                 }
             }

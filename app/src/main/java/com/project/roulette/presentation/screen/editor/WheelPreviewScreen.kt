@@ -7,9 +7,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -28,10 +25,12 @@ import com.project.roulette.presentation.component.WinnerDialog
 import com.project.roulette.presentation.component.HistoryItem
 import com.project.roulette.presentation.model.WheelUiState
 import com.project.roulette.presentation.viewmodel.PreviewViewModel
-import com.project.roulette.ui.theme.DeepNavyBlack
-import com.project.roulette.ui.theme.SurfaceDark
 import com.project.roulette.ui.theme.ThemePalette
 import java.util.Locale
+import com.project.roulette.presentation.component.AppIcons
+import com.project.roulette.ui.theme.RouletteTheme
+import com.project.roulette.ui.theme.rememberAccentOnSurface
+import com.project.roulette.ui.theme.contentColorOn
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,13 +50,7 @@ fun WheelPreviewScreen(
         ThemePalette.getOrNull(wheel.themePaletteIndex) ?: ThemePalette[0]
     }
 
-    val lighterThemeColor = remember(themeColor) {
-        val hsv = FloatArray(3)
-        android.graphics.Color.colorToHSV(themeColor.toArgb(), hsv)
-        hsv[1] *= 0.6f
-        hsv[2] = (hsv[2] + 1f) / 2f
-        Color(android.graphics.Color.HSVToColor(hsv))
-    }
+    val lighterThemeColor = rememberAccentOnSurface(themeColor)
 
     LaunchedEffect(wheel) {
         viewModel.initialize(wheel)
@@ -114,13 +107,13 @@ fun WheelPreviewScreen(
             TopAppBar(
                 title = {
                     Column {
-                        Text("PREVIEW", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = Color.Gray)
-                        Text(wheel.name, fontWeight = FontWeight.Bold, color = Color.White)
+                        Text("PREVIEW", style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, color = RouletteTheme.colors.textSecondary)
+                        Text(wheel.name, fontWeight = FontWeight.Bold, color = RouletteTheme.colors.textPrimary)
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(AppIcons.ArrowBack, contentDescription = "Back", tint = RouletteTheme.colors.textPrimary)
                     }
                 },
                 actions = {
@@ -128,25 +121,24 @@ fun WheelPreviewScreen(
                         onClick = onSave,
                         colors = ButtonDefaults.buttonColors(
                             containerColor = themeColor,
-                            contentColor = Color.White
+                            contentColor = contentColorOn(themeColor)
                         ),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier.padding(end = 8.dp)
                     ) {
                         Icon(
-                            Icons.Filled.Save,
+                            AppIcons.Save,
                             contentDescription = null,
-                            modifier = Modifier.size(18.dp),
-                            tint = Color.White
+                            modifier = Modifier.size(18.dp)
                         )
                         Spacer(Modifier.width(8.dp))
-                        Text("Save", fontWeight = FontWeight.Bold, color = Color.White)
+                        Text("Save", fontWeight = FontWeight.Bold)
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = DeepNavyBlack)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = RouletteTheme.colors.background)
             )
         },
-        containerColor = DeepNavyBlack
+        containerColor = RouletteTheme.colors.background
     ) { padding ->
         Column(
             modifier = Modifier
@@ -175,9 +167,9 @@ fun WheelPreviewScreen(
                         ) {
                             Box(modifier = Modifier.size(8.dp).background(segment.color, CircleShape))
                             Spacer(Modifier.width(8.dp))
-                            Text(segment.name, color = Color.White, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+                            Text(segment.name, color = RouletteTheme.colors.textPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.width(4.dp))
-                            Text("${String.format(Locale.US, "%.1f", segment.weight)}x", color = Color.Gray, fontSize = 10.sp)
+                            Text("${String.format(Locale.US, "%.1f", segment.weight)}x", color = RouletteTheme.colors.textSecondary, style = MaterialTheme.typography.labelSmall)
                         }
                     }
                 }
@@ -198,8 +190,8 @@ fun WheelPreviewScreen(
 
             Text(
                 "Tap Wheel to Spin",
-                color = Color.White.copy(alpha = alpha),
-                fontSize = 18.sp,
+                color = RouletteTheme.colors.textPrimary.copy(alpha = alpha),
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.ExtraBold,
                 letterSpacing = 1.2.sp
             )
@@ -231,9 +223,9 @@ fun WheelPreviewScreen(
                 
                 // Pointer arrow (Top)
                 Icon(
-                    imageVector = Icons.Filled.ArrowDropDown,
+                    painter = AppIcons.ArrowDropDown,
                     contentDescription = null,
-                    tint = Color.White,
+                    tint = RouletteTheme.colors.textPrimary,
                     modifier = Modifier
                         .size(40.dp)
                         .align(Alignment.TopCenter)
@@ -277,9 +269,9 @@ fun WheelPreviewScreen(
             ) {
                 Text(
                     "SPIN HISTORY",
-                    fontSize = 12.sp,
+                    style = MaterialTheme.typography.bodySmall,
                     fontWeight = FontWeight.Bold,
-                    color = Color.Gray,
+                    color = RouletteTheme.colors.textSecondary,
                     letterSpacing = 1.2.sp
                 )
                 Spacer(Modifier.height(12.dp))
@@ -289,14 +281,14 @@ fun WheelPreviewScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(80.dp)
-                            .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-                            .background(SurfaceDark.copy(alpha = 0.3f), RoundedCornerShape(16.dp)),
+                            .border(1.dp, RouletteTheme.colors.divider, RoundedCornerShape(16.dp))
+                            .background(RouletteTheme.colors.surface.copy(alpha = 0.3f), RoundedCornerShape(16.dp)),
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
                             "No spins yet — tap wheel to test",
-                            color = Color.Gray.copy(alpha = 0.6f),
-                            fontSize = 14.sp
+                            color = RouletteTheme.colors.textSecondary.copy(alpha = 0.6f),
+                            style = MaterialTheme.typography.bodySmall
                         )
                     }
                 } else {
@@ -305,7 +297,7 @@ fun WheelPreviewScreen(
                             val segment = wheel.segments.find { it.id == result.selectedSegmentId }
                             HistoryItem(
                                 name = result.selectedSegmentName,
-                                color = segment?.color ?: Color.Gray,
+                                color = segment?.color ?: RouletteTheme.colors.textSecondary,
                                 isLatest = index == 0
                             )
                         }
@@ -341,9 +333,9 @@ fun WheelPreviewScreen(
 fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier,
-        color = SurfaceDark,
+        color = RouletteTheme.colors.surface,
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
+        border = BorderStroke(1.dp, RouletteTheme.colors.divider)
     ) {
         Column(
             modifier = Modifier.padding(12.dp),
@@ -351,17 +343,17 @@ fun StatCard(label: String, value: String, modifier: Modifier = Modifier) {
         ) {
             Text(
                 value,
-                fontSize = 18.sp,
+                style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
-                color = Color.White,
+                color = RouletteTheme.colors.textPrimary,
                 maxLines = 1,
                 textAlign = TextAlign.Center
             )
             Spacer(Modifier.height(4.dp))
             Text(
                 label,
-                fontSize = 10.sp,
-                color = Color.Gray,
+                style = MaterialTheme.typography.labelSmall,
+                color = RouletteTheme.colors.textSecondary,
                 textAlign = TextAlign.Center
             )
         }

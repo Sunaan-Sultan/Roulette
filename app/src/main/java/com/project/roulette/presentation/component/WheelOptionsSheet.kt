@@ -4,23 +4,20 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.project.roulette.domain.model.Wheel
 import com.project.roulette.ui.theme.RouletteTheme
-import com.project.roulette.ui.theme.DeepNavyBlack
-import com.project.roulette.ui.theme.SurfaceDark
+import androidx.compose.ui.graphics.painter.Painter
 
 /**
  * Full-screen modal content for wheel options.
@@ -41,7 +38,8 @@ fun WheelOptionsSheet(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(DeepNavyBlack)
+            .background(RouletteTheme.colors.background)
+            .statusBarsPadding()
             .padding(horizontal = 20.dp)
     ) {
         Spacer(Modifier.height(16.dp))
@@ -51,18 +49,18 @@ fun WheelOptionsSheet(
         ) {
             Surface(
                 onClick = onClose,
-                color = SurfaceDark,
+                color = RouletteTheme.colors.surface,
                 shape = RoundedCornerShape(12.dp),
                 modifier = Modifier.size(40.dp)
             ) {
                 Box(contentAlignment = Alignment.Center) {
-                    Icon(Icons.Filled.Close, contentDescription = "Close", tint = Color.White, modifier = Modifier.size(20.dp))
+                    Icon(AppIcons.Close, contentDescription = "Close", tint = RouletteTheme.colors.textPrimary, modifier = Modifier.size(20.dp))
                 }
             }
             Spacer(Modifier.width(16.dp))
             Column {
-                Text(wheel.name.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = Color.Gray, letterSpacing = 1.sp)
-                Text("Options", fontSize = 20.sp, fontWeight = FontWeight.Bold, color = Color.White)
+                Text(wheel.name.uppercase(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = RouletteTheme.colors.textSecondary, letterSpacing = 1.sp)
+                Text("Options", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = RouletteTheme.colors.textPrimary)
             }
         }
 
@@ -75,32 +73,32 @@ fun WheelOptionsSheet(
             item {
                 OptionsGroup(title = "WHEEL") {
                     OptionItem(
-                        icon = Icons.Filled.Edit,
+                        icon = AppIcons.Edit,
                         title = "Edit Wheel",
                         description = "Change names & weights",
                         color = RouletteTheme.colors.primary,
                         onClick = onEdit
                     )
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.05f), modifier = Modifier.padding(horizontal = 16.dp))
+                    HorizontalDivider(color = RouletteTheme.colors.divider, modifier = Modifier.padding(horizontal = 16.dp))
                     OptionItem(
-                        icon = Icons.Filled.ContentCopy,
+                        icon = AppIcons.ContentCopy,
                         title = "Duplicate Wheel",
                         description = "Clone with same segments",
-                        color = Color(0xFF00B894),
+                        color = RouletteTheme.colors.success,
                         onClick = onDuplicate
                     )
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.05f), modifier = Modifier.padding(horizontal = 16.dp))
+                    HorizontalDivider(color = RouletteTheme.colors.divider, modifier = Modifier.padding(horizontal = 16.dp))
                     OptionItem(
-                        icon = if (wheel.isFavorite) Icons.Filled.Star else Icons.Filled.StarOutline,
+                        icon = if (wheel.isFavorite) AppIcons.StarFilled else AppIcons.Star,
                         title = "Add to Favourites",
                         description = "Pin to your favourites tab",
-                        color = Color(0xFFFFA000),
+                        color = RouletteTheme.colors.warning,
                         trailing = {
                             Switch(
                                 checked = wheel.isFavorite,
                                 onCheckedChange = { onToggleFavorite() },
                                 colors = SwitchDefaults.colors(
-                                    checkedThumbColor = Color.White,
+                                    checkedThumbColor = RouletteTheme.colors.textPrimary,
                                     checkedTrackColor = RouletteTheme.colors.primary
                                 )
                             )
@@ -112,26 +110,26 @@ fun WheelOptionsSheet(
             item {
                 OptionsGroup(title = "DATA") {
                     OptionItem(
-                        icon = Icons.Filled.History,
+                        icon = AppIcons.History,
                         title = "Spin History",
                         description = "View all past spins",
-                        color = Color(0xFF0984E3),
+                        color = RouletteTheme.colors.info,
                         onClick = onHistory
                     )
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.05f), modifier = Modifier.padding(horizontal = 16.dp))
+                    HorizontalDivider(color = RouletteTheme.colors.divider, modifier = Modifier.padding(horizontal = 16.dp))
                     OptionItem(
-                        icon = Icons.Filled.BarChart,
+                        icon = AppIcons.BarChart,
                         title = "Statistics",
                         description = "Win rates & fairness score",
-                        color = Color(0xFFA29BFE),
+                        color = RouletteTheme.colors.primary,
                         onClick = onStatistics
                     )
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.05f), modifier = Modifier.padding(horizontal = 16.dp))
+                    HorizontalDivider(color = RouletteTheme.colors.divider, modifier = Modifier.padding(horizontal = 16.dp))
                     OptionItem(
-                        icon = Icons.Filled.FileDownload,
+                        icon = AppIcons.Download,
                         title = "Export Data",
                         description = "Download history as CSV",
-                        color = Color(0xFF00B894),
+                        color = RouletteTheme.colors.success,
                         onClick = onExport
                     )
                 }
@@ -140,21 +138,21 @@ fun WheelOptionsSheet(
             item {
                 OptionsGroup(title = "DANGER ZONE") {
                     OptionItem(
-                        icon = Icons.Filled.Refresh,
+                        icon = AppIcons.Refresh,
                         title = "Reset Wheel",
                         description = "Clears spin history & counts",
-                        color = Color(0xFFEF5350),
+                        color = RouletteTheme.colors.danger,
                         onClick = onReset,
-                        titleColor = Color(0xFFEF5350)
+                        titleColor = RouletteTheme.colors.danger
                     )
-                    HorizontalDivider(color = Color.White.copy(alpha = 0.05f), modifier = Modifier.padding(horizontal = 16.dp))
+                    HorizontalDivider(color = RouletteTheme.colors.divider, modifier = Modifier.padding(horizontal = 16.dp))
                     OptionItem(
-                        icon = Icons.Filled.DeleteOutline,
+                        icon = AppIcons.Delete,
                         title = "Delete Wheel",
                         description = "Permanently remove this wheel",
-                        color = Color(0xFFEF5350),
+                        color = RouletteTheme.colors.danger,
                         onClick = onDelete,
-                        titleColor = Color(0xFFEF5350)
+                        titleColor = RouletteTheme.colors.danger
                     )
                 }
             }
@@ -167,16 +165,16 @@ fun OptionsGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
     Column {
         Text(
             title,
-            fontSize = 11.sp,
+            style = MaterialTheme.typography.labelSmall,
             fontWeight = FontWeight.Bold,
-            color = Color.Gray,
+            color = RouletteTheme.colors.textSecondary,
             letterSpacing = 1.2.sp,
             modifier = Modifier.padding(start = 8.dp, bottom = 12.dp)
         )
         Surface(
-            color = SurfaceDark,
-            shape = RoundedCornerShape(24.dp),
-            border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
+            color = RouletteTheme.colors.surface,
+            shape = RouletteTheme.shapes.card,
+            border = BorderStroke(1.dp, RouletteTheme.colors.divider)
         ) {
             Column(content = content)
         }
@@ -185,12 +183,12 @@ fun OptionsGroup(title: String, content: @Composable ColumnScope.() -> Unit) {
 
 @Composable
 fun OptionItem(
-    icon: ImageVector,
+    icon: Painter,
     title: String,
     description: String,
     color: Color,
     onClick: (() -> Unit)? = null,
-    titleColor: Color = Color.White,
+    titleColor: Color = RouletteTheme.colors.textPrimary,
     trailing: @Composable (() -> Unit)? = null
 ) {
     Row(
@@ -211,13 +209,13 @@ fun OptionItem(
         }
         Spacer(Modifier.width(16.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(title, color = titleColor, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-            Text(description, color = Color.Gray, fontSize = 12.sp)
+            Text(title, color = titleColor, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+            Text(description, color = RouletteTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
         }
         if (trailing != null) {
             trailing()
         } else if (onClick != null) {
-            Icon(Icons.Filled.ChevronRight, null, tint = Color.DarkGray, modifier = Modifier.size(20.dp))
+            Icon(AppIcons.ChevronRight, null, tint = RouletteTheme.colors.textTertiary, modifier = Modifier.size(20.dp))
         }
     }
 }

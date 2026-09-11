@@ -12,10 +12,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.HelpOutline
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,7 +22,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -45,9 +40,11 @@ import kotlinx.coroutines.launch
 import com.project.roulette.util.loadInterstitial
 import com.project.roulette.util.showInterstitial
 import com.project.roulette.ui.theme.ThemePalette
-import com.project.roulette.ui.theme.DeepNavyBlack
-import com.project.roulette.ui.theme.SurfaceDark
 import androidx.activity.compose.BackHandler
+import androidx.compose.ui.graphics.painter.Painter
+import com.project.roulette.presentation.component.AppIcons
+import com.project.roulette.ui.theme.RouletteTheme
+import com.project.roulette.ui.theme.rememberAccentOnSurface
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -75,13 +72,7 @@ fun WheelScreen(
         }
     }
     
-    val lighterThemeColor = remember(themeColor) {
-        val hsv = FloatArray(3)
-        android.graphics.Color.colorToHSV(themeColor.toArgb(), hsv)
-        hsv[1] *= 0.6f // Less saturated
-        hsv[2] = (hsv[2] + 1f) / 2f // Brighter
-        Color(android.graphics.Color.HSVToColor(hsv))
-    }
+    val lighterThemeColor = rememberAccentOnSurface(themeColor)
 
     var showOptions by remember { mutableStateOf(false) }
     var showAlgoInfo by remember { mutableStateOf(false) }
@@ -182,14 +173,20 @@ fun WheelScreen(
                 },
                 navigationIcon = {
                     IconButton(onClick = { showInterstitial(context = context) { onNavigateBack() } }) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
+                        Icon(AppIcons.ArrowBack, contentDescription = "Back")
                     }
                 },
                 actions = {
                     IconButton(onClick = { showOptions = true }) {
-                        Icon(Icons.Filled.MoreVert, contentDescription = "Options")
+                        Icon(AppIcons.MoreVert, contentDescription = "Options")
                     }
-                }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = RouletteTheme.colors.background,
+                    titleContentColor = RouletteTheme.colors.textPrimary,
+                    navigationIconContentColor = RouletteTheme.colors.textPrimary,
+                    actionIconContentColor = RouletteTheme.colors.textPrimary
+                )
             )
         }
     ) { padding ->
@@ -199,7 +196,7 @@ fun WheelScreen(
             ModalBottomSheet(
                 onDismissRequest = { showOptions = false },
                 sheetState = optionsSheetState,
-                containerColor = DeepNavyBlack,
+                containerColor = RouletteTheme.colors.background,
                 dragHandle = null,
                 modifier = Modifier.fillMaxSize()
             ) {
@@ -232,7 +229,7 @@ fun WheelScreen(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(padding)
-                        .background(Color(0xFF121212))
+                        .background(RouletteTheme.colors.background)
                         .verticalScroll(rememberScrollState())
                         .padding(horizontal = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
@@ -253,18 +250,18 @@ fun WheelScreen(
                             ) {
                                 Box(modifier = Modifier.size(8.dp).background(lighterThemeColor, CircleShape))
                                 Spacer(Modifier.width(8.dp))
-                                Text("${state.wheel.getActiveSegments().size} names", color = lighterThemeColor, fontSize = 12.sp)
+                                Text("${state.wheel.getActiveSegments().size} names", color = lighterThemeColor, style = MaterialTheme.typography.bodySmall)
                             }
                         }
                         Surface(
-                            color = Color(0xFF212121),
+                            color = RouletteTheme.colors.surfacePressed,
                             shape = CircleShape,
                         ) {
                             Text(
                                 "$spinsToday spun today",
                                 modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                                color = Color.Gray,
-                                fontSize = 12.sp
+                                color = RouletteTheme.colors.textSecondary,
+                                style = MaterialTheme.typography.bodySmall
                             )
                         }
 
@@ -278,7 +275,7 @@ fun WheelScreen(
                                     "RR: ${state.rrRemaining} left",
                                     modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
                                     color = lighterThemeColor,
-                                    fontSize = 12.sp
+                                    style = MaterialTheme.typography.bodySmall
                                 )
                             }
                         }
@@ -300,8 +297,8 @@ fun WheelScreen(
 
                     Text(
                         "Tap Wheel to Spin",
-                        color = Color.White.copy(alpha = hintAlpha),
-                        fontSize = 18.sp,
+                        color = RouletteTheme.colors.textPrimary.copy(alpha = hintAlpha),
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.ExtraBold,
                         letterSpacing = 1.2.sp
                     )
@@ -332,9 +329,9 @@ fun WheelScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.Speed, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
+                            Icon(AppIcons.Speed, contentDescription = null, tint = RouletteTheme.colors.textSecondary, modifier = Modifier.size(20.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text("Spin speed", color = Color.Gray)
+                            Text("Spin speed", color = RouletteTheme.colors.textSecondary)
                         }
                         Text(spinSpeed.label, color = lighterThemeColor, fontWeight = FontWeight.Bold)
                     }
@@ -347,15 +344,15 @@ fun WheelScreen(
                         colors = SliderDefaults.colors(
                             thumbColor = themeColor,
                             activeTrackColor = themeColor,
-                            inactiveTrackColor = Color(0xFF212121),
+                            inactiveTrackColor = RouletteTheme.colors.surfacePressed,
                             activeTickColor = themeColor.copy(alpha = 0.5f),
-                            inactiveTickColor = Color.DarkGray
+                            inactiveTickColor = RouletteTheme.colors.textTertiary
                         ),
                         modifier = Modifier.fillMaxWidth()
                     )
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                        Text("Slow", color = Color.DarkGray, fontSize = 10.sp)
-                        Text("Blazing", color = Color.DarkGray, fontSize = 10.sp)
+                        Text("Slow", color = RouletteTheme.colors.textTertiary, style = MaterialTheme.typography.labelSmall)
+                        Text("Blazing", color = RouletteTheme.colors.textTertiary, style = MaterialTheme.typography.labelSmall)
                     }
 
                     // Algorithm Section Header
@@ -365,17 +362,17 @@ fun WheelScreen(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            Icon(Icons.Filled.Memory, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(20.dp))
+                            Icon(AppIcons.Memory, contentDescription = null, tint = RouletteTheme.colors.textSecondary, modifier = Modifier.size(20.dp))
                             Spacer(Modifier.width(8.dp))
-                            Text("Algorithm", color = Color.Gray)
+                            Text("Algorithm", color = RouletteTheme.colors.textSecondary)
                         }
                         TextButton(
                             onClick = { showAlgoInfo = true },
                             colors = ButtonDefaults.textButtonColors(contentColor = lighterThemeColor)
                         ) {
-                            Icon(Icons.AutoMirrored.Filled.HelpOutline, contentDescription = null, modifier = Modifier.size(16.dp))
+                            Icon(AppIcons.Help, contentDescription = null, modifier = Modifier.size(16.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("What's this?", fontSize = 12.sp)
+                            Text("What's this?", style = MaterialTheme.typography.bodySmall)
                         }
                     }
 
@@ -385,7 +382,7 @@ fun WheelScreen(
                             AlgorithmCard(
                                 title = "Uniform",
                                 description = "Equal odds for all",
-                                icon = Icons.Filled.Casino,
+                                icon = AppIcons.Casino,
                                 selected = selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.UNIFORM,
                                 onClick = { viewModel.setSelectionAlgorithm(SelectionAlgorithmFactory.AlgorithmType.UNIFORM) },
                                 modifier = Modifier.weight(1f),
@@ -395,7 +392,7 @@ fun WheelScreen(
                             AlgorithmCard(
                                 title = "Weighted",
                                 description = "Custom odds per name",
-                                icon = Icons.Filled.Balance,
+                                icon = AppIcons.Balance,
                                 selected = selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.WEIGHTED,
                                 onClick = { viewModel.setSelectionAlgorithm(SelectionAlgorithmFactory.AlgorithmType.WEIGHTED) },
                                 modifier = Modifier.weight(1f),
@@ -407,7 +404,7 @@ fun WheelScreen(
                             AlgorithmCard(
                                 title = "Seeded",
                                 description = "Reproducible result",
-                                icon = Icons.Filled.Tag,
+                                icon = AppIcons.Tag,
                                 selected = selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.SEEDED,
                                 onClick = { viewModel.setSelectionAlgorithm(SelectionAlgorithmFactory.AlgorithmType.SEEDED) },
                                 modifier = Modifier.weight(1f),
@@ -417,7 +414,7 @@ fun WheelScreen(
                             AlgorithmCard(
                                 title = "Round Robin",
                                 description = "Everyone gets a turn",
-                                icon = Icons.Filled.Autorenew,
+                                icon = AppIcons.Autorenew,
                                 selected = selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN,
                                 onClick = { viewModel.setSelectionAlgorithm(SelectionAlgorithmFactory.AlgorithmType.ROUND_ROBIN) },
                                 modifier = Modifier.weight(1f),
@@ -439,16 +436,16 @@ fun WheelScreen(
                             },
                             trailingIcon = {
                                 IconButton(onClick = { viewModel.setSeed((100..999999).random().toLong()) }) {
-                                    Icon(Icons.Filled.Casino, contentDescription = "Random Seed", tint = lighterThemeColor)
+                                    Icon(AppIcons.Casino, contentDescription = "Random Seed", tint = lighterThemeColor)
                                 }
                             },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
                             colors = OutlinedTextFieldDefaults.colors(
                                 focusedBorderColor = themeColor,
-                                unfocusedBorderColor = Color(0xFF212121),
-                                focusedSupportingTextColor = Color.Gray,
-                                unfocusedSupportingTextColor = Color.Gray
+                                unfocusedBorderColor = RouletteTheme.colors.outline,
+                                focusedSupportingTextColor = RouletteTheme.colors.textSecondary,
+                                unfocusedSupportingTextColor = RouletteTheme.colors.textSecondary
                             )
                         )
                     } else if (selectedAlgorithm == SelectionAlgorithmFactory.AlgorithmType.WEIGHTED) {
@@ -456,10 +453,10 @@ fun WheelScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .background(Color(0xFF1E1E1E), RoundedCornerShape(12.dp))
+                                .background(RouletteTheme.colors.surface, RoundedCornerShape(12.dp))
                                 .padding(12.dp)
                         ) {
-                            Text("Custom Weights", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                            Text("Custom Weights", color = RouletteTheme.colors.textPrimary, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
                             Spacer(Modifier.height(8.dp))
                             state.wheel.getActiveSegments().forEach { segment ->
                                 Row(
@@ -467,9 +464,9 @@ fun WheelScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceBetween
                                 ) {
-                                    Text(segment.name, color = Color.Gray, modifier = Modifier.weight(1f))
+                                    Text(segment.name, color = RouletteTheme.colors.textSecondary, modifier = Modifier.weight(1f))
                                     Row(verticalAlignment = Alignment.CenterVertically) {
-                                        Text(String.format(java.util.Locale.US, "%.1f", segment.weight), color = Color.White, modifier = Modifier.padding(horizontal = 8.dp))
+                                        Text(String.format(java.util.Locale.US, "%.1f", segment.weight), color = RouletteTheme.colors.textPrimary, modifier = Modifier.padding(horizontal = 8.dp))
                                         Slider(
                                             value = segment.weight,
                                             onValueChange = { viewModel.updateSegmentWeight(segment.id, it) },
@@ -479,9 +476,9 @@ fun WheelScreen(
                                             colors = SliderDefaults.colors(
                                                 thumbColor = themeColor,
                                                 activeTrackColor = themeColor,
-                                                inactiveTrackColor = Color(0xFF212121),
+                                                inactiveTrackColor = RouletteTheme.colors.surfacePressed,
                                                 activeTickColor = themeColor.copy(alpha = 0.5f),
-                                                inactiveTickColor = Color.DarkGray
+                                                inactiveTickColor = RouletteTheme.colors.textTertiary
                                             )
                                         )
                                     }
@@ -499,9 +496,9 @@ fun WheelScreen(
                     ) {
                         Text(
                             "SPIN HISTORY",
-                            fontSize = 12.sp,
+                            style = MaterialTheme.typography.bodySmall,
                             fontWeight = FontWeight.Bold,
-                            color = Color.Gray,
+                            color = RouletteTheme.colors.textSecondary,
                             letterSpacing = 1.2.sp
                         )
                         Spacer(Modifier.height(12.dp))
@@ -511,14 +508,14 @@ fun WheelScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .height(80.dp)
-                                    .border(1.dp, Color.White.copy(alpha = 0.05f), RoundedCornerShape(16.dp))
-                                    .background(Color(0xFF1E1E1E).copy(alpha = 0.3f), RoundedCornerShape(16.dp)),
+                                    .border(1.dp, RouletteTheme.colors.divider, RoundedCornerShape(16.dp))
+                                    .background(RouletteTheme.colors.surfacePressed, RoundedCornerShape(16.dp)),
                                 contentAlignment = Alignment.Center
                             ) {
                                 Text(
                                     "No spins yet — tap wheel to start",
-                                    color = Color.Gray.copy(alpha = 0.6f),
-                                    fontSize = 14.sp
+                                    color = RouletteTheme.colors.textSecondary.copy(alpha = 0.6f),
+                                    style = MaterialTheme.typography.bodySmall
                                 )
                             }
                         } else {
@@ -527,7 +524,7 @@ fun WheelScreen(
                                     val segment = state.wheel.segments.find { it.id == result.selectedSegmentId }
                                     HistoryItem(
                                         name = result.selectedSegmentName,
-                                        color = segment?.color ?: Color.Gray,
+                                        color = segment?.color ?: RouletteTheme.colors.textSecondary,
                                         isLatest = index == 0
                                     )
                                 }
@@ -562,8 +559,8 @@ fun WheelScreen(
                     ModalBottomSheet(
                         onDismissRequest = { showAlgoInfo = false },
                         sheetState = sheetState,
-                        containerColor = Color(0xFF1E1E1E),
-                        dragHandle = { BottomSheetDefaults.DragHandle(color = Color.Gray) }
+                        containerColor = RouletteTheme.colors.surface,
+                        dragHandle = { BottomSheetDefaults.DragHandle(color = RouletteTheme.colors.textSecondary) }
                     ) {
                         Column(
                             modifier = Modifier
@@ -576,13 +573,13 @@ fun WheelScreen(
                             Text(
                                 "About Algorithms",
                                 style = MaterialTheme.typography.headlineSmall,
-                                color = Color.White,
+                                color = RouletteTheme.colors.textPrimary,
                                 fontWeight = FontWeight.Bold
                             )
                             Spacer(Modifier.height(24.dp))
                             
                             AlgoInfoDetail(
-                                icon = Icons.Filled.Casino,
+                                icon = AppIcons.Casino,
                                 title = "Uniform Random",
                                 description = "The classic fair choice. Every name on the wheel has an mathematically identical chance of being picked. It's like flipping a perfectly balanced coin or rolling a fair dice.",
                                 themeColor = themeColor,
@@ -591,7 +588,7 @@ fun WheelScreen(
                             Spacer(Modifier.height(20.dp))
                             
                             AlgoInfoDetail(
-                                icon = Icons.Filled.Balance,
+                                icon = AppIcons.Balance,
                                 title = "Weighted Random",
                                 description = "Allows you to bias the results. If one name has a weight of 5 and another has 1, the first name is 5 times more likely to win. Perfect for 'Luck-based' games where some entries are more valuable than others.",
                                 themeColor = themeColor,
@@ -600,7 +597,7 @@ fun WheelScreen(
                             Spacer(Modifier.height(20.dp))
                             
                             AlgoInfoDetail(
-                                icon = Icons.Filled.Tag,
+                                icon = AppIcons.Tag,
                                 title = "Seeded Sequence",
                                 description = "A deterministic approach. Using the same seed number will always produce the exact same sequence of winners. This is useful for running fair competitions where everyone can verify the result by using the same seed.",
                                 themeColor = themeColor,
@@ -609,7 +606,7 @@ fun WheelScreen(
                             Spacer(Modifier.height(20.dp))
                             
                             AlgoInfoDetail(
-                                icon = Icons.Filled.Autorenew,
+                                icon = AppIcons.Autorenew,
                                 title = "Round Robin",
                                 description = "Ensures everyone gets a turn. It shuffles all names into a hidden queue. Each spin picks the next person until the queue is empty, then it reshuffles for a new round. No one wins twice until everyone has won once.",
                                 themeColor = themeColor,
@@ -622,7 +619,7 @@ fun WheelScreen(
             is WheelUiState.Error -> {
                 Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Error: ${state.message}", color = Color.Red)
+                        Text("Error: ${state.message}", color = RouletteTheme.colors.danger)
                         Button(onClick = { viewModel.loadWheel(wheelId) }) { Text("Retry") }
                     }
                 }
@@ -632,7 +629,7 @@ fun WheelScreen(
 }
 
 @Composable
-fun AlgoInfoDetail(icon: ImageVector, title: String, description: String, themeColor: Color, lighterThemeColor: Color) {
+fun AlgoInfoDetail(icon: Painter, title: String, description: String, themeColor: Color, lighterThemeColor: Color) {
     Row(verticalAlignment = Alignment.Top) {
         Surface(
             color = themeColor.copy(alpha = 0.2f),
@@ -645,9 +642,9 @@ fun AlgoInfoDetail(icon: ImageVector, title: String, description: String, themeC
         }
         Spacer(Modifier.width(16.dp))
         Column {
-            Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            Text(title, color = RouletteTheme.colors.textPrimary, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(4.dp))
-            Text(description, color = Color.Gray, fontSize = 13.sp, lineHeight = 18.sp)
+            Text(description, color = RouletteTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall, lineHeight = 18.sp)
         }
     }
 }
@@ -656,7 +653,7 @@ fun AlgoInfoDetail(icon: ImageVector, title: String, description: String, themeC
 fun AlgorithmCard(
     title: String,
     description: String,
-    icon: ImageVector,
+    icon: Painter,
     selected: Boolean,
     themeColor: Color,
     lighterThemeColor: Color,
@@ -667,19 +664,19 @@ fun AlgorithmCard(
         modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .clickable { onClick() },
-        color = if (selected) themeColor.copy(alpha = 0.1f) else Color(0xFF1E1E1E),
-        border = BorderStroke(1.dp, if (selected) themeColor else Color(0xFF212121))
+        color = if (selected) themeColor.copy(alpha = 0.1f) else RouletteTheme.colors.surface,
+        border = BorderStroke(1.dp, if (selected) themeColor else RouletteTheme.colors.surfacePressed)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Icon(
                 icon,
                 contentDescription = null,
-                tint = if (selected) lighterThemeColor else Color.Gray,
+                tint = if (selected) lighterThemeColor else RouletteTheme.colors.textSecondary,
                 modifier = Modifier.size(24.dp)
             )
             Spacer(Modifier.height(8.dp))
-            Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
-            Text(description, color = Color.Gray, fontSize = 10.sp)
+            Text(title, color = RouletteTheme.colors.textPrimary, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
+            Text(description, color = RouletteTheme.colors.textSecondary, style = MaterialTheme.typography.labelSmall)
         }
     }
 }

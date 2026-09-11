@@ -10,9 +10,6 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -34,13 +30,12 @@ import com.project.roulette.presentation.viewmodel.HistoryEffect
 import com.project.roulette.presentation.viewmodel.HistoryViewModel
 import com.project.roulette.ui.theme.RouletteTheme
 import com.project.roulette.util.PdfExporter
-import com.project.roulette.ui.theme.DeepNavyBlack
-import com.project.roulette.ui.theme.SurfaceDark
-import com.project.roulette.ui.theme.SurfaceDarker
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import java.util.Locale
 import android.content.Intent
+import androidx.compose.ui.graphics.painter.Painter
+import com.project.roulette.presentation.component.AppIcons
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -85,45 +80,45 @@ fun HistoryScreen(
 
     Scaffold(
         topBar = {
-            val titleColor = Color.White
-            val subtitleColor = Color.Gray
+            val titleColor = RouletteTheme.colors.textPrimary
+            val subtitleColor = RouletteTheme.colors.textSecondary
             
             TopAppBar(
                 title = {
                     Column {
                         val subtitle = (uiState as? HistoryUiState.Success)?.wheel?.name ?: "Wheel"
-                        Text(subtitle.uppercase(), fontSize = 10.sp, fontWeight = FontWeight.Bold, color = subtitleColor, letterSpacing = 1.sp)
+                        Text(subtitle.uppercase(), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.Bold, color = subtitleColor, letterSpacing = 1.sp)
                         Text("Spin History", fontWeight = FontWeight.Bold, color = titleColor)
                     }
                 },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back", tint = Color.White)
+                        Icon(AppIcons.ArrowBack, "Back", tint = RouletteTheme.colors.textPrimary)
                     }
                 },
                 actions = {
                     IconButton(onClick = { viewModel.exportHistory() }) {
-                        Icon(Icons.Filled.FileDownload, "Export", tint = Color.White)
+                        Icon(AppIcons.Download, "Export", tint = RouletteTheme.colors.textPrimary)
                     }
                     IconButton(
                         onClick = { viewModel.clearHistory(wheelId) },
                         modifier = Modifier.padding(end = 4.dp)
                     ) {
                         Surface(
-                            color = Color.Red.copy(alpha = 0.1f),
+                            color = RouletteTheme.colors.danger.copy(alpha = 0.1f),
                             shape = RoundedCornerShape(8.dp),
-                            border = BorderStroke(1.dp, Color.Red.copy(alpha = 0.3f))
+                            border = BorderStroke(1.dp, RouletteTheme.colors.danger.copy(alpha = 0.3f))
                         ) {
                             Box(modifier = Modifier.padding(6.dp)) {
-                                Icon(Icons.Filled.DeleteOutline, "Clear", tint = Color.Red, modifier = Modifier.size(20.dp))
+                                Icon(AppIcons.Delete, "Clear", tint = RouletteTheme.colors.danger, modifier = Modifier.size(20.dp))
                             }
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = DeepNavyBlack)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = RouletteTheme.colors.background)
             )
         },
-        containerColor = DeepNavyBlack
+        containerColor = RouletteTheme.colors.background
     ) { padding ->
         when (val state = uiState) {
             is HistoryUiState.Loading -> {
@@ -155,13 +150,13 @@ fun HistoryScreen(
                             StatCard(
                                 value = String.format(Locale.US, "%.0fs", state.avgDuration),
                                 label = "Avg duration",
-                                color = Color(0xFF00B894),
+                                color = RouletteTheme.colors.success,
                                 modifier = Modifier.weight(1f)
                             )
                             StatCard(
                                 value = state.mostPickedName ?: "—",
                                 label = "Most picked",
-                                color = state.wheel.segments.find { it.name == state.mostPickedName }?.color ?: Color(0xFFE17055),
+                                color = state.wheel.segments.find { it.name == state.mostPickedName }?.color ?: RouletteTheme.colors.warning,
                                 modifier = Modifier.weight(1f)
                             )
                         }
@@ -190,15 +185,15 @@ fun HistoryScreen(
                         ) {
                             Text(
                                 "RECENT SPINS",
-                                fontSize = 12.sp,
+                                style = MaterialTheme.typography.bodySmall,
                                 fontWeight = FontWeight.Bold,
-                                color = Color.Gray,
+                                color = RouletteTheme.colors.textSecondary,
                                 letterSpacing = 1.2.sp
                             )
                             TextButton(onClick = { viewModel.toggleSort() }) {
                                 Text(
                                     if (state.isDescending) "Sort ↓" else "Sort ↑",
-                                    fontSize = 12.sp,
+                                    style = MaterialTheme.typography.bodySmall,
                                     fontWeight = FontWeight.Bold,
                                     color = RouletteTheme.colors.primary
                                 )
@@ -212,7 +207,7 @@ fun HistoryScreen(
                                 modifier = Modifier.fillMaxWidth().height(200.dp),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Text("No matching spins found", color = Color.Gray)
+                                Text("No matching spins found", color = RouletteTheme.colors.textSecondary)
                             }
                         }
                     } else {
@@ -223,7 +218,7 @@ fun HistoryScreen(
                             
                             HistoryCard(
                                 spinResult = spinResult,
-                                color = segment?.color ?: Color.Gray,
+                                color = segment?.color ?: RouletteTheme.colors.textSecondary,
                                 spinNumber = spinIndex,
                                 isLatest = isLatest
                             )
@@ -237,7 +232,7 @@ fun HistoryScreen(
             is HistoryUiState.Error -> {
                 Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Error: ${state.message}", color = Color.Red)
+                        Text("Error: ${state.message}", color = RouletteTheme.colors.danger)
                         Spacer(Modifier.height(16.dp))
                         Button(onClick = { viewModel.loadHistory(wheelId) }) {
                             Text("Retry")
@@ -261,8 +256,8 @@ private fun StatCard(value: String, label: String, color: Color, modifier: Modif
             modifier = Modifier.padding(16.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            Text(value, fontSize = 20.sp, fontWeight = FontWeight.Bold, color = color, maxLines = 1)
-            Text(label, fontSize = 10.sp, color = Color.Gray, textAlign = TextAlign.Center)
+            Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold, color = color, maxLines = 1)
+            Text(label, style = MaterialTheme.typography.labelSmall, color = RouletteTheme.colors.textSecondary, textAlign = TextAlign.Center)
         }
     }
 }
@@ -271,9 +266,9 @@ private fun StatCard(value: String, label: String, color: Color, modifier: Modif
 private fun WinDistributionCard(distribution: List<DistributionItem>, totalSpins: Int) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = SurfaceDark,
-        shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
+        color = RouletteTheme.colors.surface,
+        shape = RouletteTheme.shapes.card,
+        border = BorderStroke(1.dp, RouletteTheme.colors.divider)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Row(
@@ -281,7 +276,7 @@ private fun WinDistributionCard(distribution: List<DistributionItem>, totalSpins
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text("Win distribution", fontWeight = FontWeight.Bold, color = Color.White)
+                Text("Win distribution", fontWeight = FontWeight.Bold, color = RouletteTheme.colors.textPrimary)
                 Surface(
                     color = RouletteTheme.colors.primary.copy(alpha = 0.2f),
                     shape = CircleShape
@@ -290,7 +285,7 @@ private fun WinDistributionCard(distribution: List<DistributionItem>, totalSpins
                         "$totalSpins spins",
                         modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
                         color = RouletteTheme.colors.primary,
-                        fontSize = 11.sp,
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold
                     )
                 }
@@ -314,8 +309,8 @@ private fun DistributionRow(item: DistributionItem) {
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Text(item.name, color = Color.White, fontSize = 13.sp, fontWeight = FontWeight.Medium)
-            Text("${item.count} picks · ${item.percentage}%", color = item.color, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            Text(item.name, color = RouletteTheme.colors.textPrimary, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Medium)
+            Text("${item.count} picks · ${item.percentage}%", color = item.color, style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(6.dp))
         LinearProgressIndicator(
@@ -325,7 +320,7 @@ private fun DistributionRow(item: DistributionItem) {
                 .height(6.dp)
                 .clip(CircleShape),
             color = item.color,
-            trackColor = Color.White.copy(alpha = 0.05f)
+            trackColor = RouletteTheme.colors.divider
         )
     }
 }
@@ -344,9 +339,9 @@ private fun FilterChipsRow(names: List<String>, selectedName: String?, onSelect:
                 shape = CircleShape,
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = RouletteTheme.colors.primary,
-                    selectedLabelColor = Color.White,
-                    containerColor = SurfaceDark,
-                    labelColor = Color.Gray
+                    selectedLabelColor = RouletteTheme.colors.textPrimary,
+                    containerColor = RouletteTheme.colors.surface,
+                    labelColor = RouletteTheme.colors.textSecondary
                 ),
                 border = null
             )
@@ -359,9 +354,9 @@ private fun FilterChipsRow(names: List<String>, selectedName: String?, onSelect:
                 shape = CircleShape,
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = RouletteTheme.colors.primary.copy(alpha = 0.2f),
-                    selectedLabelColor = Color.White,
-                    containerColor = SurfaceDark,
-                    labelColor = Color.Gray
+                    selectedLabelColor = RouletteTheme.colors.textPrimary,
+                    containerColor = RouletteTheme.colors.surface,
+                    labelColor = RouletteTheme.colors.textSecondary
                 ),
                 border = BorderStroke(1.dp, if (selectedName == name) RouletteTheme.colors.primary else Color.Transparent)
             )
@@ -380,7 +375,7 @@ private fun HistoryCard(spinResult: SpinResult, color: Color, spinNumber: Int, i
     Surface(
         modifier = Modifier.fillMaxWidth(),
         color = bgColor,
-        shape = RoundedCornerShape(24.dp),
+        shape = RouletteTheme.shapes.card,
         border = BorderStroke(1.dp, color.copy(alpha = 0.3f))
     ) {
         Box {
@@ -391,11 +386,11 @@ private fun HistoryCard(spinResult: SpinResult, color: Color, spinNumber: Int, i
                 // Target Icon
                 Surface(
                     modifier = Modifier.size(48.dp),
-                    color = Color.Black.copy(alpha = 0.2f),
+                    color = RouletteTheme.colors.surfacePressed,
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Box(contentAlignment = Alignment.Center) {
-                        Icon(Icons.Filled.RadioButtonChecked, null, tint = color, modifier = Modifier.size(24.dp))
+                        Icon(AppIcons.RadioButtonChecked, null, tint = color, modifier = Modifier.size(24.dp))
                     }
                 }
                 
@@ -405,20 +400,20 @@ private fun HistoryCard(spinResult: SpinResult, color: Color, spinNumber: Int, i
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Text(
                             spinResult.selectedSegmentName,
-                            color = Color.White,
+                            color = RouletteTheme.colors.textPrimary,
                             fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp
+                            style = MaterialTheme.typography.titleMedium
                         )
                         Spacer(Modifier.width(8.dp))
                         Surface(
-                            color = Color.White.copy(alpha = 0.1f),
+                            color = RouletteTheme.colors.divider,
                             shape = CircleShape
                         ) {
                             Text(
                                 "Spin #$spinNumber",
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                color = Color.White.copy(alpha = 0.6f),
-                                fontSize = 9.sp,
+                                color = RouletteTheme.colors.textSecondary,
+                                style = MaterialTheme.typography.labelSmall,
                                 fontWeight = FontWeight.Bold
                             )
                         }
@@ -430,8 +425,8 @@ private fun HistoryCard(spinResult: SpinResult, color: Color, spinNumber: Int, i
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        InfoItem(Icons.Filled.Timer, "${spinResult.spinDuration / 1000f}s spin", color)
-                        InfoItem(Icons.Filled.Explore, "${String.format(Locale.US, "%.1f", spinResult.finalAngle)}°", color)
+                        InfoItem(AppIcons.Timer, "${spinResult.spinDuration / 1000f}s spin", color)
+                        InfoItem(AppIcons.Explore, "${String.format(Locale.US, "%.1f", spinResult.finalAngle)}°", color)
                     }
                     
                     Spacer(Modifier.height(4.dp))
@@ -441,7 +436,7 @@ private fun HistoryCard(spinResult: SpinResult, color: Color, spinNumber: Int, i
                         dt.year, dt.monthNumber, dt.dayOfMonth, 
                         dt.hour, dt.minute, dt.second)
                     
-                    InfoItem(Icons.Filled.CalendarMonth, dateStr, color)
+                    InfoItem(AppIcons.CalendarMonth, dateStr, color)
                 }
             }
             
@@ -454,8 +449,8 @@ private fun HistoryCard(spinResult: SpinResult, color: Color, spinNumber: Int, i
                     Text(
                         "LATEST",
                         modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
-                        color = Color.White,
-                        fontSize = 10.sp,
+                        color = RouletteTheme.colors.textPrimary,
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.ExtraBold
                     )
                 }
@@ -465,11 +460,11 @@ private fun HistoryCard(spinResult: SpinResult, color: Color, spinNumber: Int, i
 }
 
 @Composable
-private fun InfoItem(icon: ImageVector, text: String, color: Color) {
+private fun InfoItem(icon: Painter, text: String, color: Color) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(icon, null, tint = color.copy(alpha = 0.6f), modifier = Modifier.size(14.dp))
         Spacer(Modifier.width(4.dp))
-        Text(text, color = Color.White.copy(alpha = 0.6f), fontSize = 12.sp)
+        Text(text, color = RouletteTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
     }
 }
 

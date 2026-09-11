@@ -14,15 +14,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.project.roulette.ui.theme.SurfaceDark
+import com.project.roulette.ui.theme.RouletteTheme
+import androidx.compose.material3.MaterialTheme
 
 @Composable
 fun HistoryItem(name: String, color: Color, isLatest: Boolean, modifier: Modifier = Modifier) {
     Surface(
         modifier = modifier.fillMaxWidth(),
-        color = SurfaceDark,
+        color = RouletteTheme.colors.surface,
         shape = RoundedCornerShape(12.dp),
-        border = BorderStroke(1.dp, if (isLatest) color.copy(alpha = 0.3f) else Color.White.copy(alpha = 0.05f))
+        border = BorderStroke(1.dp, if (isLatest) color.copy(alpha = 0.3f) else RouletteTheme.colors.divider)
     ) {
         Row(
             modifier = Modifier.padding(12.dp),
@@ -32,7 +33,7 @@ fun HistoryItem(name: String, color: Color, isLatest: Boolean, modifier: Modifie
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Box(modifier = Modifier.size(12.dp).background(color, CircleShape))
                 Spacer(Modifier.width(12.dp))
-                Text(name, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                Text(name, color = RouletteTheme.colors.textPrimary, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
             }
             if (isLatest) {
                 Surface(
@@ -43,7 +44,7 @@ fun HistoryItem(name: String, color: Color, isLatest: Boolean, modifier: Modifie
                         "LATEST",
                         modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                         color = color,
-                        fontSize = 8.sp,
+                        style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.ExtraBold
                     )
                 }

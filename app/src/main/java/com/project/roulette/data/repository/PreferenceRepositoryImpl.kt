@@ -3,6 +3,7 @@ package com.project.roulette.data.repository
 import android.content.Context
 import android.content.SharedPreferences
 import com.project.roulette.data.local.database.RouletteDatabase
+import com.project.roulette.domain.model.ThemeMode
 import com.project.roulette.domain.repository.PreferenceRepository
 import com.project.roulette.domain.usecase.selection.SelectionAlgorithmFactory
 import com.project.roulette.presentation.viewmodel.WheelViewModel
@@ -20,7 +21,7 @@ class PreferenceRepositoryImpl @Inject constructor(
     private val database: RouletteDatabase
 ) : PreferenceRepository {
 
-    private val prefs: SharedPreferences = context.getSharedPreferences("roulette_prefs", Context.MODE_PRIVATE)
+    private val prefs: SharedPreferences = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
     private fun <T> preferenceFlow(key: String, defaultValue: T, getter: (SharedPreferences, String, T) -> T): Flow<T> = callbackFlow {
         val listener = SharedPreferences.OnSharedPreferenceChangeListener { sharedPreferences, changedKey ->
@@ -45,6 +46,12 @@ class PreferenceRepositoryImpl @Inject constructor(
     override val confettiEnabled: Flow<Boolean> = preferenceFlow("confetti", true) { p, k, d -> p.getBoolean(k, d) }
     override val removeAfterPickEnabled: Flow<Boolean> = preferenceFlow("remove_after", false) { p, k, d -> p.getBoolean(k, d) }
     override val lastSeenChangelogVersion: Flow<Int> = preferenceFlow("last_seen_changelog_version", 0) { p, k, d -> p.getInt(k, d) }
+
+    override val themeMode: Flow<ThemeMode> = preferenceFlow(KEY_THEME_MODE, ThemeMode.SYSTEM.name) { p, k, d -> p.getString(k, d) ?: d }
+        .map { ThemeMode.fromName(it) }
+
+    override val themeModeBlocking: ThemeMode
+        get() = ThemeMode.fromName(prefs.getString(KEY_THEME_MODE, null))
 
     override suspend fun updatePaletteIndex(index: Int) {
         prefs.edit().putInt("palette_index", index).apply()
@@ -74,8 +81,18 @@ class PreferenceRepositoryImpl @Inject constructor(
         prefs.edit().putInt("last_seen_changelog_version", versionCode).apply()
     }
 
+    override suspend fun updateThemeMode(mode: ThemeMode) {
+        prefs.edit().putString(KEY_THEME_MODE, mode.name).apply()
+    }
+
     override suspend fun clearAllData() {
         database.clearAllTables()
-        prefs.edit().clear().apply()
+        val preservedThemeMode = prefs.getString(KEY_THEME_MODE, ThemeMode.SYSTEM.name)
+        prefs.edit().clear().putString(KEY_THEME_MODE, preservedThemeMode).apply()
+    }
+
+    companion object {
+        const val PREFS_NAME = "roulette_prefs"
+        const val KEY_THEME_MODE = "theme_mode"
     }
 }

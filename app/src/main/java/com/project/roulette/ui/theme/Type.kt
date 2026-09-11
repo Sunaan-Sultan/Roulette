@@ -8,115 +8,43 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.project.roulette.R
 
-val SfPro = FontFamily(
-    Font(R.font.sf_pro, FontWeight.Normal),
-    Font(R.font.sf_pro_bold, FontWeight.Bold)
+val AppFontFamily = FontFamily(
+    Font(R.font.harmonyos_sans_regular, FontWeight.Normal),
+    Font(R.font.harmonyos_sans_medium,  FontWeight.Medium),
+    Font(R.font.harmonyos_sans_bold,    FontWeight.Bold)
+)
+
+private fun appStyle(
+    weight: FontWeight,
+    size: Int,
+    lineHeight: Int,
+    letterSpacing: Double = 0.0
+) = TextStyle(
+    fontFamily = AppFontFamily,
+    fontWeight = weight,
+    fontSize = size.sp,
+    lineHeight = lineHeight.sp,
+    letterSpacing = letterSpacing.sp
 )
 
 val Typography = Typography(
-    displayLarge = TextStyle(
-        fontFamily = SfPro,
-        fontWeight = FontWeight.Bold,
-        fontSize = 57.sp,
-        lineHeight = 64.sp,
-        letterSpacing = (-0.25).sp
-    ),
-    displayMedium = TextStyle(
-        fontFamily = SfPro,
-        fontWeight = FontWeight.Bold,
-        fontSize = 45.sp,
-        lineHeight = 52.sp,
-        letterSpacing = 0.sp
-    ),
-    displaySmall = TextStyle(
-        fontFamily = SfPro,
-        fontWeight = FontWeight.Bold,
-        fontSize = 36.sp,
-        lineHeight = 44.sp,
-        letterSpacing = 0.sp
-    ),
-    headlineLarge = TextStyle(
-        fontFamily = SfPro,
-        fontWeight = FontWeight.Bold,
-        fontSize = 32.sp,
-        lineHeight = 40.sp,
-        letterSpacing = 0.sp
-    ),
-    headlineMedium = TextStyle(
-        fontFamily = SfPro,
-        fontWeight = FontWeight.Bold,
-        fontSize = 28.sp,
-        lineHeight = 36.sp,
-        letterSpacing = 0.sp
-    ),
-    headlineSmall = TextStyle(
-        fontFamily = SfPro,
-        fontWeight = FontWeight.Bold,
-        fontSize = 24.sp,
-        lineHeight = 32.sp,
-        letterSpacing = 0.sp
-    ),
-    titleLarge = TextStyle(
-        fontFamily = SfPro,
-        fontWeight = FontWeight.Bold,
-        fontSize = 22.sp,
-        lineHeight = 28.sp,
-        letterSpacing = 0.sp
-    ),
-    titleMedium = TextStyle(
-        fontFamily = SfPro,
-        fontWeight = FontWeight.SemiBold,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.15.sp
-    ),
-    titleSmall = TextStyle(
-        fontFamily = SfPro,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.1.sp
-    ),
-    bodyLarge = TextStyle(
-        fontFamily = SfPro,
-        fontWeight = FontWeight.Normal,
-        fontSize = 16.sp,
-        lineHeight = 24.sp,
-        letterSpacing = 0.5.sp
-    ),
-    bodyMedium = TextStyle(
-        fontFamily = SfPro,
-        fontWeight = FontWeight.Normal,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.25.sp
-    ),
-    bodySmall = TextStyle(
-        fontFamily = SfPro,
-        fontWeight = FontWeight.Normal,
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.4.sp
-    ),
-    labelLarge = TextStyle(
-        fontFamily = SfPro,
-        fontWeight = FontWeight.Medium,
-        fontSize = 14.sp,
-        lineHeight = 20.sp,
-        letterSpacing = 0.1.sp
-    ),
-    labelMedium = TextStyle(
-        fontFamily = SfPro,
-        fontWeight = FontWeight.Medium,
-        fontSize = 12.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
-    ),
-    labelSmall = TextStyle(
-        fontFamily = SfPro,
-        fontWeight = FontWeight.Medium,
-        fontSize = 11.sp,
-        lineHeight = 16.sp,
-        letterSpacing = 0.5.sp
-    )
+    displayLarge = appStyle(FontWeight.Bold, 40, 48, -0.5),
+    displayMedium = appStyle(FontWeight.Bold, 34, 42, -0.4),
+    displaySmall = appStyle(FontWeight.Bold, 28, 36, -0.3),
+
+    headlineLarge = appStyle(FontWeight.Bold, 28, 36, -0.3),
+    headlineMedium = appStyle(FontWeight.Bold, 24, 32, -0.2),
+    headlineSmall = appStyle(FontWeight.Bold, 22, 28, -0.2),
+
+    titleLarge = appStyle(FontWeight.Bold, 20, 26, -0.1),
+    titleMedium = appStyle(FontWeight.Medium, 17, 22),
+    titleSmall = appStyle(FontWeight.Medium, 15, 20),
+
+    bodyLarge = appStyle(FontWeight.Normal, 17, 22),
+    bodyMedium = appStyle(FontWeight.Normal, 16, 21),
+    bodySmall = appStyle(FontWeight.Normal, 14, 19),
+
+    labelLarge = appStyle(FontWeight.Medium, 15, 20),
+    labelMedium = appStyle(FontWeight.Medium, 12, 16, 0.6),
+    labelSmall = appStyle(FontWeight.Medium, 11, 14, 0.4)
 )

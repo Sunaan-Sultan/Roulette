@@ -4,9 +4,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.NewReleases
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -19,6 +16,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.project.roulette.util.ChangelogEntry
+import com.project.roulette.ui.theme.RouletteTheme
 
 @Composable
 fun WhatsNewDialog(
@@ -34,7 +32,7 @@ fun WhatsNewDialog(
             modifier = Modifier
                 .fillMaxWidth(0.88f)
                 .clip(RoundedCornerShape(28.dp)),
-            color = Color(0xFF1E1E2C)
+            color = RouletteTheme.colors.surfaceElevated
         ) {
             Column(modifier = Modifier.padding(24.dp)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -44,12 +42,12 @@ fun WhatsNewDialog(
                             .background(themeColor.copy(alpha = 0.15f), CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(Icons.Filled.NewReleases, contentDescription = null, tint = themeColor, modifier = Modifier.size(22.dp))
+                        Icon(AppIcons.NewReleases, contentDescription = null, tint = themeColor, modifier = Modifier.size(22.dp))
                     }
                     Spacer(Modifier.width(16.dp))
                     Column {
-                        Text("What's new", color = Color.White, fontWeight = FontWeight.Bold, fontSize = 18.sp)
-                        Text("Version ${entry.versionName}", color = Color.Gray, fontSize = 12.sp)
+                        Text("What's new", color = RouletteTheme.colors.textPrimary, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleMedium)
+                        Text("Version ${entry.versionName}", color = RouletteTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
                     }
                 }
 
@@ -65,10 +63,10 @@ fun WhatsNewDialog(
                                     .background(themeColor.copy(alpha = 0.15f), CircleShape),
                                 contentAlignment = Alignment.Center
                             ) {
-                                Icon(Icons.Filled.Check, contentDescription = null, tint = themeColor, modifier = Modifier.size(12.dp))
+                                Icon(AppIcons.Check, contentDescription = null, tint = themeColor, modifier = Modifier.size(12.dp))
                             }
                             Spacer(Modifier.width(12.dp))
-                            Text(highlight, color = Color.White.copy(alpha = 0.9f), fontSize = 14.sp, modifier = Modifier.weight(1f))
+                            Text(highlight, color = RouletteTheme.colors.textPrimary, style = MaterialTheme.typography.bodySmall, modifier = Modifier.weight(1f))
                         }
                     }
                 }
@@ -79,9 +77,9 @@ fun WhatsNewDialog(
                     onClick = onDismiss,
                     modifier = Modifier.fillMaxWidth().height(48.dp),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = themeColor, contentColor = Color.White)
+                    colors = ButtonDefaults.buttonColors(containerColor = themeColor, contentColor = RouletteTheme.colors.onPrimary)
                 ) {
-                    Text("Got it", fontWeight = FontWeight.Bold, fontSize = 14.sp)
+                    Text("Got it", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodySmall)
                 }
             }
         }

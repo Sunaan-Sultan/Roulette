@@ -9,17 +9,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.automirrored.filled.VolumeUp
-import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -33,6 +28,8 @@ import com.project.roulette.presentation.viewmodel.EditorViewModel
 import com.project.roulette.ui.theme.*
 import kotlinx.coroutines.launch
 import java.util.*
+import androidx.compose.ui.graphics.painter.Painter
+import com.project.roulette.presentation.component.AppIcons
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,13 +56,7 @@ fun EditorScreen(
         }
     }
 
-    val lighterThemeColor = remember(themeColor) {
-        val hsv = FloatArray(3)
-        android.graphics.Color.colorToHSV(themeColor.toArgb(), hsv)
-        hsv[1] *= 0.6f // Less saturated
-        hsv[2] = (hsv[2] + 1f) / 2f // Brighter
-        Color(android.graphics.Color.HSVToColor(hsv))
-    }
+    val lighterThemeColor = rememberAccentOnSurface(themeColor)
 
     LaunchedEffect(Unit) {
         if (isNew) {
@@ -92,10 +83,10 @@ fun EditorScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(if (isNew) "Create Wheel" else "Edit Wheel", fontWeight = FontWeight.Bold, color = Color.White) },
+                title = { Text(if (isNew) "Create Wheel" else "Edit Wheel", fontWeight = FontWeight.Bold, color = RouletteTheme.colors.textPrimary) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back", tint = Color.White)
+                        Icon(AppIcons.ArrowBack, contentDescription = "Back", tint = RouletteTheme.colors.textPrimary)
                     }
                 },
                 actions = {
@@ -113,11 +104,11 @@ fun EditorScreen(
                         }
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = DeepNavyBlack)
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = RouletteTheme.colors.background)
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        containerColor = DeepNavyBlack
+        containerColor = RouletteTheme.colors.background
     ) { padding ->
         when (val state = uiState) {
             is EditorUiState.Loading -> {
@@ -144,7 +135,7 @@ fun EditorScreen(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .padding(top = 12.dp),
-                                    color = DeepNavyBlack.copy(alpha = 0.7f),
+                                    color = RouletteTheme.colors.background.copy(alpha = 0.7f),
                                     shape = RoundedCornerShape(16.dp),
                                     border = BorderStroke(1.5.dp, themeColor.copy(alpha = 0.4f))
                                 ) {
@@ -154,7 +145,7 @@ fun EditorScreen(
                                             localName = it
                                             viewModel.updateWheelName(it)
                                         },
-                                        placeholder = { Text("New Wheel", color = TextSecondary.copy(alpha = 0.3f)) },
+                                        placeholder = { Text("New Wheel", color = RouletteTheme.colors.textSecondary.copy(alpha = 0.3f)) },
                                         modifier = Modifier.fillMaxWidth(),
                                         colors = TextFieldDefaults.colors(
                                             focusedContainerColor = Color.Transparent,
@@ -162,8 +153,8 @@ fun EditorScreen(
                                             focusedIndicatorColor = Color.Transparent,
                                             unfocusedIndicatorColor = Color.Transparent,
                                             cursorColor = lighterThemeColor,
-                                            focusedTextColor = Color.White,
-                                            unfocusedTextColor = Color.White
+                                            focusedTextColor = RouletteTheme.colors.textPrimary,
+                                            unfocusedTextColor = RouletteTheme.colors.textPrimary
                                         ),
                                         textStyle = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Bold)
                                     )
@@ -185,7 +176,7 @@ fun EditorScreen(
                                                 .background(color)
                                                 .border(
                                                     width = 2.dp,
-                                                    color = if (state.wheel.themePaletteIndex == index) Color.White else Color.Transparent,
+                                                    color = if (state.wheel.themePaletteIndex == index) RouletteTheme.colors.textPrimary else Color.Transparent,
                                                     shape = CircleShape
                                                 )
                                                 .clickable { viewModel.updateThemePalette(index) }
@@ -193,16 +184,16 @@ fun EditorScreen(
                                     }
                                 }
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Filled.Info, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(14.dp))
+                                    Icon(AppIcons.Info, contentDescription = null, tint = RouletteTheme.colors.textSecondary, modifier = Modifier.size(14.dp))
                                     Spacer(Modifier.width(6.dp))
-                                    Text("Segments auto-get shades of this palette", color = TextSecondary, fontSize = 12.sp)
+                                    Text("Segments auto-get shades of this palette", color = RouletteTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
                                 }
                             }
                         }
 
                         item {
                             EditorToggleCard(
-                                icon = Icons.AutoMirrored.Filled.VolumeUp,
+                                icon = AppIcons.VolumeUp,
                                 title = "Spin sound",
                                 description = "Play tick sound while spinning",
                                 checked = state.wheel.spinSound,
@@ -213,7 +204,7 @@ fun EditorScreen(
 
                         item {
                             EditorToggleCard(
-                                icon = Icons.Filled.PersonRemove,
+                                icon = AppIcons.PersonRemove,
                                 title = "Remove after pick",
                                 description = "Picked names won't repeat",
                                 checked = state.wheel.removeAfterPick,
@@ -229,7 +220,7 @@ fun EditorScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Text("Segments", fontWeight = FontWeight.Bold, fontSize = 20.sp, color = Color.White)
+                                    Text("Segments", fontWeight = FontWeight.Bold, style = MaterialTheme.typography.titleLarge, color = RouletteTheme.colors.textPrimary)
                                     Spacer(Modifier.width(12.dp))
                                     Surface(
                                         color = themeColor.copy(alpha = 0.2f),
@@ -240,20 +231,20 @@ fun EditorScreen(
                                             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
                                             color = lighterThemeColor,
                                             fontWeight = FontWeight.Bold,
-                                            fontSize = 14.sp
+                                            style = MaterialTheme.typography.bodySmall
                                         )
                                     }
                                 }
                                 Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                                     TextButton(
                                         onClick = { showImportDialog = true },
-                                        colors = ButtonDefaults.textButtonColors(containerColor = SurfaceDark),
+                                        colors = ButtonDefaults.textButtonColors(containerColor = RouletteTheme.colors.surface),
                                         shape = RoundedCornerShape(12.dp),
                                         modifier = Modifier.height(40.dp)
                                     ) {
-                                        Icon(Icons.Filled.FileUpload, contentDescription = null, modifier = Modifier.size(18.dp), tint = TextSecondary)
+                                        Icon(AppIcons.Upload, contentDescription = null, modifier = Modifier.size(18.dp), tint = RouletteTheme.colors.textSecondary)
                                         Spacer(Modifier.width(6.dp))
-                                        Text("Import", fontSize = 14.sp, color = TextSecondary)
+                                        Text("Import", style = MaterialTheme.typography.bodySmall, color = RouletteTheme.colors.textSecondary)
                                     }
                                     Button(
                                         onClick = {
@@ -263,9 +254,9 @@ fun EditorScreen(
                                         shape = RoundedCornerShape(12.dp),
                                         modifier = Modifier.height(40.dp)
                                     ) {
-                                        Icon(Icons.Filled.Add, contentDescription = null, modifier = Modifier.size(18.dp), tint = Color.White)
+                                        Icon(AppIcons.Add, contentDescription = null, modifier = Modifier.size(18.dp), tint = contentColorOn(themeColor))
                                         Spacer(Modifier.width(6.dp))
-                                        Text("Add", fontSize = 14.sp, color = Color.White)
+                                        Text("Add", style = MaterialTheme.typography.bodySmall, color = contentColorOn(themeColor))
                                     }
                                 }
                             }
@@ -291,18 +282,18 @@ fun EditorScreen(
                                     .fillMaxWidth()
                                     .padding(vertical = 24.dp)
                                     .height(64.dp),
-                                shape = RoundedCornerShape(20.dp),
+                                shape = RouletteTheme.shapes.card,
                                 colors = ButtonDefaults.buttonColors(containerColor = RouletteTheme.colors.primary),
                                 enabled = !state.isSaving
                             ) {
                                 Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(Icons.Filled.Save, contentDescription = null, tint = Color.White)
+                                    Icon(AppIcons.Save, contentDescription = null, tint = RouletteTheme.colors.onPrimary)
                                     Spacer(Modifier.width(12.dp))
                                     Text(
                                         if (state.isSaving) "Saving..." else "Save Wheel",
                                         fontWeight = FontWeight.Bold,
-                                        fontSize = 18.sp,
-                                        color = Color.White
+                                        style = MaterialTheme.typography.titleMedium,
+                                        color = RouletteTheme.colors.onPrimary
                                     )
                                 }
                             }
@@ -313,11 +304,11 @@ fun EditorScreen(
                         var importText by remember { mutableStateOf("") }
                         AlertDialog(
                             onDismissRequest = { showImportDialog = false },
-                            containerColor = SurfaceDarker,
-                            title = { Text("Import Names", color = Color.White, fontWeight = FontWeight.Bold) },
+                            containerColor = RouletteTheme.colors.surfaceElevated,
+                            title = { Text("Import Names", color = RouletteTheme.colors.textPrimary, fontWeight = FontWeight.Bold) },
                             text = {
                                 Column {
-                                    Text("Enter names separated by comma or new line", color = TextSecondary, fontSize = 14.sp)
+                                    Text("Enter names separated by comma or new line", color = RouletteTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
                                     Spacer(Modifier.height(16.dp))
                                     OutlinedTextField(
                                         value = importText,
@@ -326,11 +317,11 @@ fun EditorScreen(
                                         shape = RoundedCornerShape(16.dp),
                                         colors = OutlinedTextFieldDefaults.colors(
                                             focusedBorderColor = themeColor,
-                                            unfocusedBorderColor = SurfaceDark,
-                                            focusedTextColor = Color.White,
-                                            unfocusedTextColor = Color.White,
-                                            unfocusedContainerColor = DeepNavyBlack,
-                                            focusedContainerColor = DeepNavyBlack
+                                            unfocusedBorderColor = RouletteTheme.colors.surface,
+                                            focusedTextColor = RouletteTheme.colors.textPrimary,
+                                            unfocusedTextColor = RouletteTheme.colors.textPrimary,
+                                            unfocusedContainerColor = RouletteTheme.colors.background,
+                                            focusedContainerColor = RouletteTheme.colors.background
                                         )
                                     )
                                 }
@@ -349,7 +340,7 @@ fun EditorScreen(
                             },
                             dismissButton = {
                                 TextButton(onClick = { showImportDialog = false }) {
-                                    Text("Cancel", color = TextSecondary)
+                                    Text("Cancel", color = RouletteTheme.colors.textSecondary)
                                 }
                             }
                         )
@@ -371,7 +362,7 @@ fun EditorScreen(
             is EditorUiState.Error -> {
                 Box(modifier = Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                     Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text("Error: ${state.message}", color = Color.Red, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+                        Text("Error: ${state.message}", color = RouletteTheme.colors.danger, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
                         Spacer(Modifier.height(16.dp))
                         Button(onClick = { viewModel.initializeNew() }, colors = ButtonDefaults.buttonColors(containerColor = themeColor)) {
                             Text("Retry")
@@ -387,12 +378,12 @@ fun EditorScreen(
 private fun EditorSectionCard(title: String, content: @Composable ColumnScope.() -> Unit) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = SurfaceDark,
-        shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
+        color = RouletteTheme.colors.surface,
+        shape = RouletteTheme.shapes.card,
+        border = BorderStroke(1.dp, RouletteTheme.colors.divider)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text(title, color = TextSecondary.copy(alpha = 0.8f), fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
+            Text(title, color = RouletteTheme.colors.textSecondary.copy(alpha = 0.8f), style = MaterialTheme.typography.bodySmall, fontWeight = FontWeight.Bold, letterSpacing = 1.2.sp)
             content()
         }
     }
@@ -400,7 +391,7 @@ private fun EditorSectionCard(title: String, content: @Composable ColumnScope.()
 
 @Composable
 private fun EditorToggleCard(
-    icon: ImageVector,
+    icon: Painter,
     title: String,
     description: String,
     checked: Boolean,
@@ -409,9 +400,9 @@ private fun EditorToggleCard(
 ) {
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = SurfaceDark,
-        shape = RoundedCornerShape(24.dp),
-        border = BorderStroke(1.dp, Color.White.copy(alpha = 0.05f))
+        color = RouletteTheme.colors.surface,
+        shape = RouletteTheme.shapes.card,
+        border = BorderStroke(1.dp, RouletteTheme.colors.divider)
     ) {
         Row(
             modifier = Modifier.padding(20.dp),
@@ -420,25 +411,25 @@ private fun EditorToggleCard(
         ) {
             Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
                 Box(
-                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(TextSecondary.copy(alpha = 0.12f)),
+                    modifier = Modifier.size(40.dp).clip(RoundedCornerShape(12.dp)).background(RouletteTheme.colors.textSecondary.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(icon, contentDescription = null, tint = TextSecondary, modifier = Modifier.size(20.dp))
+                    Icon(icon, contentDescription = null, tint = RouletteTheme.colors.textSecondary, modifier = Modifier.size(20.dp))
                 }
                 Spacer(Modifier.width(16.dp))
                 Column {
-                    Text(title, color = Color.White, fontWeight = FontWeight.Bold, fontSize = 16.sp)
-                    Text(description, color = TextSecondary.copy(alpha = 0.8f), fontSize = 13.sp)
+                    Text(title, color = RouletteTheme.colors.textPrimary, fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                    Text(description, color = RouletteTheme.colors.textSecondary.copy(alpha = 0.8f), style = MaterialTheme.typography.bodySmall)
                 }
             }
             Switch(
                 checked = checked,
                 onCheckedChange = onCheckedChange,
                 colors = SwitchDefaults.colors(
-                    checkedThumbColor = Color.White,
+                    checkedThumbColor = RouletteTheme.colors.textPrimary,
                     checkedTrackColor = RouletteTheme.colors.primary,
-                    uncheckedThumbColor = TextSecondary,
-                    uncheckedTrackColor = SurfaceDarker,
+                    uncheckedThumbColor = RouletteTheme.colors.textSecondary,
+                    uncheckedTrackColor = RouletteTheme.colors.surfaceElevated,
                     uncheckedBorderColor = Color.Transparent
                 )
             )
@@ -468,8 +459,8 @@ private fun SegmentEditorCard(
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = SurfaceDark,
-        shape = RoundedCornerShape(24.dp),
+        color = RouletteTheme.colors.surface,
+        shape = RouletteTheme.shapes.card,
         border = BorderStroke(1.dp, segment.color.copy(alpha = 0.5f))
     ) {
         Box(modifier = Modifier.background(segment.color.copy(alpha = 0.08f))) {
@@ -485,7 +476,7 @@ private fun SegmentEditorCard(
                         Text(
                             "SEGMENT ${index + 1}", 
                             color = accentColor.copy(alpha = 0.9f), 
-                            fontSize = 12.sp, 
+                            style = MaterialTheme.typography.bodySmall, 
                             fontWeight = FontWeight.Bold, 
                             letterSpacing = 1.2.sp
                         )
@@ -496,15 +487,15 @@ private fun SegmentEditorCard(
                             modifier = Modifier
                                 .size(36.dp)
                                 .clickable(enabled = index > 0) { onMoveUp() },
-                            color = if (index > 0) segment.color.copy(alpha = 0.15f) else SurfaceDarker.copy(alpha = 0.5f),
+                            color = if (index > 0) segment.color.copy(alpha = 0.15f) else RouletteTheme.colors.surfaceElevated.copy(alpha = 0.5f),
                             shape = RoundedCornerShape(12.dp),
                             border = if (index > 0) BorderStroke(1.dp, accentColor.copy(alpha = 0.2f)) else null
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    Icons.Filled.ExpandLess,
+                                    AppIcons.ExpandLess,
                                     contentDescription = "Move Up",
-                                    tint = if (index > 0) accentColor else Color.DarkGray,
+                                    tint = if (index > 0) accentColor else RouletteTheme.colors.textTertiary,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -515,15 +506,15 @@ private fun SegmentEditorCard(
                             modifier = Modifier
                                 .size(36.dp)
                                 .clickable(enabled = canDelete) { onRemove() },
-                            color = if (canDelete) Color.Red.copy(alpha = 0.1f) else SurfaceDarker.copy(alpha = 0.5f),
+                            color = if (canDelete) RouletteTheme.colors.danger.copy(alpha = 0.1f) else RouletteTheme.colors.surfaceElevated.copy(alpha = 0.5f),
                             shape = RoundedCornerShape(12.dp),
-                            border = if (canDelete) BorderStroke(1.dp, Color.Red.copy(alpha = 0.2f)) else null
+                            border = if (canDelete) BorderStroke(1.dp, RouletteTheme.colors.danger.copy(alpha = 0.2f)) else null
                         ) {
                             Box(contentAlignment = Alignment.Center) {
                                 Icon(
-                                    Icons.Filled.DeleteOutline,
+                                    AppIcons.Delete,
                                     contentDescription = "Remove",
-                                    tint = if (canDelete) Color(0xFFEF5350) else Color.DarkGray,
+                                    tint = if (canDelete) RouletteTheme.colors.danger else RouletteTheme.colors.textTertiary,
                                     modifier = Modifier.size(20.dp)
                                 )
                             }
@@ -535,7 +526,7 @@ private fun SegmentEditorCard(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 12.dp),
-                    color = DeepNavyBlack.copy(alpha = 0.7f),
+                    color = RouletteTheme.colors.background.copy(alpha = 0.7f),
                     shape = RoundedCornerShape(16.dp),
                     border = BorderStroke(1.5.dp, segment.color.copy(alpha = 0.4f))
                 ) {
@@ -552,11 +543,11 @@ private fun SegmentEditorCard(
                             focusedIndicatorColor = Color.Transparent,
                             unfocusedIndicatorColor = Color.Transparent,
                             cursorColor = accentColor,
-                            focusedTextColor = Color.White,
-                            unfocusedTextColor = Color.White
+                            focusedTextColor = RouletteTheme.colors.textPrimary,
+                            unfocusedTextColor = RouletteTheme.colors.textPrimary
                         ),
                         textStyle = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Bold),
-                        placeholder = { Text("Segment name", color = TextSecondary.copy(alpha = 0.3f)) }
+                        placeholder = { Text("Segment name", color = RouletteTheme.colors.textSecondary.copy(alpha = 0.3f)) }
                     )
                 }
 
@@ -565,8 +556,8 @@ private fun SegmentEditorCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text("Weight (probability)", color = Color.White.copy(alpha = 0.5f), fontSize = 13.sp)
-                    Text("${String.format(Locale.US, "%.1f", segment.weight)}x", color = accentColor, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                    Text("Weight (probability)", color = RouletteTheme.colors.textSecondary, style = MaterialTheme.typography.bodySmall)
+                    Text("${String.format(Locale.US, "%.1f", segment.weight)}x", color = accentColor, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold)
                 }
 
                 Slider(
@@ -575,9 +566,9 @@ private fun SegmentEditorCard(
                     valueRange = 1f..5f,
                     steps = 7,
                     colors = SliderDefaults.colors(
-                        thumbColor = Color.White,
+                        thumbColor = RouletteTheme.colors.textPrimary,
                         activeTrackColor = accentColor,
-                        inactiveTrackColor = Color.White.copy(alpha = 0.1f),
+                        inactiveTrackColor = RouletteTheme.colors.divider,
                         activeTickColor = Color.Transparent,
                         inactiveTickColor = Color.Transparent
                     ),
