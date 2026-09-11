@@ -54,5 +54,15 @@ interface SpinHistoryRepository {
      * Get spin counts for all wheels
      */
     fun getAllWheelSpinCounts(): Flow<Map<String, Int>>
+
+    /**
+     * Get the most recent spins across every wheel
+     */
+    fun getRecentSpinsGlobal(limit: Int): Flow<List<SpinResult>>
+
+    /**
+     * Get every spin recorded at or after the given epoch millisecond
+     */
+    fun getSpinsSince(since: Long): Flow<List<SpinResult>>
 }
 

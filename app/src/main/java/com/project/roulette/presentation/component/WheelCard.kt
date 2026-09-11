@@ -32,17 +32,18 @@ import com.project.roulette.domain.model.Wheel
 import com.project.roulette.presentation.component.design.Pill
 import com.project.roulette.ui.theme.RouletteTheme
 import com.project.roulette.ui.theme.TileBlue
-import com.project.roulette.ui.theme.TileCoral
-import com.project.roulette.ui.theme.TileOrange
+import com.project.roulette.ui.theme.TileAmber
+import com.project.roulette.ui.theme.TileGreen
 import com.project.roulette.ui.theme.TilePink
 import com.project.roulette.ui.theme.TilePurple
 import com.project.roulette.ui.theme.TileTeal
 import com.project.roulette.ui.theme.rememberAccentOnSurface
 import com.project.roulette.util.TimeUtils
 
-private val TileAccents = listOf(TilePurple, TileTeal, TileCoral, TileBlue, TilePink, TileOrange)
+val WheelAccentPalette = listOf(TilePurple, TileTeal, TileBlue, TilePink, TileAmber, TileGreen)
 
-fun wheelAccentFor(id: String) = TileAccents[(id.hashCode().let { if (it < 0) -it else it }) % TileAccents.size]
+fun wheelAccentFor(id: String) =
+    WheelAccentPalette[(id.hashCode().let { if (it < 0) -it else it }) % WheelAccentPalette.size]
 
 @Composable
 fun WheelCard(
@@ -113,63 +114,79 @@ fun WheelCard(
                 Pill(text = "Active", accent = colors.primary)
             }
 
-            var expanded by remember { mutableStateOf(false) }
-            Box {
-                IconButton(onClick = { expanded = true }) {
+            WheelOptionsMenu(
+                isFavorite = wheel.isFavorite,
+                onToggleFavorite = onToggleFavorite,
+                onDelete = onDelete
+            )
+        }
+    }
+}
+
+@Composable
+fun WheelOptionsMenu(
+    isFavorite: Boolean,
+    onToggleFavorite: () -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val colors = RouletteTheme.colors
+    var expanded by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        IconButton(onClick = { expanded = true }) {
+            Icon(
+                painter = AppIcons.MoreVert,
+                contentDescription = "Wheel options",
+                tint = colors.textSecondary
+            )
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = colors.surfaceElevated,
+            shape = RouletteTheme.shapes.cardSmall
+        ) {
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        text = if (isFavorite) "Unfavourite" else "Favourite",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.textPrimary
+                    )
+                },
+                onClick = {
+                    onToggleFavorite()
+                    expanded = false
+                },
+                leadingIcon = {
                     Icon(
-                        painter = AppIcons.MoreVert,
-                        contentDescription = "Wheel options",
-                        tint = colors.textSecondary
+                        painter = if (isFavorite) AppIcons.FavoriteFilled else AppIcons.Favorite,
+                        contentDescription = null,
+                        tint = if (isFavorite) colors.danger else colors.textSecondary
                     )
                 }
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    containerColor = colors.surfaceElevated,
-                    shape = RouletteTheme.shapes.cardSmall
-                ) {
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = if (wheel.isFavorite) "Unfavourite" else "Favourite",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = colors.textPrimary
-                            )
-                        },
-                        onClick = {
-                            onToggleFavorite()
-                            expanded = false
-                        },
-                        leadingIcon = {
-                            Icon(
-                                painter = if (wheel.isFavorite) AppIcons.FavoriteFilled else AppIcons.Favorite,
-                                contentDescription = null,
-                                tint = if (wheel.isFavorite) colors.danger else colors.textSecondary
-                            )
-                        }
+            )
+            DropdownMenuItem(
+                text = {
+                    Text(
+                        text = "Delete",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = colors.danger
                     )
-                    DropdownMenuItem(
-                        text = {
-                            Text(
-                                text = "Delete",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = colors.danger
-                            )
-                        },
-                        onClick = {
-                            onDelete()
-                            expanded = false
-                        },
-                        leadingIcon = {
-                            Icon(
-                                painter = AppIcons.Delete,
-                                contentDescription = null,
-                                tint = colors.danger
-                            )
-                        }
+                },
+                onClick = {
+                    onDelete()
+                    expanded = false
+                },
+                leadingIcon = {
+                    Icon(
+                        painter = AppIcons.Delete,
+                        contentDescription = null,
+                        tint = colors.danger
                     )
                 }
-            }
+            )
         }
     }
 }

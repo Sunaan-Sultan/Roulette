@@ -8,6 +8,8 @@ import com.project.roulette.domain.usecase.spin.ClearSpinHistoryUseCase
 import com.project.roulette.domain.usecase.spin.GetRecentSpinsUseCase
 import com.project.roulette.domain.usecase.spin.GetSpinHistoryUseCase
 import com.project.roulette.domain.usecase.spin.SpinWheelUseCase
+import com.project.roulette.domain.usecase.dashboard.GetGlobalRecentSpinsUseCase
+import com.project.roulette.domain.usecase.dashboard.GetSpinsInWindowUseCase
 import com.project.roulette.domain.usecase.statistics.ClearStatisticsUseCase
 import com.project.roulette.domain.usecase.statistics.GetWheelStatisticsUseCase
 import com.project.roulette.domain.usecase.wheel.CreateWheelUseCase
@@ -124,5 +126,18 @@ object UseCaseModule {
     @Provides
     fun provideClearStatisticsUseCase(statisticsRepository: StatisticsRepository): ClearStatisticsUseCase =
         ClearStatisticsUseCase(statisticsRepository)
+
+    // Dashboard Use Cases
+    @Singleton
+    @Provides
+    fun provideGetGlobalRecentSpinsUseCase(
+        spinHistoryRepository: SpinHistoryRepository
+    ): GetGlobalRecentSpinsUseCase = GetGlobalRecentSpinsUseCase(spinHistoryRepository)
+
+    @Singleton
+    @Provides
+    fun provideGetSpinsInWindowUseCase(
+        spinHistoryRepository: SpinHistoryRepository
+    ): GetSpinsInWindowUseCase = GetSpinsInWindowUseCase(spinHistoryRepository)
 }
 

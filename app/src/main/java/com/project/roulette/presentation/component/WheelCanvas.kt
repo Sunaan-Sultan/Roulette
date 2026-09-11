@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.luminance
 import com.project.roulette.domain.model.Wheel
 import com.project.roulette.ui.theme.RouletteTheme
 import kotlin.math.PI
+import kotlin.math.abs
 import kotlin.math.cos
 import kotlin.math.sin
 
@@ -34,7 +35,8 @@ data class WheelCanvasColors(
     val divider: Color,
     val rim: Color,
     val innerRing: Color,
-    val hubStroke: Color
+    val hubStroke: Color,
+    val pointerOutline: Color
 )
 
 @Composable
@@ -47,7 +49,8 @@ fun rememberWheelCanvasColors(): WheelCanvasColors {
                 divider = Color.White.copy(alpha = 0.85f),
                 rim = Color(0xFFD5D7DD),
                 innerRing = Color.White.copy(alpha = 0.6f),
-                hubStroke = Color.White
+                hubStroke = Color.White,
+                pointerOutline = Color.White
             )
         } else {
             WheelCanvasColors(
@@ -55,7 +58,8 @@ fun rememberWheelCanvasColors(): WheelCanvasColors {
                 divider = Color.Black.copy(alpha = 0.8f),
                 rim = Color(0xFF050505),
                 innerRing = Color(0xFF1E1E2C),
-                hubStroke = Color(0xFF121212)
+                hubStroke = Color(0xFF121212),
+                pointerOutline = Color(0xFF0B0B14)
             )
         }
     }
@@ -71,6 +75,11 @@ fun WheelCanvas(
     canvasColors: WheelCanvasColors = rememberWheelCanvasColors()
 ) {
     val segments = wheel.getActiveSegments()
+    val isLight = RouletteTheme.colors.isLight
+    val segmentColors = segments.map { it.color }
+    val pointerColor = remember(segmentColors, themeColor, isLight) {
+        distinctPointerColor(segmentColors, themeColor, isLight)
+    }
     
     // Calculate readable text colors based on the segment backgrounds
     val textColors = segments.map { segment ->
@@ -221,7 +230,12 @@ fun WheelCanvas(
 
             drawPath(
                 path = path,
-                color = themeColor // Match theme
+                color = pointerColor
+            )
+            drawPath(
+                path = path,
+                color = canvasColors.pointerOutline,
+                style = Stroke(width = 5f)
             )
         }
     }
@@ -271,4 +285,53 @@ private fun DrawScope.drawSectorLabel(
         }
         restore()
     }
+}
+
+private const val MIN_POINTER_HUE_GAP = 45f
+
+private fun distinctPointerColor(
+    segmentColors: List<Color>,
+    themeColor: Color,
+    isLight: Boolean
+): Color {
+    val hsv = FloatArray(3)
+    val segmentHues = segmentColors.mapNotNull { color ->
+        android.graphics.Color.colorToHSV(color.toArgb(), hsv)
+        if (hsv[1] >= 0.15f && hsv[2] >= 0.15f) hsv[0] else null
+    }
+    if (segmentHues.isEmpty()) return themeColor
+
+    android.graphics.Color.colorToHSV(themeColor.toArgb(), hsv)
+    val themeHue = hsv[0]
+    val themeSaturation = hsv[1]
+    val themeValue = hsv[2]
+    if (segmentHues.minOf { hueDistance(it, themeHue) } >= MIN_POINTER_HUE_GAP) return themeColor
+
+    val sorted = segmentHues.sorted()
+    var bestHue = themeHue
+    var bestGap = -1f
+    for (index in sorted.indices) {
+        val current = sorted[index]
+        val next = if (index == sorted.lastIndex) sorted[0] + 360f else sorted[index + 1]
+        val gap = next - current
+        if (gap > bestGap) {
+            bestGap = gap
+            bestHue = (current + gap / 2f) % 360f
+        }
+    }
+
+    return Color(
+        android.graphics.Color.HSVToColor(
+            floatArrayOf(
+                bestHue,
+                themeSaturation.coerceAtLeast(0.75f),
+                if (isLight) themeValue.coerceIn(0.55f, 0.8f) else themeValue.coerceAtLeast(0.9f)
+            )
+        )
+    )
+}
+
+private fun hueDistance(a: Float, b: Float): Float {
+    val diff = abs(a - b) % 360f
+    return if (diff > 180f) 360f - diff else diff
 }

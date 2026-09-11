@@ -34,6 +34,7 @@ data class Dimens(
     val textFieldHeight: Dp = 52.dp,
     val fabSize: Dp = 56.dp,
     val bottomBarHeight: Dp = 64.dp,
+    val bottomBarSpace: Dp = 96.dp,
     val topBarHeight: Dp = 56.dp,
 
     val space2: Dp = 2.dp,

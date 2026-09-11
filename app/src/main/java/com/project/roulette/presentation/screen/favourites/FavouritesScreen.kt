@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.project.roulette.domain.model.Wheel
 import com.project.roulette.presentation.component.AppIcons
+import com.project.roulette.presentation.component.WheelOptionsMenu
 import com.project.roulette.presentation.component.wheelAccentFor
 import com.project.roulette.presentation.component.design.AppFilterChip
 import com.project.roulette.presentation.component.design.AppLargeHeader
@@ -121,7 +122,7 @@ fun FavouritesScreen(
                                 contentPadding = PaddingValues(
                                     start = dimens.screenPadding,
                                     end = dimens.screenPadding,
-                                    bottom = dimens.listBottomPadding
+                                    bottom = dimens.listBottomPadding + dimens.bottomBarSpace
                                 )
                             ) {
                                 itemsIndexed(favouriteWheels, key = { _, it -> it.id }) { index, wheel ->
@@ -129,17 +130,25 @@ fun FavouritesScreen(
                                     val onSelect = {
                                         showSwitchInterstitial(context) { onNavigateToWheel(wheel.id) }
                                     }
+                                    val onToggleFavorite = {
+                                        viewModel.toggleFavorite(wheel.id, wheel.isFavorite)
+                                    }
+                                    val onDelete = { viewModel.deleteWheel(wheel.id) }
                                     if (index == 0) {
                                         FeaturedFavouriteCard(
                                             wheel = wheel,
                                             spinCount = spinCount,
-                                            onSelect = onSelect
+                                            onSelect = onSelect,
+                                            onToggleFavorite = onToggleFavorite,
+                                            onDelete = onDelete
                                         )
                                     } else {
                                         SmallFavouriteCard(
                                             wheel = wheel,
                                             spinCount = spinCount,
-                                            onSelect = onSelect
+                                            onSelect = onSelect,
+                                            onToggleFavorite = onToggleFavorite,
+                                            onDelete = onDelete
                                         )
                                     }
                                 }
@@ -166,7 +175,9 @@ fun FavouritesScreen(
 private fun FeaturedFavouriteCard(
     wheel: Wheel,
     spinCount: Int,
-    onSelect: () -> Unit
+    onSelect: () -> Unit,
+    onToggleFavorite: () -> Unit,
+    onDelete: () -> Unit
 ) {
     val colors = RouletteTheme.colors
     val dimens = RouletteTheme.dimens
@@ -180,18 +191,31 @@ private fun FeaturedFavouriteCard(
         border = BorderStroke(dimens.borderWidth, colors.primaryBorder)
     ) {
         Column(modifier = Modifier.padding(dimens.space20)) {
-            Box(
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(RouletteTheme.shapes.thumbnail)
-                    .background(colors.primarySubtle),
-                contentAlignment = Alignment.Center
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
             ) {
-                Icon(
-                    painter = AppIcons.Wheel,
-                    contentDescription = null,
-                    tint = colors.primary,
-                    modifier = Modifier.size(28.dp)
+                Box(
+                    modifier = Modifier
+                        .size(56.dp)
+                        .clip(RouletteTheme.shapes.thumbnail)
+                        .background(colors.primarySubtle),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        painter = AppIcons.Wheel,
+                        contentDescription = null,
+                        tint = colors.primary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+
+                Spacer(Modifier.weight(1f))
+
+                WheelOptionsMenu(
+                    isFavorite = wheel.isFavorite,
+                    onToggleFavorite = onToggleFavorite,
+                    onDelete = onDelete
                 )
             }
 
@@ -227,7 +251,9 @@ private fun FeaturedFavouriteCard(
 private fun SmallFavouriteCard(
     wheel: Wheel,
     spinCount: Int,
-    onSelect: () -> Unit
+    onSelect: () -> Unit,
+    onToggleFavorite: () -> Unit,
+    onDelete: () -> Unit
 ) {
     val colors = RouletteTheme.colors
     val dimens = RouletteTheme.dimens
@@ -244,7 +270,11 @@ private fun SmallFavouriteCard(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(dimens.space16),
+                .padding(
+                    start = dimens.space16,
+                    top = dimens.space12,
+                    bottom = dimens.space12
+                ),
             verticalAlignment = Alignment.CenterVertically
         ) {
             Box(
@@ -278,6 +308,12 @@ private fun SmallFavouriteCard(
                     color = colors.textSecondary
                 )
             }
+
+            WheelOptionsMenu(
+                isFavorite = wheel.isFavorite,
+                onToggleFavorite = onToggleFavorite,
+                onDelete = onDelete
+            )
         }
     }
 }

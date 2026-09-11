@@ -20,12 +20,10 @@ object TimeUtils {
 
         return when {
             seconds < 60 -> "Just now"
+            minutes == 1L -> "1 minute ago"
             minutes < 60 -> "$minutes minutes ago"
-            hours < 24 -> {
-                val nowDay = now.toLocalDateTime(TimeZone.currentSystemDefault()).dayOfMonth
-                val instantDay = instant.toLocalDateTime(TimeZone.currentSystemDefault()).dayOfMonth
-                if (nowDay == instantDay) "Today" else "Yesterday"
-            }
+            hours == 1L -> "1 hour ago"
+            hours < 24 -> "$hours hours ago"
             days == 1L -> "Yesterday"
             days < 7 -> "$days days ago"
             else -> {

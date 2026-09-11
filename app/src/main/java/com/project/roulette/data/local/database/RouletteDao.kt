@@ -69,6 +69,12 @@ interface SpinHistoryDao {
     @Query("SELECT COUNT(*) FROM spin_history")
     fun getGlobalSpinCountFlow(): Flow<Int>
 
+    @Query("SELECT * FROM spin_history ORDER BY spinTimestamp DESC LIMIT :limit")
+    fun getRecentSpinsGlobal(limit: Int): Flow<List<com.project.roulette.data.local.database.entity.SpinHistoryEntity>>
+
+    @Query("SELECT * FROM spin_history WHERE spinTimestamp >= :since ORDER BY spinTimestamp DESC")
+    fun getSpinsSince(since: Long): Flow<List<com.project.roulette.data.local.database.entity.SpinHistoryEntity>>
+
     @Query("SELECT COUNT(*) FROM spin_history WHERE spinTimestamp >= :startOfDay")
     fun getSpinsTodayCountFlow(startOfDay: Long): Flow<Int>
 

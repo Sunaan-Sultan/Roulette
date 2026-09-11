@@ -59,6 +59,8 @@ val TileCoral = Color(0xFFFF7675)
 val TileBlue = Color(0xFF0984E3)
 val TilePink = Color(0xFFE84393)
 val TileOrange = Color(0xFFE17055)
+val TileAmber = Color(0xFFFFA000)
+val TileGreen = Color(0xFF27AE60)
 
 @Deprecated("Use RouletteTheme.colors.background", ReplaceWith("RouletteTheme.colors.background"))
 val DeepNavyBlack = GroupedBgDark

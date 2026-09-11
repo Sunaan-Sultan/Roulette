@@ -25,7 +25,6 @@ import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateOptions
 import com.google.android.play.core.install.model.AppUpdateType
 import com.google.android.play.core.install.model.UpdateAvailability
-import com.project.roulette.util.BannerAd
 import com.project.roulette.presentation.component.BottomBar
 import com.project.roulette.presentation.component.WhatsNewDialog
 import com.project.roulette.presentation.navigation.RouletteNavHost
@@ -200,36 +199,16 @@ fun RouletteApp(settingsViewModel: SettingsViewModel = hiltViewModel()) {
         )
     }
 
-    val showAd by remember(currentDestination) {
-        mutableStateOf(
-            when (currentDestination?.route) {
-                RouletteScreen.Home.route,
-                RouletteScreen.Wheels.route,
-                RouletteScreen.Favourites.route,
-                RouletteScreen.Notifications.route -> true
-                else -> false
-            }
-        )
-    }
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         containerColor = RouletteTheme.colors.background,
         bottomBar = {
-            // Bottom UI Layer (Ad + Nav Bar)
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .animateContentSize(animationSpec = tween(400)),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Banner Ad
-                if (showAd) {
-                    BannerAd(modifier = Modifier.fillMaxWidth())
-                    Spacer(modifier = Modifier.height(12.dp))
-                }
-
-                // Floating Navigation Bar
                 if (showBottomBar) {
                     BottomBar(
                         navController = navController,
@@ -239,13 +218,13 @@ fun RouletteApp(settingsViewModel: SettingsViewModel = hiltViewModel()) {
             }
         }
     ) { paddingValues ->
-        // Adjust padding to bring the FAB closer to the Ad/Nav bar
         val layoutDirection = androidx.compose.ui.platform.LocalLayoutDirection.current
+        val reclaimed = if (showBottomBar) RouletteTheme.dimens.bottomBarSpace else 0.dp
         val adjustedPadding = PaddingValues(
             start = paddingValues.calculateStartPadding(layoutDirection),
             top = paddingValues.calculateTopPadding(),
             end = paddingValues.calculateEndPadding(layoutDirection),
-            bottom = (paddingValues.calculateBottomPadding() - 12.dp).coerceAtLeast(0.dp)
+            bottom = (paddingValues.calculateBottomPadding() - reclaimed).coerceAtLeast(0.dp)
         )
 
         // Main Content

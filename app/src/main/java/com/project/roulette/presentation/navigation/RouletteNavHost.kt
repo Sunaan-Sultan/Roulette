@@ -17,6 +17,7 @@ import com.project.roulette.presentation.screen.editor.EditorScreen
 import com.project.roulette.presentation.screen.templates.TemplatesScreen
 import com.project.roulette.presentation.screen.history.HistoryScreen
 import com.project.roulette.presentation.screen.statistics.StatisticsScreen
+import com.project.roulette.presentation.viewmodel.DashboardViewModel
 import com.project.roulette.presentation.viewmodel.HomeViewModel
 import com.project.roulette.presentation.viewmodel.WheelViewModel
 import androidx.compose.foundation.layout.*
@@ -87,7 +88,7 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
         }
 
         composable(RouletteScreen.Home.route) {
-            val viewModel: HomeViewModel = hiltViewModel()
+            val viewModel: DashboardViewModel = hiltViewModel()
             HomeScreen(
                 viewModel = viewModel,
                 onNavigateToWheel = { wheelId ->
@@ -98,6 +99,15 @@ fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValu
                 },
                 onNavigateToNotifications = {
                     navController.navigate(RouletteScreen.Notifications.route)
+                },
+                onNavigateToHistory = { wheelId ->
+                    navController.navigate(RouletteScreen.History.forId(wheelId))
+                },
+                onNavigateToAllWheels = {
+                    navController.navigate(RouletteScreen.Wheels.route) {
+                        popUpTo(RouletteScreen.Home.route)
+                        launchSingleTop = true
+                    }
                 }
             )
         }

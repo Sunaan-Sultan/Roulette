@@ -259,7 +259,9 @@ class EditorViewModel @Inject constructor(
     private fun updateSegmentColors() {
         _uiState.update { currentState ->
             if (currentState is EditorUiState.Success && currentState.wheel != null) {
-                val baseColor = ThemePalette[currentState.wheel.themePaletteIndex]
+                val baseColor = ThemePalette.getOrElse(currentState.wheel.themePaletteIndex) {
+                    ThemePalette[0]
+                }
                 val updatedSegments = currentState.wheel.segments.mapIndexed { i, seg ->
                     val hsv = FloatArray(3)
                     android.graphics.Color.colorToHSV(baseColor.toArgb(), hsv)

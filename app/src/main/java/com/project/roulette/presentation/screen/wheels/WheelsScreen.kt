@@ -71,7 +71,8 @@ fun WheelsScreen(
             PrimaryFab(
                 text = "Create wheel",
                 icon = AppIcons.Add,
-                onClick = { showInterstitial(context = context) { onNavigateToCreate() } }
+                onClick = { showInterstitial(context = context) { onNavigateToCreate() } },
+                modifier = Modifier.padding(bottom = dimens.bottomBarSpace)
             )
         }
     ) { padding ->
@@ -188,7 +189,8 @@ fun WheelsScreen(
                                 contentPadding = PaddingValues(
                                     start = dimens.screenPadding,
                                     end = dimens.screenPadding,
-                                    bottom = dimens.listBottomPadding + dimens.fabSize
+                                    bottom = dimens.listBottomPadding + dimens.fabSize +
+                                        dimens.bottomBarSpace
                                 )
                             ) {
                                 items(state.wheels, key = { it.id }) { wheel ->

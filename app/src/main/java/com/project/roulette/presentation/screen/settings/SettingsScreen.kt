@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -38,6 +39,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -96,7 +98,7 @@ fun SettingsScreen(
                 start = dimens.screenPadding,
                 end = dimens.screenPadding,
                 top = dimens.listTopPadding,
-                bottom = dimens.listBottomPadding
+                bottom = dimens.listBottomPadding + dimens.bottomBarSpace
             ),
             verticalArrangement = Arrangement.spacedBy(dimens.space24)
         ) {
@@ -161,7 +163,7 @@ fun SettingsScreen(
 
                         FlowRow(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(dimens.space12),
+                            horizontalArrangement = Arrangement.spacedBy(dimens.space8),
                             verticalArrangement = Arrangement.spacedBy(dimens.space16),
                             maxItemsInEachRow = 4
                         ) {
@@ -169,7 +171,8 @@ fun SettingsScreen(
                                 PaletteItem(
                                     palette = palette,
                                     isSelected = paletteIndex == index,
-                                    onClick = { viewModel.updatePaletteIndex(index) }
+                                    onClick = { viewModel.updatePaletteIndex(index) },
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
                         }
@@ -191,7 +194,7 @@ fun SettingsScreen(
 
                         Spacer(Modifier.height(dimens.space12))
                         Text(
-                            text = Palettes[paletteIndex].name,
+                            text = Palettes.getOrElse(paletteIndex) { Palettes[0] }.name,
                             modifier = Modifier.fillMaxWidth(),
                             textAlign = TextAlign.Center,
                             style = MaterialTheme.typography.titleSmall,
@@ -383,16 +386,18 @@ fun SettingsScreen(
 private fun PaletteItem(
     palette: RoulettePalette,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
 ) {
     val colors = RouletteTheme.colors
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.clickable(onClick = onClick)
+        modifier = modifier.clickable(onClick = onClick)
     ) {
         Box(
             modifier = Modifier
-                .size(48.dp)
+                .fillMaxWidth()
+                .aspectRatio(1f)
                 .clip(CircleShape)
                 .background(palette.primary)
                 .border(
@@ -405,7 +410,9 @@ private fun PaletteItem(
         Text(
             palette.name,
             style = MaterialTheme.typography.labelSmall,
-            color = if (isSelected) colors.textPrimary else colors.textSecondary
+            color = if (isSelected) colors.textPrimary else colors.textSecondary,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
         )
     }
 }

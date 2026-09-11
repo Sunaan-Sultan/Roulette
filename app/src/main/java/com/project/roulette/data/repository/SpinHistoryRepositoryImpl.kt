@@ -77,4 +77,14 @@ class SpinHistoryRepositoryImpl @Inject constructor(
         spinHistoryDao.getAllWheelSpinCounts().map { list ->
             list.associate { it.wheelId to it.count }
         }
+
+    override fun getRecentSpinsGlobal(limit: Int): Flow<List<SpinResult>> =
+        spinHistoryDao.getRecentSpinsGlobal(limit).map { entities ->
+            entities.map { spinHistoryMapper.entityToSpinResult(it) }
+        }
+
+    override fun getSpinsSince(since: Long): Flow<List<SpinResult>> =
+        spinHistoryDao.getSpinsSince(since).map { entities ->
+            entities.map { spinHistoryMapper.entityToSpinResult(it) }
+        }
 }

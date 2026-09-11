@@ -31,6 +31,63 @@ enum class HomeFilter {
     ALL, RECENT, FAVOURITES, MOST_USED, FAVOURITES_RECENT, FAVOURITES_MOST_USED
 }
 
+// Home dashboard state
+sealed class DashboardUiState {
+    object Loading : DashboardUiState()
+    data class Success(
+        val totalWheels: Int = 0,
+        val totalSpins: Int = 0,
+        val spinsToday: Int = 0,
+        val spinsThisWeek: Int = 0,
+        val dayStreak: Int = 0,
+        val bestDayCount: Int = 0,
+        val unreadNotificationCount: Int = 0,
+        val weekActivity: List<DayActivity> = emptyList(),
+        val wheelShare: List<ShareSlice> = emptyList(),
+        val topPicks: List<DistributionItem> = emptyList(),
+        val recentSpins: List<RecentSpinItem> = emptyList(),
+        val quickWheels: List<QuickWheel> = emptyList()
+    ) : DashboardUiState() {
+        val hasWheels: Boolean get() = totalWheels > 0
+        val hasSpins: Boolean get() = totalSpins > 0
+    }
+
+    data class Error(val message: String) : DashboardUiState()
+}
+
+data class DayActivity(
+    val label: String,
+    val count: Int,
+    val isToday: Boolean
+)
+
+data class ShareSlice(
+    val wheelId: String?,
+    val label: String,
+    val count: Int,
+    val percentage: Int,
+    val color: androidx.compose.ui.graphics.Color
+)
+
+data class RecentSpinItem(
+    val id: String,
+    val wheelId: String,
+    val wheelName: String,
+    val segmentName: String,
+    val color: androidx.compose.ui.graphics.Color,
+    val timestamp: kotlinx.datetime.Instant
+)
+
+data class QuickWheel(
+    val id: String,
+    val name: String,
+    val segmentCount: Int,
+    val spinCount: Int,
+    val isFavorite: Boolean,
+    val color: androidx.compose.ui.graphics.Color,
+    val segmentColors: List<androidx.compose.ui.graphics.Color> = emptyList()
+)
+
 // Single Wheel screen state
 sealed class WheelUiState {
     object Loading : WheelUiState()

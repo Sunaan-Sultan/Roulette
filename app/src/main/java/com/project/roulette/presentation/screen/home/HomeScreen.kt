@@ -11,190 +11,275 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.project.roulette.presentation.component.AppIcons
-import com.project.roulette.presentation.component.WheelCard
-import com.project.roulette.presentation.component.design.AppFilterChip
 import com.project.roulette.presentation.component.design.AppLargeHeader
 import com.project.roulette.presentation.component.design.AppScaffold
-import com.project.roulette.presentation.component.design.AppSearchField
-import com.project.roulette.presentation.component.design.EmptyState
+import com.project.roulette.presentation.component.design.GroupedCard
 import com.project.roulette.presentation.component.design.NotificationBellButton
 import com.project.roulette.presentation.component.design.PrimaryButton
-import com.project.roulette.presentation.component.design.PrimaryFab
-import com.project.roulette.presentation.model.HomeFilter
-import com.project.roulette.presentation.model.HomeUiState
-import com.project.roulette.presentation.viewmodel.HomeViewModel
+import com.project.roulette.presentation.component.design.SectionHeader
+import com.project.roulette.presentation.component.design.StatCard
+import com.project.roulette.presentation.component.design.StatCardStyle
+import com.project.roulette.presentation.model.DashboardUiState
+import com.project.roulette.presentation.viewmodel.DashboardViewModel
 import com.project.roulette.ui.theme.RouletteTheme
+import com.project.roulette.ui.theme.TileBlue
+import com.project.roulette.ui.theme.TileTeal
+import com.project.roulette.ui.theme.rememberAccentOnSurface
 import com.project.roulette.util.loadInterstitial
 import com.project.roulette.util.loadSwitchInterstitial
 import com.project.roulette.util.showInterstitial
 import com.project.roulette.util.showSwitchInterstitial
+import java.util.Calendar
+import java.util.Locale
 
 @Composable
 fun HomeScreen(
-    viewModel: HomeViewModel,
+    viewModel: DashboardViewModel,
     onNavigateToWheel: (String) -> Unit,
     onNavigateToCreate: () -> Unit,
-    onNavigateToNotifications: () -> Unit
+    onNavigateToNotifications: () -> Unit,
+    onNavigateToHistory: (String) -> Unit,
+    onNavigateToAllWheels: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
-    val currentFilter by viewModel.filter.collectAsStateWithLifecycle()
+    val chartType by viewModel.chartType.collectAsStateWithLifecycle()
 
     val context = LocalContext.current
     val colors = RouletteTheme.colors
     val dimens = RouletteTheme.dimens
 
+    val weekAccent = rememberAccentOnSurface(TileTeal)
+    val bestDayAccent = rememberAccentOnSurface(TileBlue)
+
+    val greeting = remember {
+        when (Calendar.getInstance().get(Calendar.HOUR_OF_DAY)) {
+            in 5..11 -> "Good morning"
+            in 12..16 -> "Good afternoon"
+            in 17..21 -> "Good evening"
+            else -> "Good night"
+        }
+    }
+
     LaunchedEffect(Unit) {
         loadInterstitial(context)
         loadSwitchInterstitial(context)
-        viewModel.setFilter(HomeFilter.ALL)
     }
 
-    AppScaffold(
-        floatingActionButton = {
-            PrimaryFab(
-                text = "Create wheel",
-                icon = AppIcons.Add,
-                onClick = { showInterstitial(context = context) { onNavigateToCreate() } }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-        ) {
-            AppLargeHeader(
-                eyebrow = "My collection",
-                title = "Wheel of Names",
-                trailing = {
-                    NotificationBellButton(
-                        unreadCount = (uiState as? HomeUiState.Success)?.unreadNotificationCount ?: 0,
-                        onClick = onNavigateToNotifications
-                    )
-                }
-            )
+    val openWheel: (String) -> Unit = { wheelId ->
+        showSwitchInterstitial(context) { onNavigateToWheel(wheelId) }
+    }
+    val createWheel: () -> Unit = {
+        showInterstitial(context = context) { onNavigateToCreate() }
+    }
 
-            Column(modifier = Modifier.padding(horizontal = dimens.screenPadding)) {
-                AppSearchField(
-                    value = searchQuery,
-                    onValueChange = { viewModel.searchWheels(it) },
-                    placeholder = "Search wheels"
-                )
-
-                Spacer(Modifier.size(dimens.space12))
-
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(dimens.space8)
+    AppScaffold { padding ->
+        when (val state = uiState) {
+            is DashboardUiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
                 ) {
-                    AppFilterChip(
-                        label = "All",
-                        selected = currentFilter == HomeFilter.ALL,
-                        onClick = { viewModel.setFilter(HomeFilter.ALL) }
-                    )
-                    AppFilterChip(
-                        label = "Recent",
-                        selected = currentFilter == HomeFilter.RECENT,
-                        onClick = { viewModel.setFilter(HomeFilter.RECENT) }
-                    )
-                    AppFilterChip(
-                        label = "Favourites",
-                        selected = currentFilter == HomeFilter.FAVOURITES,
-                        onClick = { viewModel.setFilter(HomeFilter.FAVOURITES) }
-                    )
+                    CircularProgressIndicator(color = colors.primary)
                 }
             }
 
-            Spacer(Modifier.size(dimens.space16))
+            is DashboardUiState.Error -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        modifier = Modifier.padding(dimens.space32)
+                    ) {
+                        Text(
+                            text = state.message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = colors.danger
+                        )
+                        Spacer(Modifier.size(dimens.space16))
+                        PrimaryButton(text = "Create wheel", onClick = createWheel)
+                    }
+                }
+            }
 
-            Box(modifier = Modifier.weight(1f)) {
-                when (val state = uiState) {
-                    is HomeUiState.Loading -> {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            CircularProgressIndicator(color = colors.primary)
-                        }
+            is DashboardUiState.Success -> {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(padding),
+                    contentPadding = PaddingValues(
+                        bottom = dimens.listBottomPadding + dimens.bottomBarSpace
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(dimens.space16)
+                ) {
+                    item {
+                        AppLargeHeader(
+                            eyebrow = greeting,
+                            title = "Wheel of Names",
+                            trailing = {
+                                NotificationBellButton(
+                                    unreadCount = state.unreadNotificationCount,
+                                    onClick = onNavigateToNotifications
+                                )
+                            }
+                        )
                     }
 
-                    is HomeUiState.Success -> {
-                        if (state.wheels.isEmpty()) {
-                            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                if (searchQuery.isNotEmpty()) {
-                                    EmptyState(
-                                        icon = AppIcons.Search,
-                                        title = "No results",
-                                        message = "No wheels match that search. Try another term."
-                                    )
-                                } else {
-                                    EmptyState(
-                                        icon = AppIcons.Wheel,
-                                        title = "No wheels yet",
-                                        message = "Create your first wheel and start spinning.",
-                                        actionLabel = "Create wheel",
-                                        onAction = {
-                                            showInterstitial(context = context) { onNavigateToCreate() }
+                    if (!state.hasWheels) {
+                        item {
+                            Box(modifier = Modifier.padding(horizontal = dimens.screenPadding)) {
+                                WelcomeCard(onCreate = createWheel)
+                            }
+                        }
+                    } else {
+                        item {
+                            Column {
+                                SectionHeader(
+                                    text = "Your wheels",
+                                    trailing = {
+                                        TextButton(onClick = onNavigateToAllWheels) {
+                                            Text(
+                                                text = "See all",
+                                                style = MaterialTheme.typography.labelLarge,
+                                                color = colors.primary
+                                            )
+                                        }
+                                    }
+                                )
+                                LazyRow(
+                                    contentPadding = PaddingValues(
+                                        horizontal = dimens.screenPadding
+                                    ),
+                                    horizontalArrangement = Arrangement.spacedBy(dimens.space12)
+                                ) {
+                                    item {
+                                        CreateWheelTile(onClick = createWheel)
+                                    }
+                                    items(state.quickWheels, key = { it.id }) { wheel ->
+                                        QuickWheelCard(
+                                            wheel = wheel,
+                                            onClick = { openWheel(wheel.id) }
+                                        )
+                                    }
+                                }
+                            }
+                        }
+
+                        if (!state.hasSpins) {
+                            item {
+                                Box(modifier = Modifier.padding(horizontal = dimens.screenPadding)) {
+                                    FirstSpinCard(
+                                        onSpin = state.quickWheels.firstOrNull()?.let { wheel ->
+                                            { openWheel(wheel.id) }
                                         }
                                     )
                                 }
                             }
-                        } else {
-                            LazyColumn(
-                                modifier = Modifier.fillMaxSize(),
-                                verticalArrangement = Arrangement.spacedBy(dimens.space12),
-                                contentPadding = PaddingValues(
-                                    start = dimens.screenPadding,
-                                    end = dimens.screenPadding,
-                                    bottom = dimens.listBottomPadding + dimens.fabSize
-                                )
+                        }
+
+                        item {
+                            Box(modifier = Modifier.padding(horizontal = dimens.screenPadding)) {
+                                ActivityHeroCard(state)
+                            }
+                        }
+
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = dimens.screenPadding),
+                                horizontalArrangement = Arrangement.spacedBy(dimens.space12)
                             ) {
-                                items(state.wheels, key = { it.id }) { wheel ->
-                                    WheelCard(
-                                        wheel = wheel,
-                                        isActive = wheel.id == state.selectedWheelId,
-                                        onSelect = {
-                                            showSwitchInterstitial(context) {
-                                                viewModel.selectWheel(wheel.id)
-                                                onNavigateToWheel(wheel.id)
-                                            }
-                                        },
-                                        onToggleFavorite = {
-                                            viewModel.toggleFavorite(wheel.id, wheel.isFavorite)
-                                        },
-                                        onDelete = { viewModel.deleteWheel(wheel.id) }
+                                StatCard(
+                                    value = state.totalWheels.toString(),
+                                    label = if (state.totalWheels == 1) "Wheel" else "Wheels",
+                                    accent = colors.primary,
+                                    style = StatCardStyle.Tinted,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                StatCard(
+                                    value = String.format(
+                                        Locale.US,
+                                        "%.1f",
+                                        state.spinsThisWeek / 7f
+                                    ),
+                                    label = "Avg / day",
+                                    accent = weekAccent,
+                                    style = StatCardStyle.Tinted,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                StatCard(
+                                    value = state.bestDayCount.toString(),
+                                    label = "Best day",
+                                    accent = bestDayAccent,
+                                    style = StatCardStyle.Tinted,
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+
+                        if (state.wheelShare.isNotEmpty()) {
+                            item {
+                                Box(modifier = Modifier.padding(horizontal = dimens.screenPadding)) {
+                                    SpinShareCard(
+                                        slices = state.wheelShare,
+                                        totalSpins = state.totalSpins,
+                                        chartType = chartType,
+                                        onToggle = { viewModel.toggleChartType() },
+                                        onSliceClick = openWheel
                                     )
                                 }
                             }
                         }
-                    }
 
-                    is HomeUiState.Error -> {
-                        Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                                modifier = Modifier.padding(dimens.space32)
-                            ) {
-                                Text(
-                                    text = state.message,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = colors.danger
-                                )
-                                Spacer(Modifier.size(dimens.space16))
-                                PrimaryButton(
-                                    text = "Retry",
-                                    onClick = { viewModel.loadAllWheels() }
-                                )
+                        if (state.topPicks.isNotEmpty()) {
+                            item {
+                                Box(modifier = Modifier.padding(horizontal = dimens.screenPadding)) {
+                                    TopPicksCard(state.topPicks)
+                                }
+                            }
+                        }
+
+                        if (state.recentSpins.isNotEmpty()) {
+                            item {
+                                val feed = state.recentSpins.take(8)
+                                Column {
+                                    SectionHeader(text = "Recent spins")
+                                    Box(
+                                        modifier = Modifier
+                                            .padding(horizontal = dimens.screenPadding)
+                                    ) {
+                                        GroupedCard {
+                                            feed.forEachIndexed { index, item ->
+                                                RecentSpinRow(
+                                                    item = item,
+                                                    onClick = { onNavigateToHistory(item.wheelId) },
+                                                    showDivider = index != feed.lastIndex
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
