@@ -24,7 +24,7 @@ class SettingsViewModel @Inject constructor(
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), SelectionAlgorithmFactory.AlgorithmType.UNIFORM)
 
     val defaultSpinSpeed: StateFlow<WheelViewModel.SpinSpeed> = preferenceRepository.defaultSpinSpeed
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WheelViewModel.SpinSpeed.MEDIUM)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), WheelViewModel.SpinSpeed.LEISURELY)
 
     val spinSoundEnabled: StateFlow<Boolean> = preferenceRepository.spinSoundEnabled
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), true)

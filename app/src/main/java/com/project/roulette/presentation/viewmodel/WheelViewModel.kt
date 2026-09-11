@@ -51,14 +51,14 @@ class WheelViewModel @Inject constructor(
     val selectedAlgorithm: StateFlow<SelectionAlgorithmFactory.AlgorithmType> = _selectedAlgorithm.asStateFlow()
 
     enum class SpinSpeed(val label: String, val durationMs: Long, val rotations: Int) {
-        SLOW("Slow", 8000L, 3),
-        LEISURELY("Leisurely", 6000L, 5),
-        MEDIUM("Medium", 4000L, 7),
-        FAST("Fast", 3000L, 10),
-        BLAZING("Blazing", 2000L, 15)
+        SLOW("Slow", 10000L, 3),
+        LEISURELY("Leisurely", 8000L, 5),
+        MEDIUM("Medium", 6000L, 7),
+        FAST("Fast", 5000L, 10),
+        BLAZING("Blazing", 4000L, 15)
     }
 
-    private val _spinSpeed = MutableStateFlow(SpinSpeed.MEDIUM)
+    private val _spinSpeed = MutableStateFlow(SpinSpeed.LEISURELY)
     val spinSpeed: StateFlow<SpinSpeed> = _spinSpeed.asStateFlow()
 
     private val _seed = MutableStateFlow<Long?>(null)

@@ -39,7 +39,7 @@ class PreferenceRepositoryImpl @Inject constructor(
     override val defaultAlgorithm: Flow<SelectionAlgorithmFactory.AlgorithmType> = preferenceFlow("default_algo", SelectionAlgorithmFactory.AlgorithmType.UNIFORM.name) { p, k, d -> p.getString(k, d) ?: d }
         .map { SelectionAlgorithmFactory.AlgorithmType.valueOf(it) }
 
-    override val defaultSpinSpeed: Flow<WheelViewModel.SpinSpeed> = preferenceFlow("default_speed", WheelViewModel.SpinSpeed.MEDIUM.name) { p, k, d -> p.getString(k, d) ?: d }
+    override val defaultSpinSpeed: Flow<WheelViewModel.SpinSpeed> = preferenceFlow("default_speed", WheelViewModel.SpinSpeed.LEISURELY.name) { p, k, d -> p.getString(k, d) ?: d }
         .map { WheelViewModel.SpinSpeed.valueOf(it) }
 
     override val spinSoundEnabled: Flow<Boolean> = preferenceFlow("spin_sound", true) { p, k, d -> p.getBoolean(k, d) }
