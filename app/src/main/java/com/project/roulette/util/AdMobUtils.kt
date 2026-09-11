@@ -8,11 +8,17 @@ import com.google.android.gms.ads.FullScreenContentCallback
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
+import com.project.roulette.ADS_ENABLED
 
 var mInterstitialAd: InterstitialAd? = null
 var mSwitchInterstitialAd: InterstitialAd? = null
 
 fun loadInterstitial(context: Context) {
+    if (!ADS_ENABLED) {
+        mInterstitialAd = null
+        return
+    }
+
     val adRequest = AdRequest.Builder().build()
 
     // Test ad ID
@@ -39,6 +45,11 @@ fun loadInterstitial(context: Context) {
 }
 
 fun loadSwitchInterstitial(context: Context) {
+    if (!ADS_ENABLED) {
+        mSwitchInterstitialAd = null
+        return
+    }
+
     val adRequest = AdRequest.Builder().build()
     val adUnitId = "ca-app-pub-9720007236604856/7907828064"
 //    val adUnitId = ""
@@ -60,6 +71,11 @@ fun loadSwitchInterstitial(context: Context) {
 }
 
 fun showInterstitial(context: Context, onAdDismissed: () -> Unit) {
+    if (!ADS_ENABLED) {
+        onAdDismissed()
+        return
+    }
+
     val activity = context as? Activity
 
     if (mInterstitialAd != null && activity != null) {
@@ -83,6 +99,11 @@ fun showInterstitial(context: Context, onAdDismissed: () -> Unit) {
 }
 
 fun showSwitchInterstitial(context: Context, onAdDismissed: () -> Unit) {
+    if (!ADS_ENABLED) {
+        onAdDismissed()
+        return
+    }
+
     val activity = context as? Activity
 
     if (mSwitchInterstitialAd != null && activity != null) {

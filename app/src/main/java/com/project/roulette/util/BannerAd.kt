@@ -7,9 +7,12 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.project.roulette.ADS_ENABLED
 
 @Composable
 fun BannerAd(modifier: Modifier = Modifier) {
+    if (!ADS_ENABLED) return
+
     AndroidView(
         modifier = modifier.fillMaxWidth(),
         factory = { context ->

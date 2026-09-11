@@ -66,7 +66,9 @@ class MainActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
-        MobileAds.initialize(this) {}
+        if (ADS_ENABLED) {
+            MobileAds.initialize(this) {}
+        }
 
         setContent {
             val settingsViewModel: SettingsViewModel = hiltViewModel()
