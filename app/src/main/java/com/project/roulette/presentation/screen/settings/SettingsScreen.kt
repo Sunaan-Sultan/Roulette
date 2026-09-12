@@ -14,7 +14,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -163,7 +162,7 @@ fun SettingsScreen(
 
                         FlowRow(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(dimens.space8),
+                            horizontalArrangement = Arrangement.SpaceBetween,
                             verticalArrangement = Arrangement.spacedBy(dimens.space16),
                             maxItemsInEachRow = 4
                         ) {
@@ -171,8 +170,7 @@ fun SettingsScreen(
                                 PaletteItem(
                                     palette = palette,
                                     isSelected = paletteIndex == index,
-                                    onClick = { viewModel.updatePaletteIndex(index) },
-                                    modifier = Modifier.weight(1f)
+                                    onClick = { viewModel.updatePaletteIndex(index) }
                                 )
                             }
                         }
@@ -392,20 +390,28 @@ private fun PaletteItem(
     val colors = RouletteTheme.colors
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier.clickable(onClick = onClick)
+        modifier = modifier
+            .width(56.dp)
+            .clickable(onClick = onClick)
     ) {
         Box(
+            contentAlignment = Alignment.Center,
             modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(1f)
+                .size(48.dp)
                 .clip(CircleShape)
-                .background(palette.primary)
                 .border(
                     width = if (isSelected) 2.dp else 0.dp,
                     color = if (isSelected) colors.textPrimary else Color.Transparent,
                     shape = CircleShape
                 )
-        )
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(if (isSelected) 38.dp else 48.dp)
+                    .clip(CircleShape)
+                    .background(palette.primary)
+            )
+        }
         Spacer(Modifier.height(RouletteTheme.dimens.space8))
         Text(
             palette.name,
