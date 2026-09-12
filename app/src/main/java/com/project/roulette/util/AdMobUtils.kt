@@ -2,6 +2,7 @@ package com.project.roulette.util
 
 import android.app.Activity
 import android.content.Context
+import android.os.SystemClock
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.FullScreenContentCallback
@@ -9,9 +10,19 @@ import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.project.roulette.ADS_ENABLED
+import com.project.roulette.AD_COOLDOWN_MS
 
 var mInterstitialAd: InterstitialAd? = null
 var mSwitchInterstitialAd: InterstitialAd? = null
+
+private var lastAdShownAt = 0L
+
+private fun isAdCooldownActive(): Boolean =
+    lastAdShownAt != 0L && SystemClock.elapsedRealtime() - lastAdShownAt < AD_COOLDOWN_MS
+
+private fun markAdShown() {
+    lastAdShownAt = SystemClock.elapsedRealtime()
+}
 
 fun loadInterstitial(context: Context) {
     if (!ADS_ENABLED) {
@@ -71,7 +82,7 @@ fun loadSwitchInterstitial(context: Context) {
 }
 
 fun showInterstitial(context: Context, onAdDismissed: () -> Unit) {
-    if (!ADS_ENABLED) {
+    if (!ADS_ENABLED || isAdCooldownActive()) {
         onAdDismissed()
         return
     }
@@ -80,6 +91,10 @@ fun showInterstitial(context: Context, onAdDismissed: () -> Unit) {
 
     if (mInterstitialAd != null && activity != null) {
         mInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+            override fun onAdShowedFullScreenContent() {
+                markAdShown()
+            }
+
             override fun onAdDismissedFullScreenContent() {
                 mInterstitialAd = null
                 loadInterstitial(context)
@@ -99,7 +114,7 @@ fun showInterstitial(context: Context, onAdDismissed: () -> Unit) {
 }
 
 fun showSwitchInterstitial(context: Context, onAdDismissed: () -> Unit) {
-    if (!ADS_ENABLED) {
+    if (!ADS_ENABLED || isAdCooldownActive()) {
         onAdDismissed()
         return
     }
@@ -108,6 +123,10 @@ fun showSwitchInterstitial(context: Context, onAdDismissed: () -> Unit) {
 
     if (mSwitchInterstitialAd != null && activity != null) {
         mSwitchInterstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
+            override fun onAdShowedFullScreenContent() {
+                markAdShown()
+            }
+
             override fun onAdDismissedFullScreenContent() {
                 mSwitchInterstitialAd = null
                 loadSwitchInterstitial(context)
