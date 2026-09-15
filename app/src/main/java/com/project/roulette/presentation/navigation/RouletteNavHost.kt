@@ -45,17 +45,23 @@ import com.project.roulette.domain.model.Wheel
 import com.project.roulette.domain.model.Segment
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.project.roulette.presentation.model.EditorUiState
+import com.project.roulette.util.AdManager
+import com.project.roulette.util.AdPlacement
 import com.project.roulette.util.PreviewData
+import androidx.compose.ui.platform.LocalContext
 
 @Composable
 fun RouletteNavHost(navController: NavHostController, paddingValues: PaddingValues = PaddingValues()) {
     val layoutDirection = LocalLayoutDirection.current
+    val context = LocalContext.current
 
     // After a wheel is saved, always land on Home with a clean back stack.
     val onWheelSaved: () -> Unit = {
-        navController.navigate(RouletteScreen.Home.route) {
-            popUpTo(RouletteScreen.Home.route) { inclusive = true }
-            launchSingleTop = true
+        AdManager.show(context, AdPlacement.WHEEL_SAVED) {
+            navController.navigate(RouletteScreen.Home.route) {
+                popUpTo(RouletteScreen.Home.route) { inclusive = true }
+                launchSingleTop = true
+            }
         }
     }
     NavHost(

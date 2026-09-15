@@ -27,7 +27,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -45,8 +44,6 @@ import com.project.roulette.presentation.model.HomeUiState
 import com.project.roulette.presentation.viewmodel.HomeViewModel
 import com.project.roulette.ui.theme.RouletteTheme
 import com.project.roulette.ui.theme.rememberAccentOnSurface
-import com.project.roulette.util.loadSwitchInterstitial
-import com.project.roulette.util.showSwitchInterstitial
 
 @Composable
 fun FavouritesScreen(
@@ -55,13 +52,11 @@ fun FavouritesScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val currentFilter by viewModel.filter.collectAsStateWithLifecycle()
-    val context = LocalContext.current
     val colors = RouletteTheme.colors
     val dimens = RouletteTheme.dimens
 
     LaunchedEffect(Unit) {
         viewModel.setFilter(HomeFilter.FAVOURITES)
-        loadSwitchInterstitial(context)
     }
 
     AppScaffold { padding ->
@@ -127,9 +122,7 @@ fun FavouritesScreen(
                             ) {
                                 itemsIndexed(favouriteWheels, key = { _, it -> it.id }) { index, wheel ->
                                     val spinCount = state.wheelSpinCounts[wheel.id] ?: 0
-                                    val onSelect = {
-                                        showSwitchInterstitial(context) { onNavigateToWheel(wheel.id) }
-                                    }
+                                    val onSelect = { onNavigateToWheel(wheel.id) }
                                     val onToggleFavorite = {
                                         viewModel.toggleFavorite(wheel.id, wheel.isFavorite)
                                     }

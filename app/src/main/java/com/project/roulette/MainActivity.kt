@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.ads.MobileAds
+import com.project.roulette.util.AdManager
 import com.google.android.play.core.appupdate.AppUpdateManager
 import com.google.android.play.core.appupdate.AppUpdateManagerFactory
 import com.google.android.play.core.appupdate.AppUpdateOptions
@@ -87,7 +88,7 @@ class MainActivity : ComponentActivity() {
         checkForUpdates()
 
         if (ADS_ENABLED) {
-            MobileAds.initialize(this) {}
+            MobileAds.initialize(this) { AdManager.init(this) }
         }
 
         setContent {

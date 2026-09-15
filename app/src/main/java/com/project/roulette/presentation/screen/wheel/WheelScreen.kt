@@ -77,8 +77,8 @@ import com.project.roulette.presentation.viewmodel.WheelViewModel
 import com.project.roulette.ui.theme.RouletteTheme
 import com.project.roulette.ui.theme.ThemePalette
 import com.project.roulette.ui.theme.rememberAccentOnSurface
-import com.project.roulette.util.loadInterstitial
-import com.project.roulette.util.showInterstitial
+import com.project.roulette.util.AdManager
+import com.project.roulette.util.AdPlacement
 import kotlinx.coroutines.launch
 import java.util.Locale
 
@@ -125,11 +125,11 @@ fun WheelScreen(
     }
 
     LaunchedEffect(Unit) {
-        loadInterstitial(context)
+        AdManager.preload(context)
     }
 
     BackHandler {
-        showInterstitial(context = context) { onNavigateBack() }
+        AdManager.show(context, AdPlacement.WHEEL_EXIT) { onNavigateBack() }
     }
 
     val rotationAnim = remember { Animatable(0f) }
@@ -156,6 +156,7 @@ fun WheelScreen(
                         )
                     )
                     viewModel.onAnimationComplete()
+                    AdManager.onSpinCompleted()
                 }
             }
         }
@@ -196,7 +197,7 @@ fun WheelScreen(
             AppTopBar(
                 title = (uiState as? WheelUiState.Success)?.wheel?.name ?: "Wheel",
                 eyebrow = "Spin",
-                onNavigateBack = { showInterstitial(context = context) { onNavigateBack() } },
+                onNavigateBack = { AdManager.show(context, AdPlacement.WHEEL_EXIT) { onNavigateBack() } },
                 actions = {
                     IconButton(onClick = { showOptions = true }) {
                         Icon(
@@ -553,7 +554,12 @@ fun WheelScreen(
                         spinsToday = spinsToday,
                         themeColor = themeColor,
                         lighterThemeColor = lighterThemeColor,
-                        onDismiss = { viewModel.clearResult() },
+                        onDismiss = {
+                            viewModel.clearResult()
+                            if (AdManager.isSpinMilestone()) {
+                                AdManager.show(context, AdPlacement.SPIN_MILESTONE) {}
+                            }
+                        },
                         onSpinAgain = {
                             viewModel.clearResult()
                             viewModel.spinWheel()

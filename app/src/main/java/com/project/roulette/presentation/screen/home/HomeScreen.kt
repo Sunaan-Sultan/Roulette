@@ -18,12 +18,10 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.project.roulette.presentation.component.AppIcons
 import com.project.roulette.presentation.component.design.AppLargeHeader
@@ -40,10 +38,6 @@ import com.project.roulette.ui.theme.RouletteTheme
 import com.project.roulette.ui.theme.TileBlue
 import com.project.roulette.ui.theme.TileTeal
 import com.project.roulette.ui.theme.rememberAccentOnSurface
-import com.project.roulette.util.loadInterstitial
-import com.project.roulette.util.loadSwitchInterstitial
-import com.project.roulette.util.showInterstitial
-import com.project.roulette.util.showSwitchInterstitial
 import java.util.Calendar
 import java.util.Locale
 
@@ -59,7 +53,6 @@ fun HomeScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val chartType by viewModel.chartType.collectAsStateWithLifecycle()
 
-    val context = LocalContext.current
     val colors = RouletteTheme.colors
     val dimens = RouletteTheme.dimens
 
@@ -75,17 +68,10 @@ fun HomeScreen(
         }
     }
 
-    LaunchedEffect(Unit) {
-        loadInterstitial(context)
-        loadSwitchInterstitial(context)
-    }
-
-    val openWheel: (String) -> Unit = { wheelId ->
-        showSwitchInterstitial(context) { onNavigateToWheel(wheelId) }
-    }
-    val createWheel: () -> Unit = {
-        showInterstitial(context = context) { onNavigateToCreate() }
-    }
+    // Opening or creating a wheel is the whole point of the app — never gate it
+    // behind an ad. Ads live at the natural breaks instead (see AdPlacement).
+    val openWheel: (String) -> Unit = onNavigateToWheel
+    val createWheel: () -> Unit = onNavigateToCreate
 
     AppScaffold { padding ->
         when (val state = uiState) {

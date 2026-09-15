@@ -16,11 +16,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.project.roulette.presentation.component.AppIcons
 import com.project.roulette.presentation.component.WheelCard
@@ -40,10 +38,6 @@ import com.project.roulette.presentation.viewmodel.HomeViewModel
 import com.project.roulette.ui.theme.RouletteTheme
 import com.project.roulette.ui.theme.rememberAccentOnSurface
 import com.project.roulette.ui.theme.TileTeal
-import com.project.roulette.util.loadInterstitial
-import com.project.roulette.util.loadSwitchInterstitial
-import com.project.roulette.util.showInterstitial
-import com.project.roulette.util.showSwitchInterstitial
 
 @Composable
 fun WheelsScreen(
@@ -56,22 +50,16 @@ fun WheelsScreen(
     val searchQuery by viewModel.searchQuery.collectAsStateWithLifecycle()
     val currentFilter by viewModel.filter.collectAsStateWithLifecycle()
 
-    val context = LocalContext.current
     val colors = RouletteTheme.colors
     val dimens = RouletteTheme.dimens
     val spinsAccent = rememberAccentOnSurface(TileTeal)
-
-    LaunchedEffect(Unit) {
-        loadInterstitial(context)
-        loadSwitchInterstitial(context)
-    }
 
     AppScaffold(
         floatingActionButton = {
             PrimaryFab(
                 text = "Create wheel",
                 icon = AppIcons.Add,
-                onClick = { showInterstitial(context = context) { onNavigateToCreate() } },
+                onClick = onNavigateToCreate,
                 modifier = Modifier.padding(bottom = dimens.bottomBarSpace)
             )
         }
@@ -176,9 +164,7 @@ fun WheelsScreen(
                                         title = "No wheels yet",
                                         message = "Create your first wheel and start spinning.",
                                         actionLabel = "Create wheel",
-                                        onAction = {
-                                            showInterstitial(context = context) { onNavigateToCreate() }
-                                        }
+                                        onAction = onNavigateToCreate
                                     )
                                 }
                             }
@@ -198,10 +184,8 @@ fun WheelsScreen(
                                         wheel = wheel,
                                         isActive = wheel.id == state.selectedWheelId,
                                         onSelect = {
-                                            showSwitchInterstitial(context) {
-                                                viewModel.selectWheel(wheel.id)
-                                                onNavigateToWheel(wheel.id)
-                                            }
+                                            viewModel.selectWheel(wheel.id)
+                                            onNavigateToWheel(wheel.id)
                                         },
                                         onToggleFavorite = {
                                             viewModel.toggleFavorite(wheel.id, wheel.isFavorite)
